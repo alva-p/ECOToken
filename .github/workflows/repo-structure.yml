@@ -1,0 +1,33 @@
+name: Repository Structure Check
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  structure:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check required directories
+        run: |
+          test -d contracts
+          test -d backend
+          test -d frontend
+          test -d infra
+          test -d .github/workflows
+
+      - name: Check required files
+        run: |
+          test -f README.md
+          test -f .gitignore
+          test -f docker-compose.yml
