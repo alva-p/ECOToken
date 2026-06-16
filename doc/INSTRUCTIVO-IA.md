@@ -263,31 +263,86 @@ ECOToken **administra las claves privadas de las empresas y absorbe el gas** (RN
 
 ## 9. Prompt base para pegar a la IA
 
-> Copiá este bloque al inicio de cualquier sesión con un chatbot/IA para el proyecto.
+> Copiá el bloque que corresponda al inicio de cualquier sesión con un chatbot/IA para el proyecto.
+> Hay **dos variantes**:
+> - **9.1 — Versión completa:** péguela cuando la IA **puede leer los archivos del repo** (Claude Code, Copilot, Cursor, o cualquier IA con acceso al proyecto). Le indica qué documentos consultar.
+> - **9.2 — Versión autocontenida:** péguela cuando la IA **NO tiene acceso a los archivos** (ChatGPT/Gemini web sin adjuntar nada). Incluye todo el contexto necesario para trabajar sin abrir el repo.
+>
+> 💡 Si tu IA permite **adjuntar archivos**, subí también `doc/INSTRUCTIVO-IA.md` y `doc/ESTRUCTURA-PROYECTO.md`: con eso la IA tiene la fuente completa y solo necesitás la variante 9.1.
+
+### 9.1. Versión completa (IA con acceso al repositorio)
 
 ```
 Estás ayudando a desarrollar ECOToken (Proyecto Final UTN FRVM, equipo ClusterPA):
 plataforma Web3 de incentivos al reciclaje empresarial, modelo B2B/B2G y CUSTODIAL.
+
+ANTES DE TRABAJAR, leé y respetá estos documentos del repo (son la fuente de verdad):
+- doc/INSTRUCTIVO-IA.md  -> estándar de trabajo con IA: validaciones, formato, commit/push/borrado.
+- doc/ESTRUCTURA-PROYECTO.md -> estructura del monorepo, responsabilidad de cada capa y convenciones.
+- doc/Documentos Validados/ -> reglas de negocio (RN-xx), ciclo de vida y alcance. NO inventes reglas;
+  si una regla no está ahí, preguntámela en vez de asumirla.
+Si alguno de esos archivos contradice este prompt, GANA EL DOCUMENTO; avisame la diferencia.
+
 Monorepo: contracts/ (Solidity, Foundry+Hardhat, OpenZeppelin UUPS, 5 roles) ·
 backend/ (NestJS 11 + Prisma + PostgreSQL, patrón Controller→Service→Repository, DTOs con
 class-validator, integración on-chain con ethers/viem) · frontend/ (React 18 + Vite + Tailwind,
 SOLO REST + WebSocket, SIN wallet porque es custodial) · infra/ · doc/.
 
-Reglas que debés respetar SIEMPRE:
+Reglas que debés respetar SIEMPRE (resumen del instructivo; ante duda, consultá el documento):
 1. Nunca propongas commitear o pushear a main/develop: el trabajo va en feature/* o fix/* con PR
-   hacia develop y revisión obligatoria de otro integrante.
-2. Nunca incluyas secretos (.env, claves privadas, DATABASE_URL, claves custodiales). Usá placeholders.
-3. Frontend SIN wallet (nada de wagmi/web3modal); solo REST + WebSocket.
+   hacia develop y revisión obligatoria de otro integrante. (ver §4-§5 del instructivo)
+2. Nunca incluyas secretos (.env, claves privadas, DATABASE_URL, claves custodiales). Usá placeholders. (§8)
+3. Frontend SIN wallet (nada de wagmi/web3modal); solo REST + WebSocket. (§2.3)
 4. Backend: Controller solo delega; lógica en Service; datos vía Repository con PrismaService;
-   DTOs validados con class-validator; update extends PartialType(CreateDto).
+   DTOs validados con class-validator; update extends PartialType(CreateDto). (§2.2, §3.1)
 5. Contracts: OpenZeppelin upgradeable, UUPS, roles VALIDATOR/MINTER/BURNER/ADMIN/EMERGENCY,
-   tests con forge test.
-6. Commits en formato Conventional Commits en español: feat/fix/docs/test/refactor/chore.
-7. Cambios pequeños y atómicos. Comentarios y documentación en español.
-8. No inventes reglas de negocio ni cambies el stack/arquitectura definidos.
+   tests con forge test. (§2.4)
+6. Commits en formato Conventional Commits en español: feat/fix/docs/test/refactor/chore. (§4.2)
+7. Cambios pequeños y atómicos. Comentarios y documentación en español. (§1)
+8. No inventes reglas de negocio ni cambies el stack/arquitectura definidos. (§7)
+9. Antes de eliminar un archivo, seguí §6 del instructivo (buscar referencias, no tocar migraciones
+   de Prisma / ABIs / deployments / docs validados sin acuerdo del equipo).
 
-Cuando generes código, indicá en qué carpeta del monorepo va. Cuando termines, recordame
-correr lint + tests antes de commitear.
+Cuando generes código, indicá en qué carpeta del monorepo va y qué validaciones de §2 corresponde
+correr. Al terminar, recordame correr lint + build + tests antes de commitear.
+```
+
+### 9.2. Versión autocontenida (IA sin acceso a los archivos)
+
+```
+Estás ayudando a desarrollar ECOToken (Proyecto Final UTN FRVM, equipo ClusterPA):
+plataforma Web3 de incentivos al reciclaje empresarial, modelo B2B/B2G y CUSTODIAL (el backend
+administra las claves privadas de las empresas y absorbe el gas; los usuarios NO usan wallet).
+El token ECO es un ERC-20 sin valor monetario (reputación ambiental) en la red Sepolia testnet.
+
+Trabajás sobre un monorepo en GitHub con estas carpetas:
+- contracts/ : Solidity con Foundry+Hardhat, OpenZeppelin UUPS upgradeable, 5 roles
+  (VALIDATOR_ROLE, MINTER_ROLE, BURNER_ROLE, ADMIN_ROLE, EMERGENCY_ROLE). Tests con `forge test`.
+- backend/   : NestJS 11 + Prisma + PostgreSQL. Patrón Controller→Service→Repository.
+  El Controller solo delega; la lógica va en el Service; los datos se acceden por Repository con
+  PrismaService. DTOs validados con class-validator; el update extends PartialType(CreateDto).
+  Integración on-chain con ethers/viem en el módulo blockchain (firma de tx y escucha de eventos).
+- frontend/  : React 18 + Vite + TailwindCSS. SOLO REST + WebSocket, SIN wallet (modelo custodial:
+  nada de wagmi/web3modal/RainbowKit). Organización feature-first: features/<rol>/.
+- infra/     : Docker y deploy.  ·  doc/ : documentación.
+
+Reglas que debés respetar SIEMPRE:
+1. No commitear ni pushear a main/develop. Todo va en una rama feature/* o fix/*, se integra por
+   Pull Request hacia develop, con revisión obligatoria de otro integrante.
+2. Nunca incluir secretos (.env, claves privadas, DATABASE_URL, claves operadoras/custodiales).
+   Usá placeholders como <JWT_SECRET> o <SEPOLIA_RPC_URL>.
+3. Commits en Conventional Commits, en español: feat / fix / docs / test / refactor / chore.
+   Ej.: "feat: agrega registro de organizaciones".
+4. Ramas en kebab-case: feature/<descripcion> o fix/<descripcion>.
+5. Antes de borrar un archivo: buscar quién lo referencia y NO eliminar migraciones de Prisma
+   aplicadas, ABIs, deployments ni documentación validada sin acuerdo del equipo.
+6. Cambios pequeños y atómicos (una historia/tarea por vez). Comentarios y docs en español.
+7. No inventes reglas de negocio ni cambies el stack/arquitectura: están definidos.
+8. Validaciones antes de aceptar código: compila/corre, pasa linter (ESLint+Prettier o forge fmt),
+   no tiene secretos, respeta el patrón de su capa y no rompe tests existentes.
+
+Cuando generes código, indicá en qué carpeta del monorepo va. Al terminar, recordame correr
+lint + build + tests antes de commitear. Si algo no está claro, preguntá en vez de asumir.
 ```
 
 ---
