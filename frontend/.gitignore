@@ -1,0 +1,15 @@
+# Dependencias y build
+node_modules/
+dist/
+dist-ssr/
+
+# Entorno
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+
+# Editor / SO
+.DS_Store

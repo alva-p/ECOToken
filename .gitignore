@@ -1,22 +1,33 @@
-# Environment
+# Dependencias y builds
+node_modules/
+dist/
+build/
+out/                    # artefactos Foundry
+cache/                  # cache Hardhat/Foundry
+coverage/
+.nyc_output/
+
+# Entornos (secretos)
 .env
 .env.local
 .env.*.local
 
-# Dependencies
-node_modules/
+# Overrides locales de compose (la definición base SÍ se versiona)
+docker-compose.override.yml
 
-# Build outputs
-dist/
-build/
-out/
-cache/
-
-# Logs
-*.log
-
-# IDE / OS
-.vscode/
+# Editor / SO
+.vscode/*
+!.vscode/settings.json
 .idea/
 .DS_Store
 Thumbs.db
+*.log
+.temp
+.tmp
+
+# Blockchain (artefactos generados)
+contracts/lib/
+contracts/artifacts/
+contracts/typechain-types/
+
+# Prisma: prisma/migrations/ SÍ se versiona (no ignorar)

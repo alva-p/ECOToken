@@ -1,0 +1,13 @@
+# Dependencias y build
+node_modules/
+dist/
+
+# Entorno (secretos / claves operadoras)
+.env
+.env.local
+
+# Logs y cobertura
+*.log
+coverage/
+
+# Prisma: prisma/migrations/ SÍ se versiona (no ignorar)

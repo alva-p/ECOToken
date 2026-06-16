@@ -1,0 +1,16 @@
+# Foundry
+out/
+cache/
+broadcast/
+
+# Hardhat
+artifacts/
+cache_hardhat/
+typechain-types/
+
+# Dependencias
+node_modules/
+lib/
+
+# Entorno
+.env

@@ -1,0 +1,102 @@
+// Prisma — fuente única de los modelos/entidades de ECOToken.
+// Detalle del dominio: ../doc/ESTRUCTURA-PROYECTO.md §4. STUB inicial (Sprint 0).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rol {
+  EMPRESA
+  COOPERATIVA
+  MUNICIPIO
+  ADMIN
+}
+
+enum TipoMaterial {
+  PLASTICO
+  VIDRIO
+  CARTON
+}
+
+model Usuario {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  rol          Rol
+  empresa      Empresa?     @relation(fields: [empresaId], references: [id])
+  empresaId    String?
+  cooperativa  Cooperativa? @relation(fields: [cooperativaId], references: [id])
+  cooperativaId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Empresa {
+  id              String           @id @default(uuid())
+  razonSocial     String
+  cuit            String           @unique
+  domicilioFiscal String?
+  representante   String?
+  walletAddress   String           @unique // dirección EVM custodial
+  usuarios        Usuario[]
+  ingresos        IngresoMaterial[]
+  movimientos     MovimientoToken[]
+  certificados    Certificado[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model Cooperativa {
+  id            String            @id @default(uuid())
+  nombre        String
+  walletAddress String            @unique // cuenta con VALIDATOR_ROLE
+  usuarios      Usuario[]
+  ingresos      IngresoMaterial[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model IngresoMaterial {
+  id            String       @id @default(uuid())
+  empresa       Empresa      @relation(fields: [empresaId], references: [id])
+  empresaId     String
+  cooperativa   Cooperativa  @relation(fields: [cooperativaId], references: [id])
+  cooperativaId String
+  tipoMaterial  TipoMaterial
+  pesoGramos    Int
+  tokensAcunados BigInt?
+  txHash        String?      // hash de la tx de mint
+  fecha         DateTime     @default(now())
+}
+
+model MovimientoToken {
+  id        String   @id @default(uuid())
+  empresa   Empresa  @relation(fields: [empresaId], references: [id])
+  empresaId String
+  cantidad  BigInt
+  tipo      String   // MINT | BURN
+  txHash    String?
+  createdAt DateTime @default(now())
+}
+
+model Certificado {
+  id         String   @id @default(uuid())
+  empresa    Empresa  @relation(fields: [empresaId], references: [id])
+  empresaId  String
+  periodo    String   // YYYY-MM
+  posicion   Int?
+  txHash     String?  // emisión registrada on-chain
+  emitidoAt  DateTime @default(now())
+}
+
+model TablaConversion {
+  id           String       @id @default(uuid())
+  tipoMaterial TipoMaterial @unique
+  tokensPorKg  Int
+  updatedAt    DateTime     @updatedAt
+}

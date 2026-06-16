@@ -1,0 +1,5 @@
+/* Tokens de diseño y estilos globales. Importar desde index.css si se separan capas. */
+:root {
+  --color-primary: #16a34a; /* verde ECO */
+  --color-bg: #ffffff;
+}

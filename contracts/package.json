@@ -1,0 +1,22 @@
+{
+  "name": "ecotoken-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Smart contracts del token ECO (ERC-20 UUPS) — Foundry + Hardhat",
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test",
+    "fmt": "forge fmt",
+    "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia",
+    "upgrade:sepolia": "hardhat run scripts/upgrade.ts --network sepolia"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-foundry": "^1.1.2",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts-upgradeable": "^5.0.2",
+    "@openzeppelin/hardhat-upgrades": "^3.2.1",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.0",
+    "typescript": "^5.4.0"
+  }
+}
