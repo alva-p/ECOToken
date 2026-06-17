@@ -99,6 +99,7 @@ Estas reglas aplican a **toda** sesión con una IA. Si la IA propone algo que la
 
 ### 3.2. Convenciones de nombres
 - **Ramas:** `feature/<descripcion-corta>` o `fix/<descripcion-corta>` en kebab-case. Ej.: `feature/registro-organizacion`, `fix/error-calculo-puntos`.
+  > ⚠️ **Nunca** nombrar una rama exactamente `feature` o `fix` (sin slash ni descripción): bloquea el namespace e impide crear cualquier `feature/*` o `fix/*` en el remoto.
 - **Commits:** Conventional Commits (ver [§4.2](#42-formato-del-mensaje-de-commit)).
 - **Historias de usuario:** `E{épica}-HU{historia}`. Ej.: `E2-HU5`.
 - **Variables/funciones:** seguir el estilo del archivo donde se trabaja (camelCase en TS, etc.).
@@ -197,6 +198,7 @@ git commit -m "feat: agrega registro de organizaciones"
    - Descripción: qué hace, cómo probarlo, qué validaste.
    - Asigná a **otro integrante como revisor** (revisión obligatoria).
 5. **Esperá la revisión.** El revisor verifica: sin conflictos, criterios de aceptación cumplidos, validaciones de [§2](#2-validaciones) OK. Recién ahí se integra a `develop`.
+6. **Integración continua `develop` → `main`:** una vez mergeada la historia a `develop`, verificá que compila y los tests pasan, y abrí un PR `develop` → `main`. No esperes a acumular todas las historias del sprint: mergear de a una evita conflictos grandes y permite detectar problemas temprano.
 
 > ❌ **Nunca** `git push --force` sobre `develop` o `main`. En tu propia rama feature, solo si es estrictamente necesario y avisando al equipo (preferir `--force-with-lease`).
 
