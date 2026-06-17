@@ -31,7 +31,7 @@ La **Vault Address** es la cuenta operadora principal del sistema. Actúa como `
 
 | Campo | Valor |
 |-------|-------|
-| **Address** | `0x034604c39Db14f6126C4D7EEC728FF1bedcDc3de` |
+| **Address** | `0xE7136d34f62C3c8375a1d3Fe04ec4B2e99F9629E` |
 | **Red** | Sepolia testnet |
 | **Rol en contrato** | `ADMIN_ROLE` + `DEFAULT_ADMIN_ROLE` |
 
@@ -46,12 +46,12 @@ El comando genera un par de claves. La **clave privada nunca se commitea**: se g
 
 ### Cómo cargar saldo (faucet Sepolia)
 
-1. Copiá la address: `0x034604c39Db14f6126C4D7EEC728FF1bedcDc3de`
+1. Copiá la address: `0xE7136d34f62C3c8375a1d3Fe04ec4B2e99F9629E`
 2. Pedí ETH de testnet en alguno de estos faucets:
    - [Google Cloud Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia) — sin requisitos
    - [Alchemy Faucet](https://sepoliafaucet.com) — requiere cuenta Alchemy
    - [Chainlink Faucet](https://faucets.chain.link/sepolia) — requiere 0.001 ETH en mainnet
-3. Verificá el saldo en [Sepolia Etherscan](https://sepolia.etherscan.io/address/0x034604c39Db14f6126C4D7EEC728FF1bedcDc3de)
+3. Verificá el saldo en [Sepolia Etherscan](https://sepolia.etherscan.io/address/0xE7136d34f62C3c8375a1d3Fe04ec4B2e99F9629E)
 
 ### Seguridad
 
