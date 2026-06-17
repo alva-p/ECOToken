@@ -99,6 +99,7 @@ Estas reglas aplican a **toda** sesión con una IA. Si la IA propone algo que la
 
 ### 3.2. Convenciones de nombres
 - **Ramas:** `feature/<descripcion-corta>` o `fix/<descripcion-corta>` en kebab-case. Ej.: `feature/registro-organizacion`, `fix/error-calculo-puntos`.
+  > ⚠️ **Nunca** nombrar una rama exactamente `feature` o `fix` (sin slash ni descripción): bloquea el namespace e impide crear cualquier `feature/*` o `fix/*` en el remoto.
 - **Commits:** Conventional Commits (ver [§4.2](#42-formato-del-mensaje-de-commit)).
 - **Historias de usuario:** `E{épica}-HU{historia}`. Ej.: `E2-HU5`.
 - **Variables/funciones:** seguir el estilo del archivo donde se trabaja (camelCase en TS, etc.).
