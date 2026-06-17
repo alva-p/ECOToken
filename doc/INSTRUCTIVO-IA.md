@@ -198,6 +198,7 @@ git commit -m "feat: agrega registro de organizaciones"
    - Descripción: qué hace, cómo probarlo, qué validaste.
    - Asigná a **otro integrante como revisor** (revisión obligatoria).
 5. **Esperá la revisión.** El revisor verifica: sin conflictos, criterios de aceptación cumplidos, validaciones de [§2](#2-validaciones) OK. Recién ahí se integra a `develop`.
+6. **Integración continua `develop` → `main`:** una vez mergeada la historia a `develop`, verificá que compila y los tests pasan, y abrí un PR `develop` → `main`. No esperes a acumular todas las historias del sprint: mergear de a una evita conflictos grandes y permite detectar problemas temprano.
 
 > ❌ **Nunca** `git push --force` sobre `develop` o `main`. En tu propia rama feature, solo si es estrictamente necesario y avisando al equipo (preferir `--force-with-lease`).
 
