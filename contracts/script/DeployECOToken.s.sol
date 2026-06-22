@@ -1,21 +1,24 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
-import { Script, console } from "forge-std/Script.sol";
-import { ECOToken } from "../src/ECOToken.sol";
+import {Script, console} from "forge-std/Script.sol";
+import {ECOToken} from "../src/ECOToken.sol";
 
-// STUB de deploy (Sprint 0). El deploy productivo del proxy UUPS se hace con Hardhat
-// (@openzeppelin/hardhat-upgrades) en scripts/deploy.ts. Este script despliega la lógica.
+// STUB de deploy (E2-HU01). El deploy productivo a Sepolia se implementa en una HU posterior.
 contract DeployECOToken is Script {
+    uint256 constant CAP = 1_000_000 ether;
+
     function run() external returns (ECOToken) {
         address admin = vm.envOr("ADMIN_ADDRESS", msg.sender);
+        address minter = vm.envOr("MINTER_ADDRESS", msg.sender);
 
         vm.startBroadcast();
-        ECOToken implementation = new ECOToken();
+        ECOToken token = new ECOToken(CAP, admin, minter);
         vm.stopBroadcast();
 
-        console.log("ECOToken implementation:", address(implementation));
-        console.log("Admin previsto:", admin);
-        return implementation;
+        console.log("ECOToken:", address(token));
+        console.log("Admin:", admin);
+        console.log("Minter:", minter);
+        return token;
     }
 }
