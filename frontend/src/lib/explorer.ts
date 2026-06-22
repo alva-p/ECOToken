@@ -3,4 +3,5 @@ const EXPLORER_URL =
 
 /** Helpers para armar links de verificación al explorador de bloques (Sepolia). */
 export const txLink = (hash: string) => `${EXPLORER_URL}/tx/${hash}`;
-export const addressLink = (address: string) => `${EXPLORER_URL}/address/${address}`;
+export const addressLink = (address: string) =>
+  `${EXPLORER_URL}/address/${address}`;
