@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {Test} from "forge-std/Test.sol";
-import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
-import {ECOToken} from "../src/ECOToken.sol";
+import { Test } from "forge-std/Test.sol";
+import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+import { ECOToken } from "../src/ECOToken.sol";
 
 contract ECOTokenTest is Test {
     ECOToken private ecoToken;
@@ -73,9 +73,7 @@ contract ECOTokenTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessControl.AccessControlUnauthorizedAccount.selector,
-                attacker,
-                minterRole
+                IAccessControl.AccessControlUnauthorizedAccount.selector, attacker, minterRole
             )
         );
 
