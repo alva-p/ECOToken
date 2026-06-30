@@ -8,20 +8,37 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
-    "lint": "eslint \"{src,test}/**/*.ts\" --fix",
+    "lint": "eslint \"{src,test}/**/*.ts\"",
+    "lint:fix": "eslint \"{src,test}/**/*.ts\" --fix",
+    "format": "prettier --write \"{src,test}/**/*.ts\"",
+    "format:check": "prettier --check \"{src,test}/**/*.ts\"",
     "test": "jest",
     "test:e2e": "jest --config ./test/jest-e2e.json",
+    "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "prisma db seed"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
+  "jest": {
+    "moduleFileExtensions": ["js", "json", "ts"],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": ["**/*.(t|j)s"],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
-    "@nestjs/config": "^3.2.0",
+    "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/jwt": "^11.0.0",
+    "@nestjs/mapped-types": "^2.0.5",
     "@nestjs/passport": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
     "@prisma/client": "^5.20.0",
@@ -35,16 +52,24 @@
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.9.0",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/testing": "^11.0.0",
     "@types/bcrypt": "^5.0.2",
     "@types/jest": "^29.5.12",
     "@types/node": "^22.0.0",
     "@types/passport-jwt": "^4.0.1",
+    "@types/supertest": "^6.0.2",
+    "eslint": "^9.9.0",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.9.0",
     "jest": "^29.7.0",
+    "prettier": "^3.3.3",
     "prisma": "^5.20.0",
+    "supertest": "^7.0.0",
     "ts-jest": "^29.2.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "typescript-eslint": "^8.2.0"
   }
 }
