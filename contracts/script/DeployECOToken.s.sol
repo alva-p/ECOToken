@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {Script, console} from "forge-std/Script.sol";
-import {ECOToken} from "../src/ECOToken.sol";
+import { Script, console } from "forge-std/Script.sol";
+import { ECOToken } from "../src/ECOToken.sol";
 
 // STUB de deploy (E2-HU01). El deploy productivo a Sepolia se implementa en una HU posterior.
 contract DeployECOToken is Script {
