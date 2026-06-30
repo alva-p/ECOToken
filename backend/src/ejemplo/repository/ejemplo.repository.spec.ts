@@ -8,10 +8,7 @@ describe('EjemploRepository', () => {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      providers: [
-        EjemploRepository,
-        { provide: PrismaService, useValue: {} },
-      ],
+      providers: [EjemploRepository, { provide: PrismaService, useValue: {} }],
     }).compile();
 
     repository = moduleRef.get(EjemploRepository);
