@@ -13,6 +13,9 @@ contract ECOToken is ERC20Capped, Pausable, AccessControl {
     error ECOToken__ZeroAddress();
 
     event EmergencyBurn(address indexed target, uint256 amount, string reason);
+    // peso en kg del material validado por la cooperativa; la conversion kg->tokens
+    // la calcula el backend (RN-06/RN-07), aqui solo queda registrada la trazabilidad.
+    event Minted(address indexed empresa, uint256 amount, string material, uint256 peso);
 
     constructor(uint256 cap_, address admin_, address minter_)
         ERC20("EcoToken", "ECO")
@@ -28,12 +31,18 @@ contract ECOToken is ERC20Capped, Pausable, AccessControl {
         _grantRole(EMERGENCY_ROLE, admin_);
     }
 
-    function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
-        if (to == address(0)) {
+    // RN-06/RN-11: acuna bajo demanda hacia la empresa adherida; revierte sobre el cap
+    // (ERC20Capped) y en pausa (RN-19).
+    function mint(address empresa, uint256 amount, string calldata material, uint256 peso)
+        external
+        onlyRole(MINTER_ROLE)
+    {
+        if (empresa == address(0)) {
             revert ECOToken__ZeroAddress();
         }
 
-        _mint(to, amount);
+        _mint(empresa, amount);
+        emit Minted(empresa, amount, material, peso);
     }
 
     // RN-19: pausa exclusiva del ADMIN.

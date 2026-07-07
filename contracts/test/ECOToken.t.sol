@@ -38,7 +38,7 @@ contract ECOTokenTest is Test {
         uint256 amount = 100 ether;
 
         vm.prank(minter);
-        ecoToken.mint(user, amount);
+        ecoToken.mint(user, amount, "plastico", 10);
 
         assertEq(ecoToken.balanceOf(user), amount);
         assertEq(ecoToken.totalSupply(), amount);
@@ -49,8 +49,8 @@ contract ECOTokenTest is Test {
         uint256 secondMint = 25 ether;
 
         vm.startPrank(minter);
-        ecoToken.mint(user, firstMint);
-        ecoToken.mint(user, secondMint);
+        ecoToken.mint(user, firstMint, "plastico", 10);
+        ecoToken.mint(user, secondMint, "plastico", 10);
         vm.stopPrank();
 
         assertEq(ecoToken.balanceOf(user), firstMint + secondMint);
@@ -60,10 +60,10 @@ contract ECOTokenTest is Test {
     function testCannotMintOverCap() public {
         vm.startPrank(minter);
 
-        ecoToken.mint(user, CAP);
+        ecoToken.mint(user, CAP, "plastico", 10);
 
         vm.expectRevert();
-        ecoToken.mint(user, 1);
+        ecoToken.mint(user, 1, "plastico", 10);
 
         vm.stopPrank();
     }
@@ -79,7 +79,7 @@ contract ECOTokenTest is Test {
         );
 
         vm.prank(attacker);
-        ecoToken.mint(user, amount);
+        ecoToken.mint(user, amount, "plastico", 10);
     }
 
     function testCannotDeployWithZeroAdmin() public {
@@ -96,7 +96,33 @@ contract ECOTokenTest is Test {
         vm.prank(minter);
         vm.expectRevert(ECOToken.ECOToken__ZeroAddress.selector);
 
-        ecoToken.mint(address(0), 100 ether);
+        ecoToken.mint(address(0), 100 ether, "plastico", 10);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                        E2-HU02: MINT CON TRAZABILIDAD
+    //////////////////////////////////////////////////////////////*/
+
+    event Minted(address indexed empresa, uint256 amount, string material, uint256 peso);
+
+    function testMintEmitsMintedEvent() public {
+        vm.expectEmit(true, false, false, true);
+        emit Minted(user, 100 ether, "vidrio", 25);
+
+        vm.prank(minter);
+        ecoToken.mint(user, 100 ether, "vidrio", 25);
+    }
+
+    function testFuzzMintRespectsCap(uint256 amount, uint256 peso) public {
+        amount = bound(amount, 1, CAP);
+
+        vm.prank(minter);
+        ecoToken.mint(user, amount, "carton", peso);
+        assertEq(ecoToken.totalSupply(), amount);
+
+        vm.expectRevert();
+        vm.prank(minter);
+        ecoToken.mint(user, CAP - amount + 1, "carton", peso);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -134,14 +160,14 @@ contract ECOTokenTest is Test {
 
     function testCannotMintOrTransferWhilePaused() public {
         vm.prank(minter);
-        ecoToken.mint(user, 100 ether);
+        ecoToken.mint(user, 100 ether, "plastico", 10);
 
         vm.prank(admin);
         ecoToken.pause();
 
         vm.expectRevert(Pausable.EnforcedPause.selector);
         vm.prank(minter);
-        ecoToken.mint(user, 1 ether);
+        ecoToken.mint(user, 1 ether, "plastico", 10);
 
         vm.expectRevert(Pausable.EnforcedPause.selector);
         vm.prank(user);
@@ -150,7 +176,7 @@ contract ECOTokenTest is Test {
 
     function testEmergencyBurnWhilePaused() public {
         vm.prank(minter);
-        ecoToken.mint(user, 100 ether);
+        ecoToken.mint(user, 100 ether, "plastico", 10);
 
         vm.prank(admin);
         ecoToken.pause();
@@ -167,7 +193,7 @@ contract ECOTokenTest is Test {
 
     function testEmergencyBurnRevertsIfNotPaused() public {
         vm.prank(minter);
-        ecoToken.mint(user, 100 ether);
+        ecoToken.mint(user, 100 ether, "plastico", 10);
 
         vm.expectRevert(Pausable.ExpectedPause.selector);
         vm.prank(admin);
@@ -176,7 +202,7 @@ contract ECOTokenTest is Test {
 
     function testNonEmergencyRoleCannotEmergencyBurn() public {
         vm.prank(minter);
-        ecoToken.mint(user, 100 ether);
+        ecoToken.mint(user, 100 ether, "plastico", 10);
 
         vm.prank(admin);
         ecoToken.pause();
@@ -198,7 +224,7 @@ contract ECOTokenTest is Test {
         burned = bound(burned, 1, minted);
 
         vm.prank(minter);
-        ecoToken.mint(user, minted);
+        ecoToken.mint(user, minted, "plastico", 10);
 
         vm.startPrank(admin);
         ecoToken.pause();
@@ -211,7 +237,7 @@ contract ECOTokenTest is Test {
 
     function testTransfersResumeAfterUnpause() public {
         vm.prank(minter);
-        ecoToken.mint(user, 100 ether);
+        ecoToken.mint(user, 100 ether, "plastico", 10);
 
         vm.startPrank(admin);
         ecoToken.pause();
