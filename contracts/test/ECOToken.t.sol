@@ -270,6 +270,53 @@ contract ECOTokenTest is Test {
         assertEq(ecoToken.totalSupply(), minted - burned);
     }
 
+    /*//////////////////////////////////////////////////////////////
+                        E2-HU07: FUZZING DE PAUSA
+    //////////////////////////////////////////////////////////////*/
+
+    function testFuzzPauseBlocksMintAndTransferForAnyInput(address to, uint256 amount) public {
+        vm.assume(to != address(0));
+        amount = bound(amount, 1, CAP - 100 ether);
+
+        vm.prank(minter);
+        ecoToken.mint(user, 100 ether, "plastico", 10);
+
+        vm.prank(admin);
+        ecoToken.pause();
+
+        vm.expectRevert(Pausable.EnforcedPause.selector);
+        vm.prank(minter);
+        ecoToken.mint(to, amount, "plastico", 10);
+
+        vm.expectRevert(Pausable.EnforcedPause.selector);
+        vm.prank(user);
+        ecoToken.transfer(to, 1 ether);
+    }
+
+    function testFuzzOnlyAdminCanPauseAndUnpause(address caller) public {
+        vm.assume(caller != admin);
+        bytes32 adminRole = ecoToken.ADMIN_ROLE();
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, caller, adminRole
+            )
+        );
+        vm.prank(caller);
+        ecoToken.pause();
+
+        vm.prank(admin);
+        ecoToken.pause();
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector, caller, adminRole
+            )
+        );
+        vm.prank(caller);
+        ecoToken.unpause();
+    }
+
     function testTransfersResumeAfterUnpause() public {
         vm.prank(minter);
         ecoToken.mint(user, 100 ether, "plastico", 10);

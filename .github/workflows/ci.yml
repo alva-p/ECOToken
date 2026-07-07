@@ -113,3 +113,10 @@ jobs:
       - run: forge fmt --check
       - run: forge build --sizes
       - run: forge test -vvv
+      # E2-HU07: cobertura minima 90% de funciones en src/
+      - name: Cobertura >= 90% de funciones
+        run: |
+          forge coverage --no-match-coverage script | tee coverage.txt
+          FUNCS=$(grep -E '^\| Total' coverage.txt | grep -oE '[0-9]+\.[0-9]+% \([0-9]+/[0-9]+\)' | tail -1 | grep -oE '^[0-9]+' )
+          echo "Cobertura de funciones: ${FUNCS}%"
+          test "$FUNCS" -ge 90
