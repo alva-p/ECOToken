@@ -7,6 +7,9 @@ import { ERC20Capped } from "@openzeppelin/contracts/token/ERC20/extensions/ERC2
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
 contract ECOToken is ERC20Capped, Pausable, AccessControl {
+    // Alias del DEFAULT_ADMIN_ROLE de AccessControl: un solo rol administra roles
+    // (RN-18, Vault Address) y pausa (RN-19), sin duplicar jerarquia.
+    bytes32 public constant ADMIN_ROLE = DEFAULT_ADMIN_ROLE;
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant EMERGENCY_ROLE = keccak256("EMERGENCY_ROLE");
 
@@ -45,12 +48,12 @@ contract ECOToken is ERC20Capped, Pausable, AccessControl {
         emit Minted(empresa, amount, material, peso);
     }
 
-    // RN-19: pausa exclusiva del ADMIN.
-    function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
+    // RN-19: pausa exclusiva del ADMIN. Emite Paused/Unpaused (OZ Pausable).
+    function pause() external onlyRole(ADMIN_ROLE) {
         _pause();
     }
 
-    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function unpause() external onlyRole(ADMIN_ROLE) {
         _unpause();
     }
 

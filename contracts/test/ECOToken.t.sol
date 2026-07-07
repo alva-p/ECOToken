@@ -130,6 +130,41 @@ contract ECOTokenTest is Test {
     //////////////////////////////////////////////////////////////*/
 
     event EmergencyBurn(address indexed target, uint256 amount, string reason);
+    event Paused(address account);
+    event Unpaused(address account);
+
+    function testAdminRoleAliasesDefaultAdminRole() public view {
+        assertEq(ecoToken.ADMIN_ROLE(), ecoToken.DEFAULT_ADMIN_ROLE());
+        assertTrue(ecoToken.hasRole(ecoToken.ADMIN_ROLE(), admin));
+    }
+
+    function testPauseAndUnpauseEmitEvents() public {
+        vm.expectEmit(false, false, false, true);
+        emit Paused(admin);
+        vm.prank(admin);
+        ecoToken.pause();
+
+        vm.expectEmit(false, false, false, true);
+        emit Unpaused(admin);
+        vm.prank(admin);
+        ecoToken.unpause();
+    }
+
+    function testNonAdminCannotUnpause() public {
+        vm.prank(admin);
+        ecoToken.pause();
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                attacker,
+                ecoToken.ADMIN_ROLE()
+            )
+        );
+
+        vm.prank(attacker);
+        ecoToken.unpause();
+    }
 
     function testConstructorGrantsEmergencyRoleToAdmin() public view {
         assertTrue(ecoToken.hasRole(ecoToken.EMERGENCY_ROLE(), admin));
