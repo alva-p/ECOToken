@@ -9,7 +9,8 @@ contract DeployECOToken is Script {
     uint256 constant CAP = 1_000_000 ether;
 
     function run() external returns (ECOToken) {
-        address admin = vm.envOr("ADMIN_ADDRESS", msg.sender);
+        address admin =
+            vm.envOr("ADMIN_ADDRESS", address(0xE7136d34f62C3c8375a1d3Fe04ec4B2e99F9629E));
         address minter = vm.envOr("MINTER_ADDRESS", msg.sender);
 
         vm.startBroadcast();
