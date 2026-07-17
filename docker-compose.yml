@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16
+    image: postgres:16-alpine
     container_name: ecotoken-postgres
     restart: unless-stopped
     environment:
@@ -12,31 +12,57 @@ services:
     volumes:
       - ecotoken_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ecotoken}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ecotoken} -d ${POSTGRES_DB:-ecotoken}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Servicios a habilitar a medida que avancen los paquetes:
-  #
-  # backend:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: ../infra/docker/backend.Dockerfile
-  #   env_file: ./backend/.env
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   ports:
-  #     - "3000:3000"
-  #
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: ../infra/docker/frontend.Dockerfile
-  #   ports:
-  #     - "5173:80"
-  #
+  backend:
+    image: node:22-alpine
+    working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: ${BACKEND_PORT:-3000}
+      DATABASE_URL: ${BACKEND_DATABASE_URL:-postgresql://ecotoken:ecotoken@postgres:5432/ecotoken?schema=public}
+      JWT_SECRET: ${JWT_SECRET:-cambiar_por_un_secreto_largo_y_aleatorio}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      SEPOLIA_RPC_URL: ${SEPOLIA_RPC_URL:-https://sepolia.infura.io/v3/TU_API_KEY}
+      ECOTOKEN_CONTRACT_ADDRESS: ${ECOTOKEN_CONTRACT_ADDRESS:-0x...}
+      EXPLORER_URL: ${EXPLORER_URL:-https://sepolia.etherscan.io}
+      MINTER_PRIVATE_KEY: ${MINTER_PRIVATE_KEY:-0x...}
+      BURNER_PRIVATE_KEY: ${BURNER_PRIVATE_KEY:-0x...}
+      WALLET_ENCRYPTION_KEY: ${WALLET_ENCRYPTION_KEY:-cambiar_por_clave_de_cifrado}
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    command: >
+      sh -c "npm install && npx prisma generate && npx prisma migrate deploy && npm run start:dev -- --host 0.0.0.0"
+
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    depends_on:
+      backend:
+        condition: service_started
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+      VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:3000}
+      VITE_EXPLORER_URL: ${VITE_EXPLORER_URL:-https://sepolia.etherscan.io}
+      VITE_CONTRACT_ADDRESS: ${VITE_CONTRACT_ADDRESS:-0x...}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    command: >
+      sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+
   # anvil:                       # nodo local Foundry (pruebas on-chain)
   #   image: ghcr.io/foundry-rs/foundry:latest
   #   command: anvil --host 0.0.0.0
