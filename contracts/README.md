@@ -19,9 +19,21 @@ contracts/
 
 ## Diseño del contrato
 
-`ECOToken.sol` — ERC-20 **UUPS upgradeable** con OpenZeppelin: `AccessControl`, `ERC20Capped`, `ERC20Burnable`, `Pausable`.
-Roles: `VALIDATOR_ROLE`, `MINTER_ROLE`, `BURNER_ROLE`, `ADMIN_ROLE`, `EMERGENCY_ROLE`.
+`ECOToken.sol` — ERC-20 con OpenZeppelin: `AccessControl`, `ERC20Capped`, `Pausable`.
+Roles implementados: `ADMIN_ROLE` (pausa + gestión de roles), `MINTER_ROLE` (mint con trazabilidad de material/peso), `EMERGENCY_ROLE` (`emergencyBurn` solo en pausa).
+Pendientes en backlog: `VALIDATOR_ROLE`, `BURNER_ROLE`, migración a UUPS upgradeable.
 Ver reglas de negocio en [`../doc/ESTRUCTURA-PROYECTO.md`](../doc/ESTRUCTURA-PROYECTO.md) §3.
+
+## Deployment en Sepolia (E2-HU08)
+
+| Campo | Valor |
+|-------|-------|
+| **Contrato** | [`0xa649Fe3F78206E4f5Bc2712765A2024AEED52765`](https://sepolia.etherscan.io/address/0xa649Fe3F78206E4f5Bc2712765A2024AEED52765) |
+| **Tx de deploy** | [`0x7053062c...c7d184de`](https://sepolia.etherscan.io/tx/0x7053062c08b936dc38fe539e42eaf828d15825b340eef8b64c70ced5c7d184de) |
+| **Block** | 11219041 |
+| **Cap** | 1.000.000 ECO |
+| **ADMIN + MINTER + EMERGENCY** | Vault `0xE7136d34f62C3c8375a1d3Fe04ec4B2e99F9629E` |
+| **Verificado en Etherscan** | ✅ [código fuente](https://sepolia.etherscan.io/address/0xa649Fe3F78206E4f5Bc2712765A2024AEED52765#code) |
 
 ## Vault Address (ADMIN_ROLE)
 
@@ -71,6 +83,7 @@ forge build           # compilar
 forge test            # tests unitarios + fuzzing
 forge fmt             # formato
 
-# Deploy + verify en Sepolia (Hardhat)
-npx hardhat run scripts/deploy.ts --network sepolia
+# Deploy + verify en Sepolia (requiere keystore: cast wallet import ecotoken-admin --interactive)
+forge script script/DeployECOToken.s.sol --rpc-url $SEPOLIA_RPC_URL --account ecotoken-admin \
+  --broadcast --verify --etherscan-api-key $ETHERSCAN_API_KEY
 ```

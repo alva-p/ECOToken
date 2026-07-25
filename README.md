@@ -24,18 +24,36 @@ ECOToken/
 
 ## Arranque rápido (desarrollo)
 
+Requisitos previos:
+- Docker Desktop + Docker Compose instalados.
+- Puertos 3000, 5173 y 5432 libres en tu máquina.
+
 ```bash
-# 1) Variables de entorno
-cp .env.example .env            # completar valores
+# 1) Variables de entorno opcionales (solo si querés personalizar valores)
+cp .env.example .env
 
-# 2) Levantar infraestructura (PostgreSQL)
+# 2) Levantar la infraestructura completa con un solo comando
 docker compose up -d
-
-# 3) Hidratar cada paquete (ver doc/ESTRUCTURA-PROYECTO.md §9)
-cd contracts && forge install && npm install
-cd ../backend && npm install && npx prisma migrate dev
-cd ../frontend && npm install && npm run dev
 ```
+
+Esto levanta:
+- PostgreSQL en `localhost:5432`
+- Backend NestJS en `http://localhost:3000`
+- Frontend Vite en `http://localhost:5173`
+
+Si necesitás ver logs:
+
+```bash
+docker compose logs -f backend frontend postgres
+```
+
+Para detener todo:
+
+```bash
+docker compose down
+```
+
+> Si querés trabajar solo con la base de datos desde el host, podés seguir usando `docker compose up -d postgres`.
 
 ## Estrategia de ramas
 
