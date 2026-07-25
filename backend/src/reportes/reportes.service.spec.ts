@@ -7,7 +7,10 @@ describe('ReportesService', () => {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      providers: [ReportesService, { provide: ReporteRepository, useValue: {} }],
+      providers: [
+        ReportesService,
+        { provide: ReporteRepository, useValue: {} },
+      ],
     }).compile();
 
     service = moduleRef.get(ReportesService);
