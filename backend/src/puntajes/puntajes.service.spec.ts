@@ -7,7 +7,10 @@ describe('PuntajesService', () => {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      providers: [PuntajesService, { provide: PuntajeRepository, useValue: {} }],
+      providers: [
+        PuntajesService,
+        { provide: PuntajeRepository, useValue: {} },
+      ],
     }).compile();
 
     service = moduleRef.get(PuntajesService);
