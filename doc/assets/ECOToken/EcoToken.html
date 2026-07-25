@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>EcoToken · Villa María</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #EDEDEA; font-family: 'Inter', system-ui, sans-serif; color: #0F1115; }
+  *, *::before, *::after { box-sizing: border-box; }
+  button { font-family: inherit; }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="screens/shared.jsx"></script>
+<script type="text/babel" src="screens/org.jsx"></script>
+<script type="text/babel" src="screens/coop.jsx"></script>
+<script type="text/babel" src="screens/muni.jsx"></script>
+<script type="text/babel" src="screens/certificate.jsx"></script>
+<script type="text/babel" src="screens/report.jsx"></script>
+<script type="text/babel" src="screens/ranking-landing.jsx"></script>
+<script type="text/babel" src="screens/web-shared.jsx"></script>
+<script type="text/babel" src="screens/auth.jsx"></script>
+<script type="text/babel" src="screens/admin.jsx"></script>
+<script type="text/babel" src="screens/empresa.jsx"></script>
+<script type="text/babel" src="screens/verify.jsx"></script>
+<script type="text/babel" src="screens/mobile-web.jsx"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+  const { useState } = React;
+
+  // Wrap each screen in a phone bezel
+  function Phone({ children, label }) {
+    return (
+      <IOSDevice width={390} height={812} title={label}>
+        {children}
+      </IOSDevice>
+    );
+  }
+
+  function App() {
+    return (
+      <DesignCanvas>
+        <DCSection
+          id="org"
+          title="Grupo 1 · Organización"
+          subtitle="Empresa, supermercado u ONG adherida — paleta verde #1D9E75"
+        >
+          <DCArtboard id="org-dash" label="01 · Dashboard" width={420} height={870}>
+            <Phone label="Inicio · Organización X"><OrgDashboard/></Phone>
+          </DCArtboard>
+          <DCArtboard id="org-redeem" label="02 · Canjear tokens" width={420} height={870}>
+            <Phone label="Canjear · Beneficios"><OrgRedeem/></Phone>
+          </DCArtboard>
+          <DCArtboard id="org-certs" label="03 · Mis certificados" width={420} height={870}>
+            <Phone label="Certificados · Marzo"><OrgCerts/></Phone>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="coop"
+          title="Grupo 2 · Cooperativa 7 de Febrero"
+          subtitle="Operador que registra el reciclaje — paleta ámbar #BA7517"
+        >
+          <DCArtboard id="coop-register" label="04 · Registrar pesaje" width={420} height={870}>
+            <Phone label="Registrar entrega"><CoopRegister/></Phone>
+          </DCArtboard>
+          <DCArtboard id="coop-history" label="05 · Historial de retiros" width={420} height={870}>
+            <Phone label="Historial · Abril"><CoopHistory/></Phone>
+          </DCArtboard>
+          <DCArtboard id="coop-close" label="06 · Cierre de mes" width={420} height={870}>
+            <Phone label="Cierre · Abril 2026"><CoopMonthClose/></Phone>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="muni"
+          title="Grupo 3 · Municipalidad de Villa María"
+          subtitle="Administrador de beneficios — paleta violeta #534AB7"
+        >
+          <DCArtboard id="muni-rank" label="07 · Ranking mensual" width={420} height={870}>
+            <Phone label="Ranking público"><MuniRanking/></Phone>
+          </DCArtboard>
+          <DCArtboard id="muni-benefits" label="08 · Gestión de beneficios" width={420} height={870}>
+            <Phone label="Beneficios · Catálogo"><MuniBenefits/></Phone>
+          </DCArtboard>
+          <DCArtboard id="muni-report" label="09 · Reporte ciudad" width={420} height={870}>
+            <Phone label="Reporte 2026"><MuniReport/></Phone>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="docs"
+          title="Documentos institucionales"
+          subtitle="Salidas físicas / digitales del programa — A4 imprimibles"
+        >
+          <DCArtboard id="doc-cert" label="10 · Certificado mensual de impacto · A4 horizontal" width={1123} height={794}>
+            <Certificate/>
+          </DCArtboard>
+          <DCArtboard id="doc-report" label="11 · Reporte mensual de actividad · A4 vertical" width={794} height={1123}>
+            <ActivityReport/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="landing"
+          title="Landing pública · ecotoken.gob.ar"
+          subtitle="Sitio web institucional — Ranking público de organizaciones (desktop 1440)"
+        >
+          <DCArtboard id="landing-ranking" label="12 · Ranking público — landing web" width={1440} height={4950}>
+            <RankingLanding/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="auth"
+          title="Acceso y registro"
+          subtitle="Registro público de empresas + login multi-rol (E3, E4, E9)"
+        >
+          <DCArtboard id="auth-register" label="13 · Registro de empresa · E3-HU01" width={1280} height={900}>
+            <RegisterCompany/>
+          </DCArtboard>
+          <DCArtboard id="auth-pending" label="14 · Registro pendiente de aprobación · E3-HU03" width={1280} height={860}>
+            <RegisterPending/>
+          </DCArtboard>
+          <DCArtboard id="auth-login" label="15 · Login multi-rol · E4-HU02 / E9-HU01" width={1280} height={760}>
+            <LoginScreen/>
+          </DCArtboard>
+          <DCArtboard id="auth-register-m" label="13m · Registro de empresa — mobile" width={420} height={870}>
+            <Phone label="Registro · Empresa"><MRegisterCompany/></Phone>
+          </DCArtboard>
+          <DCArtboard id="auth-pending-m" label="14m · Registro pendiente — mobile" width={420} height={870}>
+            <Phone label="Solicitud enviada"><MRegisterPending/></Phone>
+          </DCArtboard>
+          <DCArtboard id="auth-login-m" label="15m · Login multi-rol — mobile" width={420} height={870}>
+            <Phone label="Iniciar sesión"><MLoginScreen/></Phone>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="admin"
+          title="Panel admin · Municipalidad"
+          subtitle="Gestión del programa y del contrato — paleta violeta #534AB7"
+        >
+          <DCArtboard id="admin-approvals" label="16 · Aprobación de empresas · E3-HU04" width={1440} height={800}>
+            <AdminApprovals/>
+          </DCArtboard>
+          <DCArtboard id="admin-approvals-modal" label="17 · Aprobación — modal de confirmación · E3-HU04" width={1440} height={800}>
+            <AdminApprovals modal/>
+          </DCArtboard>
+          <DCArtboard id="admin-coop" label="18 · Alta de cooperativa + VALIDATOR_ROLE · E4-HU01" width={1440} height={800}>
+            <AdminCoopCreate/>
+          </DCArtboard>
+          <DCArtboard id="admin-conversion" label="19 · Tabla de conversión · E5-HU02" width={1440} height={800}>
+            <AdminConversion/>
+          </DCArtboard>
+          <DCArtboard id="admin-roles" label="20 · Roles del contrato · E10-HU01" width={1440} height={800}>
+            <AdminRoles/>
+          </DCArtboard>
+          <DCArtboard id="admin-pause" label="21 · Pausar contrato — modal con motivo · E10-HU02" width={1440} height={800}>
+            <AdminPause/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="empresa"
+          title="Panel empresa"
+          subtitle="Vista interna de la empresa adherida — paleta verde #1D9E75"
+        >
+          <DCArtboard id="emp-history" label="22 · Historial de aportes · E6-HU02" width={1440} height={800}>
+            <EmpresaHistory/>
+          </DCArtboard>
+          <DCArtboard id="emp-receipt" label="23 · Detalle de comprobante · E5-HU03" width={1440} height={800}>
+            <EmpresaReceipt/>
+          </DCArtboard>
+          <DCArtboard id="emp-ranking" label="24 · Mi posición en el ranking · E6-HU03" width={1440} height={800}>
+            <EmpresaRanking/>
+          </DCArtboard>
+          <DCArtboard id="emp-history-m" label="22m · Historial de aportes — mobile" width={420} height={870}>
+            <Phone label="Aportes · Abril"><MEmpresaHistory/></Phone>
+          </DCArtboard>
+          <DCArtboard id="emp-receipt-m" label="23m · Detalle de comprobante — mobile" width={420} height={870}>
+            <Phone label="Comprobante REC-0412"><MEmpresaReceipt/></Phone>
+          </DCArtboard>
+          <DCArtboard id="emp-ranking-m" label="24m · Mi posición — mobile" width={420} height={870}>
+            <Phone label="Ranking · Mi posición"><MEmpresaRanking/></Phone>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="verify"
+          title="Verificación pública de certificados"
+          subtitle="Destino del QR — /verify/:hash (E8-HU03)"
+        >
+          <DCArtboard id="verify-valid" label="25 · Certificado válido" width={1280} height={880}>
+            <VerifyPage status="valid"/>
+          </DCArtboard>
+          <DCArtboard id="verify-invalid" label="26 · Certificado no encontrado" width={1280} height={880}>
+            <VerifyPage status="invalid"/>
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+    );
+  }
+
+  // Wait for all babel scripts to evaluate before mounting
+  function mount() {
+    if (!window.DesignCanvas || !window.IOSDevice || !window.OrgDashboard || !window.CoopRegister || !window.MuniRanking || !window.Certificate || !window.ActivityReport || !window.RankingLanding || !window.WShell || !window.RegisterCompany || !window.AdminApprovals || !window.EmpresaHistory || !window.VerifyPage || !window.MRegisterCompany || !window.MEmpresaHistory) {
+      return setTimeout(mount, 50);
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  }
+  mount();
+</script>
+</body>
+</html>
