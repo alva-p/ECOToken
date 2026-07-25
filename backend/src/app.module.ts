@@ -2,11 +2,22 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthController } from './health/health.controller';
+import { EmpresasModule } from './empresas/empresas.module';
+import { UsuariosModule } from './usuarios/usuarios.module';
+import { MunicipalidadesModule } from './municipalidades/municipalidades.module';
+import { BilleterasModule } from './billeteras/billeteras.module';
+import { MaterialesModule } from './materiales/materiales.module';
+import { EstadosModule } from './estados/estados.module';
+import { PuntajesModule } from './puntajes/puntajes.module';
+import { IngresosModule } from './ingresos/ingresos.module';
+import { TokensModule } from './tokens/tokens.module';
+import { CertificadosModule } from './certificados/certificados.module';
+import { RankingModule } from './ranking/ranking.module';
+import { ReportesModule } from './reportes/reportes.module';
 
 /**
- * Módulo raíz. A medida que avancen los sprints se importan los módulos de dominio
- * (empresas, cooperativas, ingresos, tokens, certificados, ranking, reportes),
- * auth y blockchain. Ver doc/ESTRUCTURA-PROYECTO.md §4.
+ * Módulo raíz. Registra los módulos de dominio derivados del diagrama de clases.
+ * auth y blockchain se integrarán en sprints siguientes. Ver doc/ESTRUCTURA-PROYECTO.md §4.
  */
 @Module({
   imports: [
@@ -14,8 +25,18 @@ import { HealthController } from './health/health.controller';
     PrismaModule,
     // AuthModule,
     // BlockchainModule,
-    // EmpresasModule, CooperativasModule, IngresosModule, TokensModule,
-    // CertificadosModule, RankingModule, ReportesModule,
+    EmpresasModule,
+    UsuariosModule,
+    MunicipalidadesModule,
+    BilleterasModule,
+    MaterialesModule,
+    EstadosModule,
+    PuntajesModule,
+    IngresosModule,
+    TokensModule,
+    CertificadosModule,
+    RankingModule,
+    ReportesModule,
   ],
   controllers: [HealthController],
 })
