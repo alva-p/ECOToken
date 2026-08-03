@@ -34,7 +34,8 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 - La página es accesible en la raíz del dominio, sin login.
 - Comunica la propuesta de valor y cómo funciona el sistema (secciones de contenido, sin datos dinámicos).
 - Tiene un acceso a "Iniciar sesión" visible en el encabezado y un llamado a la acción equivalente al final de la página, ambos hacia `/login`.
-- Enlaza a la sección pública de ranking (E7-HU03).
+- Incluye una vista previa del ranking (resumen + podio top 3) con datos de ejemplo, reutilizando el diseño del mockup de referencia (`ranking-landing.jsx`), construida como componente reutilizable para que E7-HU03 la conecte a datos reales sin reconstruirla.
+- Enlaza a la sección pública de ranking completo (E7-HU03).
 - Es usable desde dispositivos móviles y de escritorio.
 
 **Complejidad:** Baja. Es una página de contenido estático, sin lógica de negocio ni datos dinámicos.
@@ -258,11 +259,12 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 
 **Criterios de aceptación:**
 - La página es pública, sin autenticación.
-- Muestra el ranking en una tabla con selector de mes.
+- Conecta el componente de ranking ya construido en E11-HU04 a los datos reales del backend, reemplazando los datos de ejemplo.
+- Muestra el ranking completo en una tabla con selector de mes e histórico.
 - Es usable desde dispositivos móviles (se comparte por redes y QR).
 
 **Complejidad:** Baja. Solo visualización de datos ya calculados, sin validaciones ni sesión.
-**Esfuerzo:** Bajo. Una página con una tabla y un selector.
+**Esfuerzo:** Bajo. La UI ya existe (E11-HU04); el trabajo es conectar la fuente de datos real y sumar el selector de mes/histórico.
 **Incertidumbre:** Baja. Los datos provienen de snapshots ya cerrados.
 **SP: 3**
 
