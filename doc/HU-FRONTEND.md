@@ -38,9 +38,9 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 - Es usable desde dispositivos móviles y de escritorio.
 
 **Complejidad:** Baja. Es una página de contenido estático, sin lógica de negocio ni datos dinámicos.
-**Esfuerzo:** Medio. No hay prototipo previo: hay que definir el contenido (copy, secciones) y maquetarlo.
+**Esfuerzo:** Bajo. Una página con secciones de contenido y dos enlaces.
 **Incertidumbre:** Media. Falta definir el diseño visual y el copy final con el equipo.
-**SP: 5**
+**SP: 3**
 
 ---
 
