@@ -91,19 +91,29 @@ function App() {
         </div>
       </header>
 
-      <section className="mx-auto max-w-5xl px-6 py-16 text-center sm:py-24">
-        <div className="inline-flex items-center gap-2 rounded-full bg-eco-org-soft px-3 py-1 text-xs font-semibold text-eco-org">
-          Villa María, Córdoba
+      <section className="relative overflow-hidden bg-gradient-to-b from-eco-org-soft to-eco-bg">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-32 -top-32 h-[420px] w-[420px] rounded-full bg-eco-org/25 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-20 left-[-60px] h-64 w-64 rounded-full bg-eco-org/15 blur-3xl"
+        />
+        <div className="relative mx-auto max-w-5xl px-6 py-16 text-center sm:py-24">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-eco-org">
+            Villa María, Córdoba
+          </div>
+          <h1 className="mx-auto mt-5 max-w-2xl text-4xl font-bold tracking-tight text-eco-ink sm:text-5xl">
+            Reconocimiento público para las empresas que reciclan
+          </h1>
+          <p className="mx-auto mt-5 max-w-xl text-lg text-eco-ink2">
+            EcoToken registra el material que entregan las empresas adheridas, lo
+            valida junto a las cooperativas de reciclaje y reconoce el esfuerzo
+            ambiental con un ranking mensual y un certificado digital verificable
+            — respaldado por la Municipalidad.
+          </p>
         </div>
-        <h1 className="mx-auto mt-5 max-w-2xl text-4xl font-bold tracking-tight text-eco-ink sm:text-5xl">
-          Reconocimiento público para las empresas que reciclan
-        </h1>
-        <p className="mx-auto mt-5 max-w-xl text-lg text-eco-ink2">
-          EcoToken registra el material que entregan las empresas adheridas, lo
-          valida junto a las cooperativas de reciclaje y reconoce el esfuerzo
-          ambiental con un ranking mensual y un certificado digital verificable
-          — respaldado por la Municipalidad.
-        </p>
       </section>
 
       <section
@@ -150,33 +160,33 @@ function App() {
           <div className="text-xs font-semibold uppercase tracking-wide text-eco-ink2">
             Con el respaldo de
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
-            <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-wrap items-start justify-center gap-x-16 gap-y-8">
+            <div className="flex flex-col items-center gap-3">
               <img
                 src="/logos/logo-villa-maria.png"
                 alt="Municipalidad Villa María"
-                className="h-10 w-auto"
+                className="h-16 w-auto"
               />
               <span className="text-sm font-semibold text-eco-ink2">
                 Municipalidad Villa María
               </span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col items-center gap-3">
               <img
                 src="/logos/logo-cooperativa.jpg"
                 alt="Cooperativa de Trabajo 7 de Febrero"
-                className="h-14 w-14 rounded-full"
+                className="h-20 w-20 rounded-full"
               />
-              <span className="text-sm font-semibold text-eco-ink2">
+              <span className="text-center text-sm font-semibold text-eco-ink2">
                 Cooperativa de Trabajo
                 <br />7 de Febrero
               </span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col items-center gap-3">
               <img
                 src="/logos/logo-greenpack.png"
                 alt="GreenPack"
-                className="h-14 w-14 rounded-full"
+                className="h-20 w-20 rounded-full"
               />
               <span className="text-sm font-semibold text-eco-ink2">GreenPack</span>
             </div>
