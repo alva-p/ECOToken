@@ -70,9 +70,15 @@ function App() {
     <div className="bg-eco-bg">
       <header className="border-b border-eco-border bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <span className="text-lg font-bold tracking-tight text-eco-ink">
-            EcoToken
-          </span>
+          <div className="flex items-center gap-3">
+            <img src="/logos/logo-ecotoken.png" alt="EcoToken" className="h-9 w-auto" />
+            <div className="hidden h-6 w-px bg-eco-border sm:block" />
+            <img
+              src="/logos/logo-villa-maria.png"
+              alt="Municipalidad de Villa María"
+              className="hidden h-7 w-auto sm:block"
+            />
+          </div>
           <nav className="flex items-center gap-6">
             <a
               href="#como-funciona"
@@ -144,6 +150,32 @@ function App() {
             summary={EXAMPLE_SUMMARY}
             podium={EXAMPLE_PODIUM}
           />
+        </div>
+      </section>
+
+      <section className="border-t border-eco-border bg-white px-6 py-12">
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-6">
+          <div className="text-xs font-semibold uppercase tracking-wide text-eco-ink2">
+            Con el respaldo de
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
+            <img
+              src="/logos/logo-villa-maria.png"
+              alt="Municipalidad de Villa María"
+              className="h-10 w-auto"
+            />
+            <div className="flex items-center gap-3">
+              <img
+                src="/logos/logo-cooperativa.jpg"
+                alt="Cooperativa de Trabajo 7 de Febrero"
+                className="h-14 w-14 rounded-full"
+              />
+              <span className="text-sm font-semibold text-eco-ink2">
+                Cooperativa de Trabajo
+                <br />7 de Febrero
+              </span>
+            </div>
+          </div>
         </div>
       </section>
 
