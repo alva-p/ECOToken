@@ -175,6 +175,14 @@ function App() {
                 <br />7 de Febrero
               </span>
             </div>
+            <div className="flex items-center gap-3">
+              <img
+                src="/logos/logo-greenpack.png"
+                alt="GreenPack"
+                className="h-14 w-14 rounded-full"
+              />
+              <span className="text-sm font-semibold text-eco-ink2">GreenPack</span>
+            </div>
           </div>
         </div>
       </section>
