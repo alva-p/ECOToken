@@ -156,8 +156,8 @@ function App() {
       </section>
 
       <section className="border-t border-eco-border bg-white px-6 py-12">
-        <div className="mx-auto flex max-w-5xl flex-col items-center gap-6">
-          <div className="text-xs font-semibold uppercase tracking-wide text-eco-ink2">
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-6 text-center">
+          <div className="w-full text-xs font-semibold uppercase tracking-wide text-eco-ink2">
             Con el respaldo de
           </div>
           <div className="flex flex-wrap items-start justify-center gap-x-16 gap-y-8">
