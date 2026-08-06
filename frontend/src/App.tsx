@@ -209,6 +209,23 @@ function App() {
         </div>
       </section>
 
+      <section className="border-t border-eco-border bg-eco-org-soft px-6 py-14 text-center">
+        <h2 className="text-xl font-bold tracking-tight text-eco-ink sm:text-2xl">
+          ¿Tu empresa recicla pero todavía no es parte de EcoToken?
+        </h2>
+        <p className="mx-auto mt-2 max-w-md text-sm text-eco-ink2">
+          Comunicate con nosotros y sumate al programa para empezar a acumular
+          reconocimiento y acceder a los beneficios.
+        </p>
+        <div className="mt-5">
+          <Link to="/login">
+            <Button variant="outline" color="org">
+              Quiero sumarme
+            </Button>
+          </Link>
+        </div>
+      </section>
+
       <footer className="bg-white px-6 py-6 text-center text-xs text-eco-ink2">
         © 2026 EcoToken · Municipalidad de Villa María
       </footer>
