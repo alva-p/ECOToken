@@ -70,15 +70,7 @@ function App() {
     <div className="bg-eco-bg">
       <header className="border-b border-eco-border bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <img src="/logos/logo-ecotoken.png" alt="EcoToken" className="h-9 w-auto" />
-            <div className="hidden h-6 w-px bg-eco-border sm:block" />
-            <img
-              src="/logos/logo-villa-maria.png"
-              alt="Municipalidad de Villa María"
-              className="hidden h-7 w-auto sm:block"
-            />
-          </div>
+          <img src="/logos/logo-ecotoken.png" alt="EcoToken" className="h-14 w-auto" />
           <nav className="flex items-center gap-6">
             <a
               href="#como-funciona"
@@ -159,11 +151,16 @@ function App() {
             Con el respaldo de
           </div>
           <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
-            <img
-              src="/logos/logo-villa-maria.png"
-              alt="Municipalidad de Villa María"
-              className="h-10 w-auto"
-            />
+            <div className="flex flex-col items-center gap-2">
+              <img
+                src="/logos/logo-villa-maria.png"
+                alt="Municipalidad Villa María"
+                className="h-10 w-auto"
+              />
+              <span className="text-sm font-semibold text-eco-ink2">
+                Municipalidad Villa María
+              </span>
+            </div>
             <div className="flex items-center gap-3">
               <img
                 src="/logos/logo-cooperativa.jpg"
