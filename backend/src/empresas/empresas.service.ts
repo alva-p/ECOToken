@@ -1,8 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { CategoriaEmpresa } from '@prisma/client';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { CategoriaEmpresa, EstadoEmpresa } from '@prisma/client';
 import { EmpresaRepository } from './repository/empresa.repository';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
+import { RegistrarEmpresaDto } from './dto/registrar-empresa.dto';
 
 /** Lógica de negocio de Empresa. */
 @Injectable()
@@ -33,7 +40,75 @@ export class EmpresasService {
     return this.repository.remove(id);
   }
 
-  // ─── Métodos de negocio del diagrama de clases (stubs — completar en próximos sprints) ───
+  // ─── E3-HU01: registro público de empresa ───
+
+  /**
+   * Registra una empresa (alta pública). Valida unicidad de CUIT y correo, y la
+   * deja en estado PENDIENTE. La validación de formato/dígito del CUIT la hace
+   * el DTO (@IsCuit); acá se controla la unicidad y el estado inicial.
+   */
+  async registrar(dto: RegistrarEmpresaDto) {
+    const porCuit = await this.repository.findByCuit(dto.cuit);
+    if (porCuit) {
+      throw new ConflictException(
+        'Ya existe una empresa registrada con ese CUIT',
+      );
+    }
+    const porEmail = await this.repository.findByEmailContacto(
+      dto.emailContacto,
+    );
+    if (porEmail) {
+      throw new ConflictException(
+        'Ya existe una empresa registrada con ese correo electrónico',
+      );
+    }
+    return this.repository.registrar(dto);
+  }
+
+  // ─── E3-HU04: aprobación / rechazo por el administrador ───
+
+  /** Empresas pendientes de aprobación (listado del panel admin). */
+  findPendientes() {
+    return this.repository.findByEstado(EstadoEmpresa.PENDIENTE);
+  }
+
+  /** Aprueba una empresa PENDIENTE → APROBADA. */
+  async aprobar(id: string) {
+    const empresa = await this.findOne(id);
+    if (empresa.estado !== EstadoEmpresa.PENDIENTE) {
+      throw new BadRequestException(
+        `Solo se puede aprobar una empresa PENDIENTE (estado actual: ${empresa.estado})`,
+      );
+    }
+    return this.repository.updateEstado(id, EstadoEmpresa.APROBADA);
+  }
+
+  /** Rechaza una empresa PENDIENTE → RECHAZADA. */
+  async rechazar(id: string) {
+    const empresa = await this.findOne(id);
+    if (empresa.estado !== EstadoEmpresa.PENDIENTE) {
+      throw new BadRequestException(
+        `Solo se puede rechazar una empresa PENDIENTE (estado actual: ${empresa.estado})`,
+      );
+    }
+    return this.repository.updateEstado(id, EstadoEmpresa.RECHAZADA);
+  }
+
+  /**
+   * Gate "la empresa solo opera si fue aprobada" (E3-HU04). Otros módulos
+   * (ingresos, tokens, etc.) deben llamarlo antes de operar sobre la empresa.
+   */
+  async verificarAprobada(id: string) {
+    const empresa = await this.findOne(id);
+    if (empresa.estado !== EstadoEmpresa.APROBADA) {
+      throw new ForbiddenException(
+        `La empresa ${id} no está habilitada para operar (estado: ${empresa.estado})`,
+      );
+    }
+    return empresa;
+  }
+
+  // ─── Métodos de negocio del diagrama (stubs — completar en próximos sprints) ───
 
   /** True si la empresa es una cooperativa validadora (categoria = COOPERATIVA). */
   async esCooperativa(id: string): Promise<boolean> {
@@ -41,47 +116,35 @@ export class EmpresasService {
     return empresa.categoria === CategoriaEmpresa.COOPERATIVA;
   }
 
-  /** Alta de una nueva empresa (perfil). */
-  registrar(dto: CreateEmpresaDto) {
-    // TODO: reglas de alta (validación de CUIT, creación de billetera custodial, etc.).
-    return this.create(dto);
-  }
-
-  /** Actualiza el perfil de la empresa. */
   async actualizarPerfil(id: string, dto: UpdateEmpresaDto) {
     // TODO: reglas de actualización de perfil.
     return this.update(id, dto);
   }
 
-  /** Total de tokens acumulados por la empresa. */
   async obtenerTokens(id: string): Promise<number> {
     await this.findOne(id);
     // TODO: sumar tokensAcumulados de los ingresos o consultar saldo on-chain.
     return 0;
   }
 
-  /** Historial de aportes (ingresos de material) de la empresa. */
   async obtenerHistorialAportes(id: string) {
     await this.findOne(id);
     // TODO: devolver los IngresoMaterial de la empresa.
     return [];
   }
 
-  /** Posición de la empresa en el ranking de un período. */
   async obtenerPosicionRanking(id: string, mes: number, anio: number) {
     await this.findOne(id);
     // TODO: calcular la posición en el ranking del período.
     return { empresaId: id, mes, anio, posicion: null };
   }
 
-  /** Certificados digitales emitidos a la empresa. */
   async obtenerCertificados(id: string) {
     await this.findOne(id);
     // TODO: devolver los CertificadoDigital de la empresa.
     return [];
   }
 
-  /** Exporta el historial de aportes de la empresa en CSV. */
   async exportarHistorial(id: string): Promise<string> {
     await this.findOne(id);
     // TODO: generar el CSV del historial de aportes.
