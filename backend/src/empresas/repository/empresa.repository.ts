@@ -43,6 +43,25 @@ export class EmpresaRepository {
   }
 
   /**
+   * Buscador con autocompletado para la cooperativa (E4-HU03): solo empresas
+   * adherentes APROBADAS (no otras cooperativas), por razón social o CUIT.
+   */
+  buscar(query: string) {
+    return this.prisma.empresa.findMany({
+      where: {
+        estado: EstadoEmpresa.APROBADA,
+        categoria: CategoriaEmpresa.EMPRESA,
+        OR: [
+          { razonSocial: { contains: query, mode: 'insensitive' } },
+          { cuit: { contains: query } },
+        ],
+      },
+      orderBy: { razonSocial: 'asc' },
+      take: 10,
+    });
+  }
+
+  /**
    * Alta administrativa de cooperativa (E4-HU01): a diferencia de `registrar`
    * (alta pública, arranca PENDIENTE), esta queda APROBADA y activa de una.
    */

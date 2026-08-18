@@ -18,6 +18,7 @@ import { RegistrarEmpresaDto } from './dto/registrar-empresa.dto';
 import { AltaCooperativaDto } from './dto/alta-cooperativa.dto';
 
 const BCRYPT_ROUNDS = 10;
+const BUSQUEDA_LARGO_MINIMO = 2;
 
 /** Lógica de negocio de Empresa. */
 @Injectable()
@@ -193,6 +194,21 @@ export class EmpresasService {
       );
     }
     return empresa;
+  }
+
+  // ─── E4-HU03: buscador de empresas (cooperativa, con autocompletado) ───
+
+  /**
+   * Busca empresas adherentes APROBADAS por razón social o CUIT, para que la
+   * cooperativa le asocie un ingreso (E5-HU01). Con menos de
+   * BUSQUEDA_LARGO_MINIMO caracteres devuelve `[]` sin pegarle a la DB.
+   */
+  async buscar(query: string) {
+    const q = query?.trim() ?? '';
+    if (q.length < BUSQUEDA_LARGO_MINIMO) {
+      return [];
+    }
+    return this.repository.buscar(q);
   }
 
   // ─── Métodos de negocio del diagrama (stubs — completar en próximos sprints) ───
