@@ -7,15 +7,18 @@ import {
   IsString,
 } from 'class-validator';
 import { CategoriaEmpresa } from '@prisma/client';
+import { IsCuit } from '../../common/decorators/is-cuit.decorator';
 
-/** Datos para dar de alta una Empresa (o cooperativa, según categoria). */
+/**
+ * Alta genérica de Empresa (CRUD interno/admin). El `estado` NO se setea acá:
+ * lo gestiona el flujo de aprobación (E3-HU04) y arranca en PENDIENTE por default.
+ */
 export class CreateEmpresaDto {
   @IsString()
   @IsNotEmpty()
   razonSocial: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsCuit()
   cuit: string;
 
   @IsOptional()
@@ -29,10 +32,6 @@ export class CreateEmpresaDto {
   @IsOptional()
   @IsEmail()
   emailContacto?: string;
-
-  @IsOptional()
-  @IsString()
-  estado?: string;
 
   @IsOptional()
   @IsEnum(CategoriaEmpresa)
