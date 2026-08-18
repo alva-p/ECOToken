@@ -35,6 +35,7 @@ services:
       EXPLORER_URL: ${EXPLORER_URL:-https://sepolia.etherscan.io}
       MINTER_PRIVATE_KEY: ${MINTER_PRIVATE_KEY:-0x...}
       BURNER_PRIVATE_KEY: ${BURNER_PRIVATE_KEY:-0x...}
+      ADMIN_PRIVATE_KEY: ${ADMIN_PRIVATE_KEY:-0x...}
       WALLET_ENCRYPTION_KEY: ${WALLET_ENCRYPTION_KEY:-cambiar_por_clave_de_cifrado}
     volumes:
       - ./backend:/app

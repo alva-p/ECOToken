@@ -5,10 +5,14 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { CategoriaEmpresa, Empresa, EstadoEmpresa } from '@prisma/client';
+import { CategoriaEmpresa, Empresa, EstadoEmpresa, TipoRol } from '@prisma/client';
 import { EmpresasService } from './empresas.service';
 import { EmpresaRepository } from './repository/empresa.repository';
+import { BilleterasService } from '../billeteras/billeteras.service';
+import { BlockchainService } from '../blockchain/blockchain.service';
+import { UsuariosService } from '../usuarios/usuarios.service';
 import { RegistrarEmpresaDto } from './dto/registrar-empresa.dto';
+import { AltaCooperativaDto } from './dto/alta-cooperativa.dto';
 
 const empresaBase: Empresa = {
   id: 'e1',
@@ -36,7 +40,12 @@ describe('EmpresasService', () => {
     findByEstado: jest.Mock;
     findById: jest.Mock;
     updateEstado: jest.Mock;
+    altaCooperativa: jest.Mock;
+    remove: jest.Mock;
   };
+  let billeterasService: { generarParaEmpresa: jest.Mock; remove: jest.Mock };
+  let blockchainService: { grantValidatorRole: jest.Mock };
+  let usuariosService: { create: jest.Mock; remove: jest.Mock };
 
   beforeEach(async () => {
     repository = {
@@ -46,12 +55,26 @@ describe('EmpresasService', () => {
       findByEstado: jest.fn(),
       findById: jest.fn(),
       updateEstado: jest.fn(),
+      altaCooperativa: jest.fn(),
+      remove: jest.fn().mockResolvedValue(undefined),
+    };
+    billeterasService = {
+      generarParaEmpresa: jest.fn(),
+      remove: jest.fn().mockResolvedValue(undefined),
+    };
+    blockchainService = { grantValidatorRole: jest.fn() };
+    usuariosService = {
+      create: jest.fn(),
+      remove: jest.fn().mockResolvedValue(undefined),
     };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
         EmpresasService,
         { provide: EmpresaRepository, useValue: repository },
+        { provide: BilleterasService, useValue: billeterasService },
+        { provide: BlockchainService, useValue: blockchainService },
+        { provide: UsuariosService, useValue: usuariosService },
       ],
     }).compile();
 
@@ -97,6 +120,96 @@ describe('EmpresasService', () => {
         ConflictException,
       );
       expect(repository.registrar).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('altaCooperativa (E4-HU01)', () => {
+    const dto: AltaCooperativaDto = {
+      razonSocial: 'Cooperativa Verde',
+      cuit: '20123456786',
+      emailContacto: 'contacto@coopverde.com',
+    };
+    const cooperativa: Empresa = {
+      ...empresaBase,
+      id: 'coop-1',
+      razonSocial: dto.razonSocial,
+      emailContacto: dto.emailContacto,
+      categoria: CategoriaEmpresa.COOPERATIVA,
+      estado: EstadoEmpresa.APROBADA,
+    };
+    const billetera = { id: 'billetera-1', direccionEVM: '0xCoopWallet' };
+
+    beforeEach(() => {
+      repository.findByCuit.mockResolvedValue(null);
+      repository.findByEmailContacto.mockResolvedValue(null);
+      repository.altaCooperativa.mockResolvedValue(cooperativa);
+      billeterasService.generarParaEmpresa.mockResolvedValue(billetera);
+      blockchainService.grantValidatorRole.mockResolvedValue('0xTxHash');
+      usuariosService.create.mockImplementation((data) =>
+        Promise.resolve({ id: 'usuario-1', ...data }),
+      );
+    });
+
+    it('crea la empresa, la billetera, otorga el rol y crea el usuario', async () => {
+      const res = await service.altaCooperativa(dto);
+
+      expect(repository.altaCooperativa).toHaveBeenCalledWith(dto);
+      expect(billeterasService.generarParaEmpresa).toHaveBeenCalledWith(
+        cooperativa.id,
+        'VALIDATOR',
+      );
+      expect(blockchainService.grantValidatorRole).toHaveBeenCalledWith(
+        billetera.direccionEVM,
+      );
+      expect(usuariosService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: dto.emailContacto,
+          tipoRol: TipoRol.COOPERATIVA,
+          empresaId: cooperativa.id,
+        }),
+      );
+
+      expect(res.empresa).toBe(cooperativa);
+      expect(res.direccionEVM).toBe(billetera.direccionEVM);
+      expect(res.txHash).toBe('0xTxHash');
+      expect(res.credencialesTemporales.email).toBe(dto.emailContacto);
+      expect(res.credencialesTemporales.passwordTemporal).toEqual(
+        expect.any(String),
+      );
+    });
+
+    it('lanza ConflictException si el CUIT ya existe y no crea nada más', async () => {
+      repository.findByCuit.mockResolvedValue(cooperativa);
+
+      await expect(service.altaCooperativa(dto)).rejects.toBeInstanceOf(
+        ConflictException,
+      );
+      expect(repository.altaCooperativa).not.toHaveBeenCalled();
+    });
+
+    it('revierte empresa y billetera si falla el grant on-chain', async () => {
+      blockchainService.grantValidatorRole.mockRejectedValue(
+        new Error('RPC caído'),
+      );
+
+      await expect(service.altaCooperativa(dto)).rejects.toThrow(
+        'RPC caído',
+      );
+
+      expect(billeterasService.remove).toHaveBeenCalledWith(billetera.id);
+      expect(repository.remove).toHaveBeenCalledWith(cooperativa.id);
+      expect(usuariosService.create).not.toHaveBeenCalled();
+    });
+
+    it('revierte empresa, billetera y usuario si falla la creación del usuario', async () => {
+      usuariosService.create.mockRejectedValue(new Error('email duplicado'));
+
+      await expect(service.altaCooperativa(dto)).rejects.toThrow(
+        'email duplicado',
+      );
+
+      expect(billeterasService.remove).toHaveBeenCalledWith(billetera.id);
+      expect(repository.remove).toHaveBeenCalledWith(cooperativa.id);
     });
   });
 
