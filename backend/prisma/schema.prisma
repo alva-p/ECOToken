@@ -74,6 +74,7 @@ model Empresa {
   nombre             String?
   datosContacto      String?
   activa             Boolean          @default(true)
+  walletAddress      String           @unique
 
   usuarios           Usuario[]
   ingresos           IngresoMaterial[]
@@ -93,7 +94,7 @@ model BilleteraCustodial {
   clavePrivadaCifrada String
   tipoRolOnChain      String
 
-  empresa   Empresa @relation(fields: [empresaId], references: [id])
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   empresaId String  @unique
 
   createdAt DateTime @default(now())

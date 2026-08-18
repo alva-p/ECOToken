@@ -32,6 +32,7 @@ export class Empresa {
   nombre: string | null;
   datosContacto: string | null;
   activa: boolean;
+  walletAddress: string;
 
   // Relaciones
   usuarios?: Usuario[];

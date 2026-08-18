@@ -36,3 +36,15 @@ npm run start:dev                    # http://localhost:3000
 nest g resource <nombre>             # controller/service/module/dto
 # luego reorganizar repository/ y dto/ como en la plantilla src/ejemplo/
 ```
+
+## Respaldo de billeteras custodiales
+
+La alta de empresa genera una billetera EVM custodial y guarda la clave privada cifrada con AES-256-GCM usando `WALLET_ENCRYPTION_KEY`.
+
+Procedimiento mínimo de respaldo:
+
+1. Respaldar la base de datos PostgreSQL con una copia consistente del entorno de desarrollo o del ambiente de despliegue.
+2. Resguardar `WALLET_ENCRYPTION_KEY` por separado del backup de la base; sin esa clave no es posible recuperar las claves privadas cifradas.
+3. Para restaurar una empresa, reconstruir la base y descifrar la clave privada desde el backend con la misma clave maestra.
+
+Nunca registrar claves privadas en texto plano, logs, tickets ni PRs.

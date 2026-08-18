@@ -3,14 +3,18 @@ import { CategoriaEmpresa } from '@prisma/client';
 import { EmpresaRepository } from './repository/empresa.repository';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
+import { BilleterasService } from '../billeteras/billeteras.service';
 
 /** Lógica de negocio de Empresa. */
 @Injectable()
 export class EmpresasService {
-  constructor(private readonly repository: EmpresaRepository) {}
+  constructor(
+    private readonly repository: EmpresaRepository,
+    private readonly billeterasService: BilleterasService,
+  ) {}
 
   create(dto: CreateEmpresaDto) {
-    return this.repository.create(dto);
+    return this.registrar(dto);
   }
 
   findAll() {
@@ -43,8 +47,15 @@ export class EmpresasService {
 
   /** Alta de una nueva empresa (perfil). */
   registrar(dto: CreateEmpresaDto) {
-    // TODO: reglas de alta (validación de CUIT, creación de billetera custodial, etc.).
-    return this.create(dto);
+    const tipoRolOnChain =
+      dto.categoria === CategoriaEmpresa.COOPERATIVA
+        ? 'COOPERATIVA'
+        : 'EMPRESA';
+    const billetera = this.billeterasService.generarBilleteraCustodial(
+      tipoRolOnChain,
+    );
+
+    return this.repository.create(dto, billetera);
   }
 
   /** Actualiza el perfil de la empresa. */
