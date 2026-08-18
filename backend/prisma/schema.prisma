@@ -83,6 +83,10 @@ model Empresa {
   datosContacto      String?
   activa             Boolean          @default(true)
 
+  // E3-HU03: constancia de aceptación de términos y condiciones.
+  terminosVersion     String?
+  terminosAceptadosEn DateTime?
+
   usuarios           Usuario[]
   ingresos           IngresoMaterial[]
   billeteraCustodial BilleteraCustodial?

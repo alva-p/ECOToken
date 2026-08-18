@@ -33,6 +33,8 @@ export class Empresa {
   nombre: string | null;
   datosContacto: string | null;
   activa: boolean;
+  terminosVersion: string | null;
+  terminosAceptadosEn: Date | null;
 
   // Relaciones
   usuarios?: Usuario[];
