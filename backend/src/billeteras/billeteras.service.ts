@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Wallet } from 'ethers';
 import {
@@ -87,7 +91,9 @@ export class BilleterasService {
     const [ivHex, authTagHex, ciphertextHex] = clavePrivadaCifrada.split(':');
 
     if (!ivHex || !authTagHex || !ciphertextHex) {
-      throw new BadRequestException('Formato inválido de clave privada cifrada');
+      throw new BadRequestException(
+        'Formato inválido de clave privada cifrada',
+      );
     }
 
     const decipher = createDecipheriv(
@@ -106,7 +112,9 @@ export class BilleterasService {
   }
 
   private obtenerClaveMaestra(): Buffer {
-    const clave = this.configService.get<string>('WALLET_ENCRYPTION_KEY')?.trim();
+    const clave = this.configService
+      .get<string>('WALLET_ENCRYPTION_KEY')
+      ?.trim();
 
     if (!clave || clave === 'cambiar_por_clave_de_cifrado') {
       throw new BadRequestException(

@@ -14,7 +14,9 @@ describe('BilleterasService', () => {
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn().mockReturnValue('clave_maestra_para_pruebas_1234567890'),
+            get: jest
+              .fn()
+              .mockReturnValue('clave_maestra_para_pruebas_1234567890'),
           },
         },
       ],
@@ -28,7 +30,8 @@ describe('BilleterasService', () => {
   });
 
   it('cifra y descifra una clave privada', () => {
-    const clavePrivada = '0x1111111111111111111111111111111111111111111111111111111111111111';
+    const clavePrivada =
+      '0x1111111111111111111111111111111111111111111111111111111111111111';
 
     const cifrada = service.cifrarClavePrivada(clavePrivada);
     const descifrada = service.descifrarClavePrivada(cifrada);

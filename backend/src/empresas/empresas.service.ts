@@ -136,9 +136,8 @@ export class EmpresasService {
       dto.categoria === CategoriaEmpresa.COOPERATIVA
         ? 'COOPERATIVA'
         : 'EMPRESA';
-    const billetera = this.billeterasService.generarBilleteraCustodial(
-      tipoRolOnChain,
-    );
+    const billetera =
+      this.billeterasService.generarBilleteraCustodial(tipoRolOnChain);
 
     return this.repository.create(dto, billetera);
   }
