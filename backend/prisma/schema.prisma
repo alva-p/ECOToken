@@ -6,8 +6,8 @@
 // - La Cooperativa dejó de ser una entidad propia: pasó a ser una Empresa con
 //   categoria = COOPERATIVA (ver Empresa.esCooperativa() en empresas.service.ts).
 // - TipoMaterial es una tabla (antes era enum) y su valor de conversión vive en Puntaje.
-// - Estado es una entidad propia usada por IngresoMaterial. Los campos `estado` de
-//   Empresa y Ranking quedan como texto libre, tal como en el diagrama.
+// - Estado es una entidad propia usada por IngresoMaterial. El campo `estado` de
+//   Ranking queda como texto libre; el de Empresa usa el enum EstadoEmpresa (E3-HU04).
 
 generator client {
   provider = "prisma-client-js"
@@ -30,6 +30,14 @@ enum TipoRol {
 enum CategoriaEmpresa {
   EMPRESA
   COOPERATIVA
+}
+
+/// Estado de aprobación de una Empresa durante el alta (E3-HU04).
+/// Solo una empresa APROBADA puede operar en el sistema.
+enum EstadoEmpresa {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
 }
 
 /// Usuario del sistema. Pertenece a una Empresa o a una Municipalidad según su rol.
@@ -67,14 +75,18 @@ model Empresa {
   cuit               String           @unique
   domicilio          String?
   representanteLegal String?
-  emailContacto      String?
-  estado             String?
+  emailContacto      String?          @unique
+  estado             EstadoEmpresa    @default(PENDIENTE)
   categoria          CategoriaEmpresa @default(EMPRESA)
   fechaRegistro      DateTime         @default(now())
   nombre             String?
   datosContacto      String?
   activa             Boolean          @default(true)
   walletAddress      String           @unique
+
+  // E3-HU03: constancia de aceptación de términos y condiciones.
+  terminosVersion     String?
+  terminosAceptadosEn DateTime?
 
   usuarios           Usuario[]
   ingresos           IngresoMaterial[]
