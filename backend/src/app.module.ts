@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthController } from './health/health.controller';
+import { AuthModule } from './auth/auth.module';
 import { BlockchainModule } from './blockchain/blockchain.module';
 import { EmpresasModule } from './empresas/empresas.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
@@ -18,13 +19,13 @@ import { ReportesModule } from './reportes/reportes.module';
 
 /**
  * Módulo raíz. Registra los módulos de dominio derivados del diagrama de clases.
- * auth se integra en E4-HU02. Ver doc/ESTRUCTURA-PROYECTO.md §4.
+ * Ver doc/ESTRUCTURA-PROYECTO.md §4.
  */
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
-    // AuthModule,
+    AuthModule,
     BlockchainModule,
     EmpresasModule,
     UsuariosModule,

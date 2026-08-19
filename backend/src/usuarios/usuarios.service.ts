@@ -22,6 +22,11 @@ export class UsuariosService {
     return usuario;
   }
 
+  /** Búsqueda por email para el login (E4-HU02). `null` si no existe (no lanza). */
+  findByEmail(email: string) {
+    return this.repository.findByEmail(email);
+  }
+
   async update(id: string, dto: UpdateUsuarioDto) {
     await this.findOne(id);
     return this.repository.update(id, dto);
