@@ -6,7 +6,7 @@ import { PanelLayout, type PanelNavItem } from './PanelLayout';
 // admin lo opera personal municipal con gobierno total del contrato.
 const NAV: PanelNavItem[] = [
   { label: 'Empresas', to: '/admin' },
-  { label: 'Cooperativas' },
+  { label: 'Cooperativas', to: '/admin/cooperativas' },
   { label: 'Conversión' },
   { label: 'Roles' },
   { label: 'Contrato' },

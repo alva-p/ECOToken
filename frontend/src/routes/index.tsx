@@ -10,6 +10,7 @@ import { CooperativaLayout } from '@/layouts/CooperativaLayout';
 import { CooperativaDashboardPage } from '@/features/cooperativa/pages/DashboardPage';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { AdminDashboardPage } from '@/features/admin/pages/DashboardPage';
+import { CooperativasPage } from '@/features/admin/pages/CooperativasPage';
 import { MunicipioLayout } from '@/layouts/MunicipioLayout';
 import { MunicipioDashboardPage } from '@/features/municipio/pages/DashboardPage';
 
@@ -48,7 +49,10 @@ export const router = createBrowserRouter([
         <AdminLayout />
       </ProtectedRoute>
     ),
-    children: [{ index: true, element: <AdminDashboardPage /> }],
+    children: [
+      { index: true, element: <AdminDashboardPage /> },
+      { path: 'cooperativas', element: <CooperativasPage /> },
+    ],
   },
   {
     path: '/municipio',

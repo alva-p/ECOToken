@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { EstadoEmpresa } from '@prisma/client';
+import { CategoriaEmpresa, EstadoEmpresa } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateEmpresaDto } from '../dto/create-empresa.dto';
 import { UpdateEmpresaDto } from '../dto/update-empresa.dto';
 import { BilleteraCustodialGenerada } from '../../billeteras/billeteras.service';
 import { RegistrarEmpresaDto } from '../dto/registrar-empresa.dto';
+import { AltaCooperativaDto } from '../dto/alta-cooperativa.dto';
 
 /** Acceso a datos de Empresa vía PrismaService. */
 @Injectable()
@@ -78,6 +79,33 @@ export class EmpresaRepository {
 
   findByEstado(estado: EstadoEmpresa) {
     return this.prisma.empresa.findMany({ where: { estado } });
+  }
+
+  /**
+   * Alta administrativa de cooperativa (E4-HU01): a diferencia de `registrar`
+   * (alta pública, arranca PENDIENTE), esta queda APROBADA y activa de una, y
+   * persiste la billetera custodial generada (E3-HU02) como cuenta operadora.
+   */
+  altaCooperativa(
+    dto: AltaCooperativaDto,
+    billetera: BilleteraCustodialGenerada,
+  ) {
+    return this.prisma.empresa.create({
+      data: {
+        ...dto,
+        categoria: CategoriaEmpresa.COOPERATIVA,
+        estado: EstadoEmpresa.APROBADA,
+        activa: true,
+        walletAddress: billetera.direccionEVM,
+        billeteraCustodial: {
+          create: {
+            direccionEVM: billetera.direccionEVM,
+            clavePrivadaCifrada: billetera.clavePrivadaCifrada,
+            tipoRolOnChain: billetera.tipoRolOnChain,
+          },
+        },
+      },
+    });
   }
 
   update(id: string, dto: UpdateEmpresaDto) {

@@ -11,6 +11,7 @@ import { EmpresasService } from './empresas.service';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 import { RegistrarEmpresaDto } from './dto/registrar-empresa.dto';
+import { AltaCooperativaDto } from './dto/alta-cooperativa.dto';
 
 /** Rutas HTTP de Empresa: solo delegan en el service. */
 @Controller('empresas')
@@ -21,6 +22,13 @@ export class EmpresasController {
   @Post('registro')
   registrar(@Body() dto: RegistrarEmpresaDto) {
     return this.service.registrar(dto);
+  }
+
+  // ─── E4-HU01: alta administrativa de cooperativa ───
+  // TODO(auth E4-HU02): @UseGuards(JwtAuthGuard, RolesGuard) @Roles(TipoRol.ADMIN)
+  @Post('cooperativas')
+  altaCooperativa(@Body() dto: AltaCooperativaDto) {
+    return this.service.altaCooperativa(dto);
   }
 
   // ─── E3-HU04: panel de administración (aprobar / rechazar altas) ───
