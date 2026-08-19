@@ -36,7 +36,9 @@ describe('UsuariosService', () => {
     it('devuelve null sin lanzar si no existe', async () => {
       repository.findByEmail.mockResolvedValue(null);
 
-      await expect(service.findByEmail('nadie@ejemplo.com')).resolves.toBeNull();
+      await expect(
+        service.findByEmail('nadie@ejemplo.com'),
+      ).resolves.toBeNull();
     });
   });
 });

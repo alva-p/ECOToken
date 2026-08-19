@@ -150,9 +150,7 @@ export class EmpresasService {
         await this.usuariosService.remove(usuarioId).catch(() => undefined);
       }
       if (billeteraId) {
-        await this.billeterasService
-          .remove(billeteraId)
-          .catch(() => undefined);
+        await this.billeterasService.remove(billeteraId).catch(() => undefined);
       }
       await this.repository.remove(empresa.id).catch(() => undefined);
       throw err;

@@ -210,9 +210,7 @@ describe('EmpresasService', () => {
         new Error('RPC caído'),
       );
 
-      await expect(service.altaCooperativa(dto)).rejects.toThrow(
-        'RPC caído',
-      );
+      await expect(service.altaCooperativa(dto)).rejects.toThrow('RPC caído');
 
       expect(billeterasService.remove).toHaveBeenCalledWith(billetera.id);
       expect(repository.remove).toHaveBeenCalledWith(cooperativa.id);
