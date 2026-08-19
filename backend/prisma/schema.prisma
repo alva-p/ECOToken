@@ -1,5 +1,13 @@
 // Prisma — fuente única de los modelos/entidades de ECOToken.
-// Detalle del dominio: ../doc/ESTRUCTURA-PROYECTO.md §4. STUB inicial (Sprint 0).
+// Detalle del dominio: ../doc/ESTRUCTURA-PROYECTO.md §4.
+// Modelo derivado del diagrama de clases del equipo ClusterPA.
+//
+// Notas de diseño:
+// - La Cooperativa dejó de ser una entidad propia: pasó a ser una Empresa con
+//   categoria = COOPERATIVA (ver Empresa.esCooperativa() en empresas.service.ts).
+// - TipoMaterial es una tabla (antes era enum) y su valor de conversión vive en Puntaje.
+// - Estado es una entidad propia usada por IngresoMaterial. El campo `estado` de
+//   Ranking queda como texto libre; el de Empresa usa el enum EstadoEmpresa (E3-HU04).
 
 generator client {
   provider = "prisma-client-js"
@@ -10,93 +18,196 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Rol {
+/// Rol funcional del usuario dentro de la plataforma (RBAC).
+enum TipoRol {
   EMPRESA
   COOPERATIVA
-  MUNICIPIO
+  MUNICIPALIDAD
   ADMIN
 }
 
-enum TipoMaterial {
-  PLASTICO
-  VIDRIO
-  CARTON
+/// Categoría de una Empresa. La cooperativa es una Empresa con categoria = COOPERATIVA.
+enum CategoriaEmpresa {
+  EMPRESA
+  COOPERATIVA
 }
 
+/// Estado de aprobación de una Empresa durante el alta (E3-HU04).
+/// Solo una empresa APROBADA puede operar en el sistema.
+enum EstadoEmpresa {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+}
+
+/// Usuario del sistema. Pertenece a una Empresa o a una Municipalidad según su rol.
 model Usuario {
-  id           String   @id @default(uuid())
-  email        String   @unique
+  id           String  @id @default(uuid())
+  email        String  @unique
   passwordHash String
-  rol          Rol
-  empresa      Empresa?     @relation(fields: [empresaId], references: [id])
-  empresaId    String?
-  cooperativa  Cooperativa? @relation(fields: [cooperativaId], references: [id])
-  cooperativaId String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
+  tipoRol      TipoRol
+  activo       Boolean @default(true)
 
-model Empresa {
-  id              String           @id @default(uuid())
-  razonSocial     String
-  cuit            String           @unique
-  domicilioFiscal String?
-  representante   String?
-  walletAddress   String           @unique // dirección EVM custodial
-  usuarios        Usuario[]
-  ingresos        IngresoMaterial[]
-  movimientos     MovimientoToken[]
-  certificados    Certificado[]
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-}
+  empresa         Empresa?       @relation(fields: [empresaId], references: [id])
+  empresaId       String?
+  municipalidad   Municipalidad? @relation(fields: [municipalidadId], references: [id])
+  municipalidadId String?
 
-model Cooperativa {
-  id            String            @id @default(uuid())
-  nombre        String
-  walletAddress String            @unique // cuenta con VALIDATOR_ROLE
-  usuarios      Usuario[]
-  ingresos      IngresoMaterial[]
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-}
-
-model IngresoMaterial {
-  id            String       @id @default(uuid())
-  empresa       Empresa      @relation(fields: [empresaId], references: [id])
-  empresaId     String
-  cooperativa   Cooperativa  @relation(fields: [cooperativaId], references: [id])
-  cooperativaId String
-  tipoMaterial  TipoMaterial
-  pesoGramos    Int
-  tokensAcunados BigInt?
-  txHash        String?      // hash de la tx de mint
-  fecha         DateTime     @default(now())
-}
-
-model MovimientoToken {
-  id        String   @id @default(uuid())
-  empresa   Empresa  @relation(fields: [empresaId], references: [id])
-  empresaId String
-  cantidad  BigInt
-  tipo      String   // MINT | BURN
-  txHash    String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model Certificado {
-  id         String   @id @default(uuid())
-  empresa    Empresa  @relation(fields: [empresaId], references: [id])
-  empresaId  String
-  periodo    String   // YYYY-MM
-  posicion   Int?
-  txHash     String?  // emisión registrada on-chain
-  emitidoAt  DateTime @default(now())
+/// Municipalidad: autoridad institucional que consume reportes y ranking público.
+model Municipalidad {
+  id       String    @id @default(uuid())
+  nombre   String
+  ciudad   String
+  usuarios Usuario[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model TablaConversion {
-  id           String       @id @default(uuid())
-  tipoMaterial TipoMaterial @unique
-  tokensPorKg  Int
-  updatedAt    DateTime     @updatedAt
+/// Empresa adherida (o cooperativa validadora, según categoria). Actor primario.
+model Empresa {
+  id                 String           @id @default(uuid())
+  razonSocial        String
+  cuit               String           @unique
+  domicilio          String?
+  representanteLegal String?
+  emailContacto      String?          @unique
+  estado             EstadoEmpresa    @default(PENDIENTE)
+  categoria          CategoriaEmpresa @default(EMPRESA)
+  fechaRegistro      DateTime         @default(now())
+  nombre             String?
+  datosContacto      String?
+  activa             Boolean          @default(true)
+
+  usuarios           Usuario[]
+  ingresos           IngresoMaterial[]
+  billeteraCustodial BilleteraCustodial?
+  certificados       CertificadoDigital[]
+  reportes           Reporte[]
+  rankings           Ranking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Billetera custodial (dirección EVM) administrada por el backend para una Empresa.
+model BilleteraCustodial {
+  id                  String @id @default(uuid())
+  direccionEVM        String @unique
+  clavePrivadaCifrada String
+  tipoRolOnChain      String
+
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+  empresaId String  @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Reporte consolidado por período (empresa / cooperativa / municipio).
+model Reporte {
+  id                String   @id @default(uuid())
+  periodo           String
+  fechaGeneracion   DateTime @default(now())
+  datosConsolidados Json
+  creadorPor        String
+
+  empresa   Empresa? @relation(fields: [empresaId], references: [id])
+  empresaId String?
+}
+
+/// Tipo de material reciclable. Su conversión kg → tokens vive en Puntaje.
+model TipoMaterial {
+  id          String  @id @default(uuid())
+  nombre      String  @unique
+  descripcion String?
+
+  puntajes Puntaje[]
+  ingresos IngresoMaterial[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Estado de un IngresoMaterial (p. ej. REGISTRADO, VALIDADO, ACUÑADO).
+model Estado {
+  id          String  @id @default(uuid())
+  nombre      String  @unique
+  descripcion String?
+
+  ingresos IngresoMaterial[]
+}
+
+/// Configuración de puntaje (tokens por kilo) versionada por período para un TipoMaterial.
+model Puntaje {
+  id              String    @id @default(uuid())
+  fechaDesde      DateTime
+  fechaHasta      DateTime?
+  versionConfig   String
+  cantidadPorKilo String
+
+  tipoMaterial   TipoMaterial @relation(fields: [tipoMaterialId], references: [id])
+  tipoMaterialId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Ingreso de material entregado por una Empresa y validado por una cooperativa.
+model IngresoMaterial {
+  id               String   @id @default(uuid())
+  peso             Float
+  fechaIngreso     DateTime @default(now())
+  tokensAcumulados Int      @default(0)
+
+  empresa        Empresa      @relation(fields: [empresaId], references: [id])
+  empresaId      String
+  tipoMaterial   TipoMaterial @relation(fields: [tipoMaterialId], references: [id])
+  tipoMaterialId String
+  estado         Estado       @relation(fields: [estadoId], references: [id])
+  estadoId       String
+
+  movimientoToken MovimientoToken?
+}
+
+/// Movimiento de tokens on-chain (mint/burn) asociado a un IngresoMaterial.
+model MovimientoToken {
+  id       String   @id @default(uuid())
+  cantidad Int
+  txHash   String?
+  bloque   Int?
+  fecha    DateTime @default(now())
+
+  ingresoMaterial   IngresoMaterial @relation(fields: [ingresoMaterialId], references: [id])
+  ingresoMaterialId String          @unique
+}
+
+/// Certificado digital verificable emitido a una Empresa (con anclaje on-chain).
+model CertificadoDigital {
+  id               String   @id @default(uuid())
+  fechaEmision     DateTime @default(now())
+  hashVerificacion String
+  urlPDF           String?
+  txHashOnChain    String?
+
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+  empresaId String
+}
+
+/// Ranking mensual (snapshot auditable) del reconocimiento ambiental.
+model Ranking {
+  id               String    @id @default(uuid())
+  mes              Int
+  anio             Int
+  fechaCierre      DateTime?
+  hashSnapshot     String?
+  bloqueReferencia Int?
+  estado           String?
+
+  empresa   Empresa? @relation(fields: [empresaId], references: [id])
+  empresaId String?
 }
