@@ -9,15 +9,19 @@ import { CategoriaEmpresa, EstadoEmpresa } from '@prisma/client';
 import { EmpresaRepository } from './repository/empresa.repository';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
+import { BilleterasService } from '../billeteras/billeteras.service';
 import { RegistrarEmpresaDto } from './dto/registrar-empresa.dto';
 
 /** Lógica de negocio de Empresa. */
 @Injectable()
 export class EmpresasService {
-  constructor(private readonly repository: EmpresaRepository) {}
+  constructor(
+    private readonly repository: EmpresaRepository,
+    private readonly billeterasService: BilleterasService,
+  ) {}
 
   create(dto: CreateEmpresaDto) {
-    return this.repository.create(dto);
+    return this.crearConBilletera(dto);
   }
 
   findAll() {
@@ -43,9 +47,10 @@ export class EmpresasService {
   // ─── E3-HU01: registro público de empresa ───
 
   /**
-   * Registra una empresa (alta pública). Valida unicidad de CUIT y correo, y la
-   * deja en estado PENDIENTE. La validación de formato/dígito del CUIT la hace
-   * el DTO (@IsCuit); acá se controla la unicidad y el estado inicial.
+   * Registra una empresa (alta pública). Valida unicidad de CUIT y correo, la
+   * deja en estado PENDIENTE y le genera su billetera custodial (E3-HU02). La
+   * validación de formato/dígito del CUIT la hace el DTO (@IsCuit); acá se
+   * controla la unicidad y el estado inicial.
    */
   async registrar(dto: RegistrarEmpresaDto) {
     if (!dto.aceptaTerminos) {
@@ -68,7 +73,10 @@ export class EmpresasService {
         'Ya existe una empresa registrada con ese correo electrónico',
       );
     }
-    return this.repository.registrar(dto);
+
+    const billetera =
+      this.billeterasService.generarBilleteraCustodial('EMPRESA');
+    return this.repository.registrar(dto, billetera);
   }
 
   // ─── E3-HU04: aprobación / rechazo por el administrador ───
@@ -122,6 +130,19 @@ export class EmpresasService {
     return empresa.categoria === CategoriaEmpresa.COOPERATIVA;
   }
 
+  /** Alta de una nueva empresa (perfil), con billetera custodial (E3-HU02). */
+  crearConBilletera(dto: CreateEmpresaDto) {
+    const tipoRolOnChain =
+      dto.categoria === CategoriaEmpresa.COOPERATIVA
+        ? 'COOPERATIVA'
+        : 'EMPRESA';
+    const billetera =
+      this.billeterasService.generarBilleteraCustodial(tipoRolOnChain);
+
+    return this.repository.create(dto, billetera);
+  }
+
+  /** Actualiza el perfil de la empresa. */
   async actualizarPerfil(id: string, dto: UpdateEmpresaDto) {
     // TODO: reglas de actualización de perfil.
     return this.update(id, dto);

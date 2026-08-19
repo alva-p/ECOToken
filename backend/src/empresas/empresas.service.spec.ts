@@ -8,6 +8,7 @@ import {
 import { CategoriaEmpresa, Empresa, EstadoEmpresa } from '@prisma/client';
 import { EmpresasService } from './empresas.service';
 import { EmpresaRepository } from './repository/empresa.repository';
+import { BilleterasService } from '../billeteras/billeteras.service';
 import { RegistrarEmpresaDto } from './dto/registrar-empresa.dto';
 
 const empresaBase: Empresa = {
@@ -23,6 +24,7 @@ const empresaBase: Empresa = {
   nombre: null,
   datosContacto: null,
   activa: true,
+  walletAddress: '0xEmpresaWallet',
   terminosVersion: null,
   terminosAceptadosEn: null,
   createdAt: new Date(),
@@ -32,6 +34,7 @@ const empresaBase: Empresa = {
 describe('EmpresasService', () => {
   let service: EmpresasService;
   let repository: {
+    create: jest.Mock;
     findByCuit: jest.Mock;
     findByEmailContacto: jest.Mock;
     registrar: jest.Mock;
@@ -39,9 +42,11 @@ describe('EmpresasService', () => {
     findById: jest.Mock;
     updateEstado: jest.Mock;
   };
+  let billeterasService: { generarBilleteraCustodial: jest.Mock };
 
   beforeEach(async () => {
     repository = {
+      create: jest.fn(),
       findByCuit: jest.fn(),
       findByEmailContacto: jest.fn(),
       registrar: jest.fn(),
@@ -49,11 +54,13 @@ describe('EmpresasService', () => {
       findById: jest.fn(),
       updateEstado: jest.fn(),
     };
+    billeterasService = { generarBilleteraCustodial: jest.fn() };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
         EmpresasService,
         { provide: EmpresaRepository, useValue: repository },
+        { provide: BilleterasService, useValue: billeterasService },
       ],
     }).compile();
 
@@ -62,6 +69,35 @@ describe('EmpresasService', () => {
 
   it('debería estar definido', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('crearConBilletera (E3-HU02)', () => {
+    it('genera una billetera custodial al dar de alta una empresa', () => {
+      const dto = {
+        razonSocial: 'Eco SRL',
+        cuit: '20-12345678-9',
+        categoria: CategoriaEmpresa.EMPRESA,
+      } as never;
+
+      billeterasService.generarBilleteraCustodial.mockReturnValue({
+        direccionEVM: '0x1234567890abcdef1234567890abcdef12345678',
+        clavePrivadaCifrada: 'iv:tag:ciphertext',
+        tipoRolOnChain: 'EMPRESA',
+      });
+      repository.create.mockReturnValue({ id: 'empresa-1' });
+
+      const resultado = service.crearConBilletera(dto);
+
+      expect(billeterasService.generarBilleteraCustodial).toHaveBeenCalledWith(
+        'EMPRESA',
+      );
+      expect(repository.create).toHaveBeenCalledWith(dto, {
+        direccionEVM: '0x1234567890abcdef1234567890abcdef12345678',
+        clavePrivadaCifrada: 'iv:tag:ciphertext',
+        tipoRolOnChain: 'EMPRESA',
+      });
+      expect(resultado).toEqual({ id: 'empresa-1' });
+    });
   });
 
   describe('registrar (E3-HU01 + E3-HU03)', () => {
@@ -73,14 +109,23 @@ describe('EmpresasService', () => {
       versionTerminos: 'v1',
     };
 
-    it('registra la empresa cuando el CUIT y el correo son únicos', async () => {
+    it('registra la empresa cuando el CUIT y el correo son únicos, con billetera custodial', async () => {
+      const billetera = {
+        direccionEVM: '0x1234567890abcdef1234567890abcdef12345678',
+        clavePrivadaCifrada: 'iv:tag:ciphertext',
+        tipoRolOnChain: 'EMPRESA',
+      };
       repository.findByCuit.mockResolvedValue(null);
       repository.findByEmailContacto.mockResolvedValue(null);
+      billeterasService.generarBilleteraCustodial.mockReturnValue(billetera);
       repository.registrar.mockResolvedValue(empresaBase);
 
       const res = await service.registrar(dto);
 
-      expect(repository.registrar).toHaveBeenCalledWith(dto);
+      expect(billeterasService.generarBilleteraCustodial).toHaveBeenCalledWith(
+        'EMPRESA',
+      );
+      expect(repository.registrar).toHaveBeenCalledWith(dto, billetera);
       expect(res).toBe(empresaBase);
     });
 
