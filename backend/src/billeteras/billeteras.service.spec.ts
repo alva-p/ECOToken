@@ -31,7 +31,10 @@ describe('BilleterasService', () => {
     it('genera una wallet, cifra la clave privada y la persiste', async () => {
       repository.create.mockImplementation((data) => ({ id: 'b1', ...data }));
 
-      const billetera = await service.generarParaEmpresa('empresa-1', 'VALIDATOR');
+      const billetera = await service.generarParaEmpresa(
+        'empresa-1',
+        'VALIDATOR',
+      );
 
       expect(repository.create).toHaveBeenCalledTimes(1);
       const dto = repository.create.mock.calls[0][0];

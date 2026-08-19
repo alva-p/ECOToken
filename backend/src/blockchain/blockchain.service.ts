@@ -1,4 +1,8 @@
-import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Contract, id, JsonRpcProvider, Wallet } from 'ethers';
 
@@ -31,8 +35,12 @@ export class BlockchainService {
 
   constructor(private readonly config: ConfigService) {
     const rpcUrl = this.config.get<string>('blockchain.rpcUrl');
-    const contractAddress = this.config.get<string>('blockchain.contractAddress');
-    const adminPrivateKey = this.config.get<string>('blockchain.adminPrivateKey');
+    const contractAddress = this.config.get<string>(
+      'blockchain.contractAddress',
+    );
+    const adminPrivateKey = this.config.get<string>(
+      'blockchain.adminPrivateKey',
+    );
 
     if (!rpcUrl || !contractAddress || !adminPrivateKey) {
       this.logger.warn(
@@ -46,7 +54,11 @@ export class BlockchainService {
 
     const provider = new JsonRpcProvider(rpcUrl);
     const adminSigner = new Wallet(adminPrivateKey, provider);
-    this.contract = new Contract(contractAddress, ACCESS_CONTROL_ABI, adminSigner);
+    this.contract = new Contract(
+      contractAddress,
+      ACCESS_CONTROL_ABI,
+      adminSigner,
+    );
   }
 
   /**
