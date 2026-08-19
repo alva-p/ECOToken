@@ -70,7 +70,11 @@ function App() {
     <div className="bg-eco-bg">
       <header className="border-b border-eco-border bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <img src="/logos/logo-ecotoken.png" alt="EcoToken" className="h-14 w-auto" />
+          <img
+            src="/logos/logo-ecotoken.png"
+            alt="EcoToken"
+            className="h-14 w-auto"
+          />
           <nav className="flex items-center gap-6">
             <a
               href="#como-funciona"
@@ -108,10 +112,10 @@ function App() {
             Reconocimiento público para las empresas que reciclan
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg text-eco-ink2">
-            EcoToken registra el material que entregan las empresas adheridas, lo
-            valida junto a las cooperativas de reciclaje y reconoce el esfuerzo
-            ambiental con un ranking mensual y un certificado digital verificable
-            — respaldado por la Municipalidad.
+            EcoToken registra el material que entregan las empresas adheridas,
+            lo valida junto a las cooperativas de reciclaje y reconoce el
+            esfuerzo ambiental con un ranking mensual y un certificado digital
+            verificable — respaldado por la Municipalidad.
           </p>
         </div>
       </section>
@@ -188,7 +192,9 @@ function App() {
                 alt="GreenPack"
                 className="h-20 w-20 rounded-full"
               />
-              <span className="text-sm font-semibold text-eco-ink2">GreenPack</span>
+              <span className="text-sm font-semibold text-eco-ink2">
+                GreenPack
+              </span>
             </div>
           </div>
         </div>
