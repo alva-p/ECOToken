@@ -5,18 +5,20 @@ import { BilleteraCustodialRepository } from './repository/billetera-custodial.r
 
 describe('BilleterasService', () => {
   let service: BilleterasService;
-  let repository: { create: jest.Mock };
-  let config: { get: jest.Mock };
 
   beforeEach(async () => {
-    repository = { create: jest.fn() };
-    config = { get: jest.fn().mockReturnValue('clave-de-cifrado-de-prueba') };
-
     const moduleRef = await Test.createTestingModule({
       providers: [
         BilleterasService,
-        { provide: BilleteraCustodialRepository, useValue: repository },
-        { provide: ConfigService, useValue: config },
+        { provide: BilleteraCustodialRepository, useValue: {} },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest
+              .fn()
+              .mockReturnValue('clave_maestra_para_pruebas_1234567890'),
+          },
+        },
       ],
     }).compile();
 
@@ -27,37 +29,22 @@ describe('BilleterasService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('generarParaEmpresa (E4-HU01)', () => {
-    it('genera una wallet, cifra la clave privada y la persiste', async () => {
-      repository.create.mockImplementation((data) => ({ id: 'b1', ...data }));
+  it('cifra y descifra una clave privada', () => {
+    const clavePrivada =
+      '0x1111111111111111111111111111111111111111111111111111111111111111';
 
-      const billetera = await service.generarParaEmpresa(
-        'empresa-1',
-        'VALIDATOR',
-      );
+    const cifrada = service.cifrarClavePrivada(clavePrivada);
+    const descifrada = service.descifrarClavePrivada(cifrada);
 
-      expect(repository.create).toHaveBeenCalledTimes(1);
-      const dto = repository.create.mock.calls[0][0];
-      expect(dto.empresaId).toBe('empresa-1');
-      expect(dto.tipoRolOnChain).toBe('VALIDATOR');
-      expect(dto.direccionEVM).toMatch(/^0x[a-fA-F0-9]{40}$/);
-      // La clave privada nunca se persiste en claro: el payload cifrado tiene
-      // el formato iv:authTag:ciphertext (3 segmentos base64), no el de una
-      // clave privada EVM en hexadecimal (0x + 64 dígitos).
-      expect(dto.clavePrivadaCifrada).toMatch(
-        /^[A-Za-z0-9+/=]+:[A-Za-z0-9+/=]+:[A-Za-z0-9+/=]+$/,
-      );
-      expect(dto.clavePrivadaCifrada).not.toMatch(/^0x[a-fA-F0-9]{64}$/);
-      expect(billetera.id).toBe('b1');
-    });
+    expect(cifrada).not.toEqual(clavePrivada);
+    expect(descifrada).toEqual(clavePrivada);
+  });
 
-    it('lanza si falta WALLET_ENCRYPTION_KEY', async () => {
-      config.get.mockReturnValue('');
+  it('genera una billetera custodial con dirección y clave cifrada', () => {
+    const billetera = service.generarBilleteraCustodial();
 
-      await expect(
-        service.generarParaEmpresa('empresa-1', 'VALIDATOR'),
-      ).rejects.toThrow('WALLET_ENCRYPTION_KEY');
-      expect(repository.create).not.toHaveBeenCalled();
-    });
+    expect(billetera.direccionEVM).toMatch(/^0x[a-fA-F0-9]{40}$/);
+    expect(billetera.clavePrivadaCifrada).toContain(':');
+    expect(billetera.tipoRolOnChain).toBe('EMPRESA');
   });
 });

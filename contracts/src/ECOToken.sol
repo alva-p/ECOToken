@@ -1,12 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { ERC20Capped } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
-import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {
+    UUPSUpgradeable
+} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {
+    AccessControlUpgradeable
+} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {
+    ERC20CappedUpgradeable
+} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20CappedUpgradeable.sol";
+import {
+    PausableUpgradeable
+} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-contract ECOToken is ERC20Capped, Pausable, AccessControl {
+contract ECOToken is
+    Initializable,
+    ERC20CappedUpgradeable,
+    PausableUpgradeable,
+    AccessControlUpgradeable,
+    UUPSUpgradeable
+{
     // Alias del DEFAULT_ADMIN_ROLE de AccessControl: un solo rol administra roles
     // (RN-18, Vault Address) y pausa (RN-19), sin duplicar jerarquia.
     bytes32 public constant ADMIN_ROLE = DEFAULT_ADMIN_ROLE;
@@ -20,13 +35,22 @@ contract ECOToken is ERC20Capped, Pausable, AccessControl {
     // la calcula el backend (RN-06/RN-07), aqui solo queda registrada la trazabilidad.
     event Minted(address indexed empresa, uint256 amount, string material, uint256 peso);
 
-    constructor(uint256 cap_, address admin_, address minter_)
-        ERC20("EcoToken", "ECO")
-        ERC20Capped(cap_)
-    {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    // E2-HU06: reemplaza al constructor bajo el patron UUPS; se ejecuta una unica vez
+    // via delegatecall desde el proxy (ERC1967Proxy) en el deploy.
+    function initialize(uint256 cap_, address admin_, address minter_) external initializer {
         if (admin_ == address(0) || minter_ == address(0)) {
             revert ECOToken__ZeroAddress();
         }
+
+        __ERC20_init("EcoToken", "ECO");
+        __ERC20Capped_init(cap_);
+        __Pausable_init();
+        __AccessControl_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin_);
         _grantRole(MINTER_ROLE, minter_);
@@ -66,6 +90,9 @@ contract ECOToken is ERC20Capped, Pausable, AccessControl {
         _burn(target, amount);
         emit EmergencyBurn(target, amount, reason);
     }
+
+    // RN-29: upgrades del proxy UUPS exclusivos del ADMIN (Vault Address).
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(ADMIN_ROLE) { }
 
     // La pausa congela mints y transferencias (evita fugar tokens fraudulentos antes
     // del burn); la unica operacion permitida en pausa es el emergencyBurn.
