@@ -51,6 +51,7 @@ describe('EmpresasService', () => {
     updateEstado: jest.Mock;
     altaCooperativa: jest.Mock;
     remove: jest.Mock;
+    buscar: jest.Mock;
   };
   let billeterasService: { generarBilleteraCustodial: jest.Mock };
   let blockchainService: { grantValidatorRole: jest.Mock };
@@ -67,6 +68,7 @@ describe('EmpresasService', () => {
       updateEstado: jest.fn(),
       altaCooperativa: jest.fn(),
       remove: jest.fn().mockResolvedValue(undefined),
+      buscar: jest.fn(),
     };
     billeterasService = { generarBilleteraCustodial: jest.fn() };
     blockchainService = { grantValidatorRole: jest.fn() };
@@ -332,6 +334,25 @@ describe('EmpresasService', () => {
       await expect(service.verificarAprobada('e1')).rejects.toBeInstanceOf(
         ForbiddenException,
       );
+    });
+  });
+
+  describe('buscar (E4-HU03)', () => {
+    it('devuelve [] sin consultar el repository si la query tiene menos de 2 caracteres', async () => {
+      await expect(service.buscar('a')).resolves.toEqual([]);
+      await expect(service.buscar('')).resolves.toEqual([]);
+      await expect(service.buscar('   ')).resolves.toEqual([]);
+      expect(repository.buscar).not.toHaveBeenCalled();
+    });
+
+    it('delega en el repository con la query recortada', async () => {
+      const resultados = [{ ...empresaBase, razonSocial: 'ACME SA' }];
+      repository.buscar.mockResolvedValue(resultados);
+
+      const res = await service.buscar('  acme  ');
+
+      expect(repository.buscar).toHaveBeenCalledWith('acme');
+      expect(res).toBe(resultados);
     });
   });
 });

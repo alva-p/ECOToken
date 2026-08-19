@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { TipoRol } from '@prisma/client';
@@ -57,6 +58,14 @@ export class EmpresasController {
   @Patch(':id/rechazar')
   rechazar(@Param('id') id: string) {
     return this.service.rechazar(id);
+  }
+
+  // ─── E4-HU03: buscador de empresas (cooperativa, con autocompletado) ───
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.COOPERATIVA)
+  @Get('buscar')
+  buscar(@Query('q') q?: string) {
+    return this.service.buscar(q ?? '');
   }
 
   // ─── CRUD genérico (interno / admin) ───

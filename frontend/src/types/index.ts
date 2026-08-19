@@ -23,6 +23,9 @@ export type UserRole = TipoRol;
 /** Categoría de una Empresa. La cooperativa es una Empresa con categoria = COOPERATIVA. */
 export type CategoriaEmpresa = 'EMPRESA' | 'COOPERATIVA';
 
+/** Estado de aprobación de una Empresa (E3-HU04). Solo APROBADA puede operar. */
+export type EstadoEmpresa = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
+
 // ─── Entidades ───
 
 /**
@@ -53,7 +56,7 @@ export interface Empresa {
   domicilio: string | null;
   representanteLegal: string | null;
   emailContacto: string | null;
-  estado: string | null;
+  estado: EstadoEmpresa;
   categoria: CategoriaEmpresa;
   fechaRegistro: string;
   nombre: string | null;

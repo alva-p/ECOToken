@@ -97,6 +97,10 @@ model Empresa {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Búsqueda por razón social (E4-HU03): sin esto, el `contains` de
+  // EmpresaRepository.buscar() hace table scan en cada tecla del autocompletado.
+  @@index([razonSocial])
 }
 
 /// Billetera custodial (dirección EVM) administrada por el backend para una Empresa.
