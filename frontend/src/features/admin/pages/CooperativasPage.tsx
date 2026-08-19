@@ -58,7 +58,11 @@ export function CooperativasPage() {
         <h2 className="mb-4 text-sm font-semibold text-eco-ink">
           Dar de alta una cooperativa
         </h2>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-4"
+          noValidate
+        >
           <Field
             label="Razón social"
             required
