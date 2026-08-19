@@ -105,7 +105,10 @@ export class EmpresaRepository {
    * (alta pública, arranca PENDIENTE), esta queda APROBADA y activa de una, y
    * persiste la billetera custodial generada (E3-HU02) como cuenta operadora.
    */
-  altaCooperativa(dto: AltaCooperativaDto, billetera: BilleteraCustodialGenerada) {
+  altaCooperativa(
+    dto: AltaCooperativaDto,
+    billetera: BilleteraCustodialGenerada,
+  ) {
     return this.prisma.empresa.create({
       data: {
         ...dto,
