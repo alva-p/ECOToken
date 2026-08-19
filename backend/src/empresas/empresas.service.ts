@@ -62,6 +62,12 @@ export class EmpresasService {
    * el DTO (@IsCuit); acá se controla la unicidad y el estado inicial.
    */
   async registrar(dto: RegistrarEmpresaDto) {
+    if (!dto.aceptaTerminos) {
+      throw new BadRequestException(
+        'Debe aceptar los términos y condiciones para registrarse',
+      );
+    }
+
     const porCuit = await this.repository.findByCuit(dto.cuit);
     if (porCuit) {
       throw new ConflictException(

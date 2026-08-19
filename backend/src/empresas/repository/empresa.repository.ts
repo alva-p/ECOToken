@@ -15,10 +15,19 @@ export class EmpresaRepository {
     return this.prisma.empresa.create({ data: dto });
   }
 
-  /** Alta pública de empresa (E3-HU01): arranca en estado PENDIENTE. */
+  /**
+   * Alta pública de empresa (E3-HU01): arranca en estado PENDIENTE y registra
+   * la aceptación de términos y condiciones con su versión y timestamp (E3-HU03).
+   */
   registrar(dto: RegistrarEmpresaDto) {
+    const { aceptaTerminos: _aceptaTerminos, versionTerminos, ...datos } = dto;
     return this.prisma.empresa.create({
-      data: { ...dto, estado: EstadoEmpresa.PENDIENTE },
+      data: {
+        ...datos,
+        estado: EstadoEmpresa.PENDIENTE,
+        terminosVersion: versionTerminos,
+        terminosAceptadosEn: new Date(),
+      },
     });
   }
 

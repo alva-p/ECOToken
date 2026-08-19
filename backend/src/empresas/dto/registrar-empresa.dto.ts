@@ -1,10 +1,17 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { IsCuit } from '../../common/decorators/is-cuit.decorator';
 
 /**
- * Datos del formulario público de registro de empresa (E3-HU01).
- * La empresa queda en estado PENDIENTE; el `estado`/`categoria`/`activa`
- * NO se aceptan del cliente (los gestiona el flujo de aprobación, E3-HU04).
+ * Datos del formulario público de registro de empresa (E3-HU01 + E3-HU03).
+ * La empresa queda en estado PENDIENTE; el estado/categoria/activa NO se
+ * aceptan del cliente. Incluye la aceptación obligatoria de términos y
+ * condiciones (E3-HU03), que se persiste con su versión y timestamp.
  */
 export class RegistrarEmpresaDto {
   @IsString()
@@ -32,4 +39,12 @@ export class RegistrarEmpresaDto {
   @IsOptional()
   @IsString()
   datosContacto?: string;
+
+  // E3-HU03: aceptación obligatoria de términos y condiciones.
+  @IsBoolean()
+  aceptaTerminos: boolean;
+
+  @IsString()
+  @IsNotEmpty()
+  versionTerminos: string;
 }
