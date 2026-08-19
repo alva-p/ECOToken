@@ -30,7 +30,7 @@ export class EmpresasService {
   ) {}
 
   create(dto: CreateEmpresaDto) {
-    return this.repository.create(dto);
+    return this.crearConBilletera(dto);
   }
 
   findAll() {
@@ -56,9 +56,10 @@ export class EmpresasService {
   // ─── E3-HU01: registro público de empresa ───
 
   /**
-   * Registra una empresa (alta pública). Valida unicidad de CUIT y correo, y la
-   * deja en estado PENDIENTE. La validación de formato/dígito del CUIT la hace
-   * el DTO (@IsCuit); acá se controla la unicidad y el estado inicial.
+   * Registra una empresa (alta pública). Valida unicidad de CUIT y correo, la
+   * deja en estado PENDIENTE y le genera su billetera custodial (E3-HU02). La
+   * validación de formato/dígito del CUIT la hace el DTO (@IsCuit); acá se
+   * controla la unicidad y el estado inicial.
    */
   async registrar(dto: RegistrarEmpresaDto) {
     if (!dto.aceptaTerminos) {
@@ -81,7 +82,10 @@ export class EmpresasService {
         'Ya existe una empresa registrada con ese correo electrónico',
       );
     }
-    return this.repository.registrar(dto);
+
+    const billetera =
+      this.billeterasService.generarBilleteraCustodial('EMPRESA');
+    return this.repository.registrar(dto, billetera);
   }
 
   // ─── E4-HU01: alta administrativa de cooperativa ───
@@ -89,14 +93,14 @@ export class EmpresasService {
   /**
    * Da de alta una cooperativa (acto administrativo, no pasa por el flujo de
    * aprobación de E3-HU04): crea la Empresa (`categoria: COOPERATIVA`,
-   * `estado: APROBADA`, `activa: true`), genera su cuenta operadora
-   * (billetera custodial), le otorga VALIDATOR_ROLE on-chain y crea el
-   * Usuario con el que va a iniciar sesión (E4-HU02), con una contraseña
-   * temporal que se devuelve una única vez en la respuesta.
+   * `estado: APROBADA`, `activa: true`) con su billetera custodial (E3-HU02),
+   * le otorga VALIDATOR_ROLE on-chain y crea el Usuario con el que va a
+   * iniciar sesión (E4-HU02), con una contraseña temporal que se devuelve
+   * una única vez en la respuesta.
    *
-   * Si cualquier paso posterior a la creación de la Empresa falla (billetera,
-   * grant on-chain o alta del usuario), se revierte todo lo creado hasta ese
-   * punto para no dejar una cooperativa a medio dar de alta.
+   * Si un paso posterior a la creación de la Empresa falla (grant on-chain o
+   * alta del usuario), se borra la Empresa creada (la billetera custodial se
+   * borra en cascada) para no dejar una cooperativa a medio dar de alta.
    */
   async altaCooperativa(dto: AltaCooperativaDto) {
     const porCuit = await this.repository.findByCuit(dto.cuit);
@@ -114,17 +118,12 @@ export class EmpresasService {
       );
     }
 
-    const empresa = await this.repository.altaCooperativa(dto);
-    let billeteraId: string | undefined;
+    const billetera =
+      this.billeterasService.generarBilleteraCustodial('VALIDATOR');
+    const empresa = await this.repository.altaCooperativa(dto, billetera);
     let usuarioId: string | undefined;
 
     try {
-      const billetera = await this.billeterasService.generarParaEmpresa(
-        empresa.id,
-        'VALIDATOR',
-      );
-      billeteraId = billetera.id;
-
       const txHash = await this.blockchainService.grantValidatorRole(
         billetera.direccionEVM,
       );
@@ -147,9 +146,6 @@ export class EmpresasService {
     } catch (err) {
       if (usuarioId) {
         await this.usuariosService.remove(usuarioId).catch(() => undefined);
-      }
-      if (billeteraId) {
-        await this.billeterasService.remove(billeteraId).catch(() => undefined);
       }
       await this.repository.remove(empresa.id).catch(() => undefined);
       throw err;
@@ -207,6 +203,19 @@ export class EmpresasService {
     return empresa.categoria === CategoriaEmpresa.COOPERATIVA;
   }
 
+  /** Alta de una nueva empresa (perfil), con billetera custodial (E3-HU02). */
+  crearConBilletera(dto: CreateEmpresaDto) {
+    const tipoRolOnChain =
+      dto.categoria === CategoriaEmpresa.COOPERATIVA
+        ? 'COOPERATIVA'
+        : 'EMPRESA';
+    const billetera =
+      this.billeterasService.generarBilleteraCustodial(tipoRolOnChain);
+
+    return this.repository.create(dto, billetera);
+  }
+
+  /** Actualiza el perfil de la empresa. */
   async actualizarPerfil(id: string, dto: UpdateEmpresaDto) {
     // TODO: reglas de actualización de perfil.
     return this.update(id, dto);

@@ -4,7 +4,17 @@ pragma solidity ^0.8.24;
 import { Test } from "forge-std/Test.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import { ECOToken } from "../src/ECOToken.sol";
+
+// E2-HU06: implementacion V2 de prueba para el test de upgrade end-to-end. No agrega
+// storage nuevo (evita colisiones de layout), solo una funcion para verificar que el
+// proxy quedo apuntando a la logica nueva.
+contract ECOTokenV2 is ECOToken {
+    function version() external pure returns (string memory) {
+        return "v2";
+    }
+}
 
 contract ECOTokenTest is Test {
     ECOToken private ecoToken;
@@ -17,7 +27,11 @@ contract ECOTokenTest is Test {
     uint256 private constant CAP = 1_000_000 ether;
 
     function setUp() public {
-        ecoToken = new ECOToken(CAP, admin, minter);
+        ECOToken implementation = new ECOToken();
+        ERC1967Proxy proxy = new ERC1967Proxy(
+            address(implementation), abi.encodeCall(ECOToken.initialize, (CAP, admin, minter))
+        );
+        ecoToken = ECOToken(address(proxy));
     }
 
     function testConstructorSetsNameSymbolAndCap() public view {
@@ -83,13 +97,19 @@ contract ECOTokenTest is Test {
     }
 
     function testCannotDeployWithZeroAdmin() public {
+        ECOToken implementation = new ECOToken();
         vm.expectRevert(ECOToken.ECOToken__ZeroAddress.selector);
-        new ECOToken(CAP, address(0), minter);
+        new ERC1967Proxy(
+            address(implementation), abi.encodeCall(ECOToken.initialize, (CAP, address(0), minter))
+        );
     }
 
     function testCannotDeployWithZeroMinter() public {
+        ECOToken implementation = new ECOToken();
         vm.expectRevert(ECOToken.ECOToken__ZeroAddress.selector);
-        new ECOToken(CAP, admin, address(0));
+        new ERC1967Proxy(
+            address(implementation), abi.encodeCall(ECOToken.initialize, (CAP, admin, address(0)))
+        );
     }
 
     function testCannotMintToZeroAddress() public {
@@ -329,5 +349,39 @@ contract ECOTokenTest is Test {
         vm.prank(user);
         ecoToken.transfer(attacker, 10 ether);
         assertEq(ecoToken.balanceOf(attacker), 10 ether);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                        E2-HU06: UPGRADE UUPS
+    //////////////////////////////////////////////////////////////*/
+
+    function testUpgradePreservesStateAndAddsNewLogic() public {
+        vm.prank(minter);
+        ecoToken.mint(user, 100 ether, "plastico", 10);
+
+        ECOTokenV2 newImplementation = new ECOTokenV2();
+        vm.prank(admin);
+        ecoToken.upgradeToAndCall(address(newImplementation), "");
+
+        // el estado (balance, cap, roles) sobrevive porque vive en el storage del
+        // proxy, no en el de la implementacion.
+        assertEq(ecoToken.balanceOf(user), 100 ether);
+        assertEq(ecoToken.cap(), CAP);
+        assertTrue(ecoToken.hasRole(ecoToken.MINTER_ROLE(), minter));
+        assertEq(ECOTokenV2(address(ecoToken)).version(), "v2");
+    }
+
+    function testNonAdminCannotUpgrade() public {
+        ECOTokenV2 newImplementation = new ECOTokenV2();
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                attacker,
+                ecoToken.ADMIN_ROLE()
+            )
+        );
+        vm.prank(attacker);
+        ecoToken.upgradeToAndCall(address(newImplementation), "");
     }
 }

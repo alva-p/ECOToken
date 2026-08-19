@@ -32,6 +32,7 @@ const empresaBase: Empresa = {
   nombre: null,
   datosContacto: null,
   activa: true,
+  walletAddress: '0xEmpresaWallet',
   terminosVersion: null,
   terminosAceptadosEn: null,
   createdAt: new Date(),
@@ -41,6 +42,7 @@ const empresaBase: Empresa = {
 describe('EmpresasService', () => {
   let service: EmpresasService;
   let repository: {
+    create: jest.Mock;
     findByCuit: jest.Mock;
     findByEmailContacto: jest.Mock;
     registrar: jest.Mock;
@@ -50,12 +52,13 @@ describe('EmpresasService', () => {
     altaCooperativa: jest.Mock;
     remove: jest.Mock;
   };
-  let billeterasService: { generarParaEmpresa: jest.Mock; remove: jest.Mock };
+  let billeterasService: { generarBilleteraCustodial: jest.Mock };
   let blockchainService: { grantValidatorRole: jest.Mock };
   let usuariosService: { create: jest.Mock; remove: jest.Mock };
 
   beforeEach(async () => {
     repository = {
+      create: jest.fn(),
       findByCuit: jest.fn(),
       findByEmailContacto: jest.fn(),
       registrar: jest.fn(),
@@ -65,10 +68,7 @@ describe('EmpresasService', () => {
       altaCooperativa: jest.fn(),
       remove: jest.fn().mockResolvedValue(undefined),
     };
-    billeterasService = {
-      generarParaEmpresa: jest.fn(),
-      remove: jest.fn().mockResolvedValue(undefined),
-    };
+    billeterasService = { generarBilleteraCustodial: jest.fn() };
     blockchainService = { grantValidatorRole: jest.fn() };
     usuariosService = {
       create: jest.fn(),
@@ -92,6 +92,35 @@ describe('EmpresasService', () => {
     expect(service).toBeDefined();
   });
 
+  describe('crearConBilletera (E3-HU02)', () => {
+    it('genera una billetera custodial al dar de alta una empresa', () => {
+      const dto = {
+        razonSocial: 'Eco SRL',
+        cuit: '20-12345678-9',
+        categoria: CategoriaEmpresa.EMPRESA,
+      } as never;
+
+      billeterasService.generarBilleteraCustodial.mockReturnValue({
+        direccionEVM: '0x1234567890abcdef1234567890abcdef12345678',
+        clavePrivadaCifrada: 'iv:tag:ciphertext',
+        tipoRolOnChain: 'EMPRESA',
+      });
+      repository.create.mockReturnValue({ id: 'empresa-1' });
+
+      const resultado = service.crearConBilletera(dto);
+
+      expect(billeterasService.generarBilleteraCustodial).toHaveBeenCalledWith(
+        'EMPRESA',
+      );
+      expect(repository.create).toHaveBeenCalledWith(dto, {
+        direccionEVM: '0x1234567890abcdef1234567890abcdef12345678',
+        clavePrivadaCifrada: 'iv:tag:ciphertext',
+        tipoRolOnChain: 'EMPRESA',
+      });
+      expect(resultado).toEqual({ id: 'empresa-1' });
+    });
+  });
+
   describe('registrar (E3-HU01 + E3-HU03)', () => {
     const dto: RegistrarEmpresaDto = {
       razonSocial: 'ACME SA',
@@ -101,14 +130,23 @@ describe('EmpresasService', () => {
       versionTerminos: 'v1',
     };
 
-    it('registra la empresa cuando el CUIT y el correo son únicos', async () => {
+    it('registra la empresa cuando el CUIT y el correo son únicos, con billetera custodial', async () => {
+      const billetera = {
+        direccionEVM: '0x1234567890abcdef1234567890abcdef12345678',
+        clavePrivadaCifrada: 'iv:tag:ciphertext',
+        tipoRolOnChain: 'EMPRESA',
+      };
       repository.findByCuit.mockResolvedValue(null);
       repository.findByEmailContacto.mockResolvedValue(null);
+      billeterasService.generarBilleteraCustodial.mockReturnValue(billetera);
       repository.registrar.mockResolvedValue(empresaBase);
 
       const res = await service.registrar(dto);
 
-      expect(repository.registrar).toHaveBeenCalledWith(dto);
+      expect(billeterasService.generarBilleteraCustodial).toHaveBeenCalledWith(
+        'EMPRESA',
+      );
+      expect(repository.registrar).toHaveBeenCalledWith(dto, billetera);
       expect(res).toBe(empresaBase);
     });
 
@@ -153,27 +191,30 @@ describe('EmpresasService', () => {
       categoria: CategoriaEmpresa.COOPERATIVA,
       estado: EstadoEmpresa.APROBADA,
     };
-    const billetera = { id: 'billetera-1', direccionEVM: '0xCoopWallet' };
+    const billetera = {
+      direccionEVM: '0xCoopWallet',
+      clavePrivadaCifrada: 'iv:tag:ciphertext',
+      tipoRolOnChain: 'VALIDATOR',
+    };
 
     beforeEach(() => {
       repository.findByCuit.mockResolvedValue(null);
       repository.findByEmailContacto.mockResolvedValue(null);
+      billeterasService.generarBilleteraCustodial.mockReturnValue(billetera);
       repository.altaCooperativa.mockResolvedValue(cooperativa);
-      billeterasService.generarParaEmpresa.mockResolvedValue(billetera);
       blockchainService.grantValidatorRole.mockResolvedValue('0xTxHash');
       usuariosService.create.mockImplementation((data) =>
         Promise.resolve({ id: 'usuario-1', ...data }),
       );
     });
 
-    it('crea la empresa, la billetera, otorga el rol y crea el usuario', async () => {
+    it('crea la empresa con billetera, otorga el rol y crea el usuario', async () => {
       const res = await service.altaCooperativa(dto);
 
-      expect(repository.altaCooperativa).toHaveBeenCalledWith(dto);
-      expect(billeterasService.generarParaEmpresa).toHaveBeenCalledWith(
-        cooperativa.id,
+      expect(billeterasService.generarBilleteraCustodial).toHaveBeenCalledWith(
         'VALIDATOR',
       );
+      expect(repository.altaCooperativa).toHaveBeenCalledWith(dto, billetera);
       expect(blockchainService.grantValidatorRole).toHaveBeenCalledWith(
         billetera.direccionEVM,
       );
@@ -203,26 +244,24 @@ describe('EmpresasService', () => {
       expect(repository.altaCooperativa).not.toHaveBeenCalled();
     });
 
-    it('revierte empresa y billetera si falla el grant on-chain', async () => {
+    it('revierte la empresa si falla el grant on-chain', async () => {
       blockchainService.grantValidatorRole.mockRejectedValue(
         new Error('RPC caído'),
       );
 
       await expect(service.altaCooperativa(dto)).rejects.toThrow('RPC caído');
 
-      expect(billeterasService.remove).toHaveBeenCalledWith(billetera.id);
       expect(repository.remove).toHaveBeenCalledWith(cooperativa.id);
       expect(usuariosService.create).not.toHaveBeenCalled();
     });
 
-    it('revierte empresa, billetera y usuario si falla la creación del usuario', async () => {
+    it('revierte empresa y usuario si falla la creación del usuario', async () => {
       usuariosService.create.mockRejectedValue(new Error('email duplicado'));
 
       await expect(service.altaCooperativa(dto)).rejects.toThrow(
         'email duplicado',
       );
 
-      expect(billeterasService.remove).toHaveBeenCalledWith(billetera.id);
       expect(repository.remove).toHaveBeenCalledWith(cooperativa.id);
     });
   });

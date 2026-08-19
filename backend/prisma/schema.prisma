@@ -82,6 +82,7 @@ model Empresa {
   nombre             String?
   datosContacto      String?
   activa             Boolean          @default(true)
+  walletAddress      String           @unique
 
   // E3-HU03: constancia de aceptación de términos y condiciones.
   terminosVersion     String?
@@ -105,7 +106,7 @@ model BilleteraCustodial {
   clavePrivadaCifrada String
   tipoRolOnChain      String
 
-  empresa   Empresa @relation(fields: [empresaId], references: [id])
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   empresaId String  @unique
 
   createdAt DateTime @default(now())
