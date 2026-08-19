@@ -25,6 +25,7 @@ export interface BilleteraCustodialGenerada {
 @Injectable()
 export class BilleterasService {
   constructor(
+    private readonly repository: BilleteraCustodialRepository,
     private readonly configService: ConfigService,
   ) {}
 
