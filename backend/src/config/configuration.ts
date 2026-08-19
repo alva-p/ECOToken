@@ -13,5 +13,11 @@ export default () => ({
     rpcUrl: process.env.SEPOLIA_RPC_URL ?? '',
     contractAddress: process.env.ECOTOKEN_CONTRACT_ADDRESS ?? '',
     explorerUrl: process.env.EXPLORER_URL ?? 'https://sepolia.etherscan.io',
+    // Cuenta con ADMIN_ROLE/DEFAULT_ADMIN_ROLE on-chain: es quien puede otorgar
+    // roles (p. ej. VALIDATOR_ROLE a una cooperativa, E4-HU01).
+    adminPrivateKey: process.env.ADMIN_PRIVATE_KEY ?? '',
   },
+  // Cifra datos sensibles que deben poder recuperarse (p. ej. la clave privada
+  // de una billetera custodial) — ver common/helpers/crypto.helper.ts.
+  walletEncryptionKey: process.env.WALLET_ENCRYPTION_KEY ?? '',
 });

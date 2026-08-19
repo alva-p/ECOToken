@@ -20,6 +20,11 @@ export class UsuarioRepository {
     return this.prisma.usuario.findUnique({ where: { id } });
   }
 
+  /** Búsqueda por email (login, E4-HU02). */
+  findByEmail(email: string) {
+    return this.prisma.usuario.findUnique({ where: { email } });
+  }
+
   update(id: string, dto: UpdateUsuarioDto) {
     return this.prisma.usuario.update({ where: { id }, data: dto });
   }
