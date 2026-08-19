@@ -23,6 +23,8 @@ const empresaBase: Empresa = {
   nombre: null,
   datosContacto: null,
   activa: true,
+  terminosVersion: null,
+  terminosAceptadosEn: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -62,11 +64,13 @@ describe('EmpresasService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('registrar (E3-HU01)', () => {
+  describe('registrar (E3-HU01 + E3-HU03)', () => {
     const dto: RegistrarEmpresaDto = {
       razonSocial: 'ACME SA',
       cuit: '20123456786',
       emailContacto: 'contacto@acme.com',
+      aceptaTerminos: true,
+      versionTerminos: 'v1',
     };
 
     it('registra la empresa cuando el CUIT y el correo son únicos', async () => {
@@ -78,6 +82,13 @@ describe('EmpresasService', () => {
 
       expect(repository.registrar).toHaveBeenCalledWith(dto);
       expect(res).toBe(empresaBase);
+    });
+
+    it('lanza BadRequestException si no se aceptan los términos (E3-HU03)', async () => {
+      await expect(
+        service.registrar({ ...dto, aceptaTerminos: false }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(repository.registrar).not.toHaveBeenCalled();
     });
 
     it('lanza ConflictException si el CUIT ya existe', async () => {
