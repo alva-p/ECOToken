@@ -15,6 +15,9 @@ import { Contract, id, JsonRpcProvider, Wallet } from 'ethers';
 const ACCESS_CONTROL_ABI = [
   'function grantRole(bytes32 role, address account) external',
   'function hasRole(bytes32 role, address account) external view returns (bool)',
+  'function pause() external',
+  'function unpause() external',
+  'function paused() external view returns (bool)',
 ];
 
 /**
@@ -83,6 +86,60 @@ export class BlockchainService {
       );
       throw new ServiceUnavailableException(
         'No se pudo otorgar VALIDATOR_ROLE on-chain. Intentá nuevamente más tarde.',
+      );
+    }
+  }
+
+  /** Estado actual de pausa del contrato (E10-HU02). */
+  async estaPausado(): Promise<boolean> {
+    if (!this.contract) {
+      throw new ServiceUnavailableException(
+        'No se pudo consultar el estado del contrato: la integración blockchain no está configurada.',
+      );
+    }
+
+    try {
+      return (await this.contract.paused()) as boolean;
+    } catch (err) {
+      this.logger.error(
+        `Falló la consulta de pausa del contrato: ${(err as Error).message}`,
+      );
+      throw new ServiceUnavailableException(
+        'No se pudo consultar el estado del contrato on-chain. Intentá nuevamente más tarde.',
+      );
+    }
+  }
+
+  /** Pausa el contrato (E10-HU02) y devuelve el hash de la tx confirmada. */
+  pausarContrato(): Promise<string> {
+    return this.enviarTransaccionSimple('pause', 'pausar');
+  }
+
+  /** Despausa el contrato (E10-HU02) y devuelve el hash de la tx confirmada. */
+  despausarContrato(): Promise<string> {
+    return this.enviarTransaccionSimple('unpause', 'despausar');
+  }
+
+  private async enviarTransaccionSimple(
+    metodo: 'pause' | 'unpause',
+    accion: string,
+  ): Promise<string> {
+    if (!this.contract) {
+      throw new ServiceUnavailableException(
+        `No se pudo ${accion} el contrato: la integración blockchain no está configurada.`,
+      );
+    }
+
+    try {
+      const tx = await this.contract[metodo]();
+      const receipt = await tx.wait();
+      return receipt.hash as string;
+    } catch (err) {
+      this.logger.error(
+        `Falló el ${accion} del contrato: ${(err as Error).message}`,
+      );
+      throw new ServiceUnavailableException(
+        `No se pudo ${accion} el contrato on-chain. Intentá nuevamente más tarde.`,
       );
     }
   }

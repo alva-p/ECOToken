@@ -5,6 +5,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { HealthController } from './health/health.controller';
 import { AuthModule } from './auth/auth.module';
 import { BlockchainModule } from './blockchain/blockchain.module';
+import { ContratoModule } from './contrato/contrato.module';
 import { EmpresasModule } from './empresas/empresas.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { MunicipalidadesModule } from './municipalidades/municipalidades.module';
@@ -28,6 +29,7 @@ import { ReportesModule } from './reportes/reportes.module';
     PrismaModule,
     AuthModule,
     BlockchainModule,
+    ContratoModule,
     EmpresasModule,
     UsuariosModule,
     MunicipalidadesModule,
