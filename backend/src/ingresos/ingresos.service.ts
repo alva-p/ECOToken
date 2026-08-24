@@ -1,12 +1,32 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import { CategoriaEmpresa } from '@prisma/client';
+import { EmpresasService } from '../empresas/empresas.service';
+import { BlockchainService } from '../blockchain/blockchain.service';
 import { IngresoMaterialRepository } from './repository/ingreso-material.repository';
 import { CreateIngresoMaterialDto } from './dto/create-ingreso-material.dto';
 import { UpdateIngresoMaterialDto } from './dto/update-ingreso-material.dto';
+import { RegistrarIngresoDto } from './dto/registrar-ingreso.dto';
+
+const ESTADO_REGISTRADO = 'REGISTRADO';
+const ESTADO_ACUNADO = 'ACUNADO';
 
 /** Lógica de negocio de IngresoMaterial. */
 @Injectable()
 export class IngresosService {
-  constructor(private readonly repository: IngresoMaterialRepository) {}
+  private readonly logger = new Logger(IngresosService.name);
+
+  constructor(
+    private readonly repository: IngresoMaterialRepository,
+    private readonly empresas: EmpresasService,
+    private readonly blockchain: BlockchainService,
+  ) {}
 
   create(dto: CreateIngresoMaterialDto) {
     return this.repository.create(dto);
@@ -33,19 +53,180 @@ export class IngresosService {
     return this.repository.remove(id);
   }
 
-  // ─── Métodos de negocio del diagrama de clases (stubs — completar en próximos sprints) ───
+  // ─── E5-HU01: registro de ingreso de material ───
 
-  /** Puntaje del ingreso: peso * cantidadPorKilo del Puntaje vigente del TipoMaterial. */
-  async calcularPuntaje(id: string): Promise<number> {
-    await this.findOne(id);
-    // TODO: peso * cantidadPorKilo del Puntaje vigente del TipoMaterial.
-    return 0;
+  /**
+   * Registra un ingreso de material aportado por una empresa y validado por una
+   * cooperativa, y dispara la acuñación de tokens. El ingreso se persiste SIEMPRE
+   * (estado REGISTRADO); si la acuñación on-chain está disponible y sale bien, el
+   * ingreso pasa a ACUÑADO con su MovimientoToken; si no, queda pendiente y
+   * reintentable (ver `reintentarAcunacion`).
+   */
+  async registrar(dto: RegistrarIngresoDto, cooperativaId: string | null) {
+    if (!cooperativaId) {
+      throw new ForbiddenException(
+        'El usuario no está asociado a ninguna cooperativa',
+      );
+    }
+
+    // 1) La cooperativa que registra debe estar aprobada y ser COOPERATIVA.
+    const cooperativa = await this.empresas.verificarAprobada(cooperativaId);
+    if (cooperativa.categoria !== CategoriaEmpresa.COOPERATIVA) {
+      throw new ForbiddenException(
+        'Solo una cooperativa puede registrar ingresos de material',
+      );
+    }
+    // Validación on-chain del rol validador (solo si la cadena está configurada).
+    if (this.blockchain.configurada) {
+      const habilitada = await this.blockchain.tieneValidatorRole(
+        cooperativa.walletAddress,
+      );
+      if (!habilitada) {
+        throw new ForbiddenException(
+          'La cooperativa no tiene VALIDATOR_ROLE activo on-chain',
+        );
+      }
+    }
+
+    // 2) La empresa destino debe estar aprobada.
+    const empresa = await this.empresas.verificarAprobada(dto.empresaId);
+
+    // 3) Material + puntaje vigente → cálculo de tokens.
+    const material = await this.repository.findTipoMaterialById(
+      dto.tipoMaterialId,
+    );
+    if (!material) {
+      throw new NotFoundException(
+        `TipoMaterial ${dto.tipoMaterialId} no encontrado`,
+      );
+    }
+    const puntaje = await this.repository.findPuntajeVigente(
+      dto.tipoMaterialId,
+    );
+    if (!puntaje) {
+      throw new BadRequestException(
+        `No hay un puntaje vigente para el material ${material.nombre}`,
+      );
+    }
+    const tokens = this.calcularTokens(dto.peso, puntaje.cantidadPorKilo);
+
+    // 4) Estado inicial REGISTRADO y alta del ingreso off-chain.
+    const registrado =
+      await this.repository.findEstadoByNombre(ESTADO_REGISTRADO);
+    if (!registrado) {
+      throw new InternalServerErrorException(
+        `Falta el estado ${ESTADO_REGISTRADO} (ejecutar el seed)`,
+      );
+    }
+    const ingreso = await this.repository.registrar({
+      empresaId: dto.empresaId,
+      tipoMaterialId: dto.tipoMaterialId,
+      estadoId: registrado.id,
+      peso: dto.peso,
+      tokensAcumulados: tokens,
+    });
+
+    // 5) Acuñación on-chain (best-effort; si falla, queda reintentable).
+    const acunado = await this.acunarSiPosible(
+      ingreso.id,
+      empresa.walletAddress,
+      material.nombre,
+      dto.peso,
+      tokens,
+    );
+
+    return acunado ?? this.repository.findByIdFull(ingreso.id);
   }
 
-  /** True si el estado del ingreso corresponde a "ingresado/registrado". */
-  async esIngresado(id: string): Promise<boolean> {
-    await this.findOne(id);
-    // TODO: true si el estado corresponde a "ingresado/registrado".
-    return false;
+  /**
+   * Reintenta la acuñación de un ingreso que quedó en REGISTRADO (sin
+   * MovimientoToken). A diferencia del alta, acá los errores se propagan: es una
+   * acción explícita del usuario que quiere ver el resultado.
+   */
+  async reintentarAcunacion(id: string) {
+    const ingreso = await this.repository.findByIdFull(id);
+    if (!ingreso) {
+      throw new NotFoundException(`IngresoMaterial ${id} no encontrado`);
+    }
+    if (ingreso.movimientoToken) {
+      throw new BadRequestException('El ingreso ya fue acuñado');
+    }
+    const acunado = await this.repository.findEstadoByNombre(ESTADO_ACUNADO);
+    if (!acunado) {
+      throw new InternalServerErrorException(
+        `Falta el estado ${ESTADO_ACUNADO} (ejecutar el seed)`,
+      );
+    }
+
+    const { txHash, bloque } = await this.blockchain.mint(
+      ingreso.empresa.walletAddress,
+      ingreso.tokensAcumulados,
+      ingreso.tipoMaterial.nombre,
+      ingreso.peso,
+    );
+    return this.repository.acunar(
+      id,
+      ingreso.tokensAcumulados,
+      txHash,
+      bloque,
+      acunado.id,
+    );
+  }
+
+  /** tokens = peso × cantidadPorKilo del puntaje vigente, redondeado. */
+  private calcularTokens(peso: number, cantidadPorKilo: string): number {
+    const factor = Number(cantidadPorKilo);
+    if (!Number.isFinite(factor) || factor < 0) {
+      throw new BadRequestException(
+        `Puntaje inválido (cantidadPorKilo = ${cantidadPorKilo})`,
+      );
+    }
+    return Math.round(peso * factor);
+  }
+
+  /**
+   * Intenta acuñar. Devuelve el ingreso ACUÑADO si sale bien, o `null` si la
+   * acuñación no está disponible o falló (el ingreso permanece REGISTRADO).
+   */
+  private async acunarSiPosible(
+    ingresoId: string,
+    walletEmpresa: string,
+    material: string,
+    peso: number,
+    tokens: number,
+  ) {
+    if (!this.blockchain.mintDisponible) {
+      this.logger.warn(
+        `Acuñación no disponible; el ingreso ${ingresoId} queda REGISTRADO (pendiente).`,
+      );
+      return null;
+    }
+    try {
+      const { txHash, bloque } = await this.blockchain.mint(
+        walletEmpresa,
+        tokens,
+        material,
+        peso,
+      );
+      const acunado = await this.repository.findEstadoByNombre(ESTADO_ACUNADO);
+      if (!acunado) {
+        this.logger.error(
+          `Falta el estado ${ESTADO_ACUNADO}; el ingreso ${ingresoId} queda REGISTRADO.`,
+        );
+        return null;
+      }
+      return await this.repository.acunar(
+        ingresoId,
+        tokens,
+        txHash,
+        bloque,
+        acunado.id,
+      );
+    } catch (err) {
+      this.logger.error(
+        `La acuñación del ingreso ${ingresoId} falló: ${(err as Error).message}. Queda reintentable.`,
+      );
+      return null;
+    }
   }
 }
