@@ -129,8 +129,32 @@ async function main() {
       },
     });
 
+    const municipalidadExistente = await prisma.municipalidad.findFirst({
+      where: { nombre: 'Municipalidad de Villa María' },
+    });
+    const municipalidad =
+      municipalidadExistente ??
+      (await prisma.municipalidad.create({
+        data: { nombre: 'Municipalidad de Villa María', ciudad: 'Villa María' },
+      }));
+    const municipioPasswordHash = await bcrypt.hash(
+      'municipio1234',
+      BCRYPT_ROUNDS,
+    );
+    await prisma.usuario.upsert({
+      where: { email: 'municipio@ecotoken.test' },
+      update: {},
+      create: {
+        email: 'municipio@ecotoken.test',
+        passwordHash: municipioPasswordHash,
+        tipoRol: 'MUNICIPALIDAD',
+        municipalidadId: municipalidad.id,
+      },
+    });
+
     console.log(
-      'Usuarios de prueba: admin@ecotoken.test / admin1234, coop@ecotoken.test / coop1234. ' +
+      'Usuarios de prueba: admin@ecotoken.test / admin1234, coop@ecotoken.test / coop1234, ' +
+        'municipio@ecotoken.test / municipio1234. ' +
         `Empresa de prueba (aprobada) para el buscador: ${empresaTest.razonSocial}.`,
     );
   }
