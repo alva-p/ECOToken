@@ -1,15 +1,133 @@
 import { Test } from '@nestjs/testing';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { IngresosService } from './ingresos.service';
 import { IngresoMaterialRepository } from './repository/ingreso-material.repository';
+import { EmpresasService } from '../empresas/empresas.service';
+import { BlockchainService } from '../blockchain/blockchain.service';
+import { RegistrarIngresoDto } from './dto/registrar-ingreso.dto';
+import { PuntajesService } from '../puntajes/puntajes.service';
 
-describe('IngresosService', () => {
+const coop = {
+  id: 'coop1',
+  categoria: 'COOPERATIVA',
+  walletAddress: '0xcoop',
+  estado: 'APROBADA',
+};
+const empresa = {
+  id: 'emp1',
+  categoria: 'EMPRESA',
+  walletAddress: '0xemp',
+  estado: 'APROBADA',
+};
+const dto: RegistrarIngresoDto = {
+  empresaId: 'emp1',
+  tipoMaterialId: 'mat1',
+  peso: 2.5,
+};
+
+describe('IngresosService (E5-HU01)', () => {
   let service: IngresosService;
+  let repository: Record<string, jest.Mock>;
+  let empresas: { verificarAprobada: jest.Mock };
+  let blockchain: {
+    configurada: boolean;
+    mintDisponible: boolean;
+    tieneValidatorRole: jest.Mock;
+    mint: jest.Mock;
+  };
+  let puntajesService: Record<string, jest.Mock>;
+
+  const mockIngreso = {
+    id: 'ingreso-1',
+    peso: 50,
+    tokensAcumulados: 500,
+    empresaId: 'empresa-1',
+    tipoMaterialId: 'mat-1',
+    estadoId: 'estado-1',
+    fechaIngreso: new Date('2026-01-01'),
+    estado: { nombre: 'REGISTRADO' },
+  };
+
+  const mockPuntaje = {
+    id: 'puntaje-1',
+    tipoMaterialId: 'mat-1',
+    cantidadPorKilo: '10',
+  };
 
   beforeEach(async () => {
+    repository = {
+      create: jest
+        .fn()
+        .mockImplementation((dto) =>
+          Promise.resolve({ id: 'ingreso-1', ...dto }),
+        ),
+      findAll: jest.fn().mockResolvedValue([mockIngreso]),
+      findById: jest.fn().mockResolvedValue(mockIngreso),
+      update: jest.fn().mockResolvedValue(mockIngreso),
+      remove: jest.fn().mockResolvedValue(mockIngreso),
+      findTipoMaterialById: jest
+        .fn()
+        .mockResolvedValue({ id: 'mat1', nombre: 'PLASTICO' }),
+      findPuntajeVigente: jest
+        .fn()
+        .mockResolvedValue({ id: 'p1', cantidadPorKilo: '10' }),
+      findEstadoByNombre: jest
+        .fn()
+        .mockImplementation((nombre: string) =>
+          Promise.resolve(
+            nombre === 'REGISTRADO' ? { id: 'estReg' } : { id: 'estAcu' },
+          ),
+        ),
+      registrar: jest.fn().mockResolvedValue({ id: 'ing1' }),
+      findByIdFull: jest
+        .fn()
+        .mockResolvedValue({ id: 'ing1', movimientoToken: null }),
+      acunar: jest
+        .fn()
+        .mockResolvedValue({ id: 'ing1', movimientoToken: { txHash: '0xtx' } }),
+      findAportesEmpresa: jest.fn().mockResolvedValue({
+        data: [
+          {
+            id: 'ing1',
+            fechaIngreso: new Date('2026-08-01'),
+            tokensAcumulados: 25,
+            peso: 2.5,
+            cooperativa: { razonSocial: 'Coop Puente Verde' },
+            tipoMaterial: { nombre: 'PLASTICO' },
+          },
+        ],
+        total: 1,
+      }),
+    };
+    empresas = {
+      verificarAprobada: jest
+        .fn()
+        .mockImplementation((id: string) =>
+          Promise.resolve(id === 'coop1' ? coop : empresa),
+        ),
+    };
+    blockchain = {
+      configurada: false,
+      mintDisponible: true,
+      tieneValidatorRole: jest.fn().mockResolvedValue(true),
+      mint: jest.fn().mockResolvedValue({ txHash: '0xtx', bloque: 123 }),
+    };
+
+    puntajesService = {
+      findVigenteByTipoMaterial: jest.fn().mockResolvedValue(mockPuntaje),
+    };
+
     const moduleRef = await Test.createTestingModule({
       providers: [
         IngresosService,
-        { provide: IngresoMaterialRepository, useValue: {} },
+        { provide: IngresoMaterialRepository, useValue: repository },
+        { provide: EmpresasService, useValue: empresas },
+        { provide: BlockchainService, useValue: blockchain },
+        { provide: PuntajesService, useValue: puntajesService },
       ],
     }).compile();
 
@@ -18,5 +136,257 @@ describe('IngresosService', () => {
 
   it('debería estar definido', () => {
     expect(service).toBeDefined();
+  });
+
+  it('registra el ingreso, calcula tokens y lo acuña cuando el mint está disponible', async () => {
+    await service.registrar(dto, 'coop1');
+
+    // tokens = round(2.5 * 10) = 25
+    expect(repository.registrar).toHaveBeenCalledWith(
+      expect.objectContaining({
+        empresaId: 'emp1',
+        estadoId: 'estReg',
+        peso: 2.5,
+        tokensAcumulados: 25,
+      }),
+    );
+    expect(blockchain.mint).toHaveBeenCalledWith('0xemp', 25, 'PLASTICO', 2.5);
+    expect(repository.acunar).toHaveBeenCalledWith(
+      'ing1',
+      25,
+      '0xtx',
+      123,
+      'estAcu',
+    );
+  });
+
+  it('deja el ingreso REGISTRADO (sin acuñar) cuando el mint no está disponible', async () => {
+    blockchain.mintDisponible = false;
+
+    await service.registrar(dto, 'coop1');
+
+    expect(repository.registrar).toHaveBeenCalled();
+    expect(blockchain.mint).not.toHaveBeenCalled();
+    expect(repository.acunar).not.toHaveBeenCalled();
+    expect(repository.findByIdFull).toHaveBeenCalledWith('ing1');
+  });
+
+  it('deja el ingreso REGISTRADO si el mint falla (no propaga el error)', async () => {
+    blockchain.mint.mockRejectedValueOnce(new Error('RPC caído'));
+
+    await expect(service.registrar(dto, 'coop1')).resolves.toBeDefined();
+
+    expect(repository.registrar).toHaveBeenCalled();
+    expect(repository.acunar).not.toHaveBeenCalled();
+  });
+
+  it('rechaza si el usuario no está asociado a una cooperativa', async () => {
+    await expect(service.registrar(dto, null)).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
+    expect(repository.registrar).not.toHaveBeenCalled();
+  });
+
+  it('rechaza si quien registra no es una COOPERATIVA', async () => {
+    empresas.verificarAprobada.mockResolvedValueOnce({
+      ...coop,
+      categoria: 'EMPRESA',
+    });
+
+    await expect(service.registrar(dto, 'coop1')).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
+    expect(repository.registrar).not.toHaveBeenCalled();
+  });
+
+  it('rechaza si la cooperativa no tiene VALIDATOR_ROLE on-chain', async () => {
+    blockchain.configurada = true;
+    blockchain.tieneValidatorRole.mockResolvedValueOnce(false);
+
+    await expect(service.registrar(dto, 'coop1')).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
+    expect(repository.registrar).not.toHaveBeenCalled();
+  });
+
+  it('rechaza si no hay puntaje vigente para el material', async () => {
+    repository.findPuntajeVigente.mockResolvedValueOnce(null);
+
+    await expect(service.registrar(dto, 'coop1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(repository.registrar).not.toHaveBeenCalled();
+  });
+
+  describe('reintentarAcunacion', () => {
+    it('acuña un ingreso pendiente (sin movimiento)', async () => {
+      repository.findByIdFull.mockResolvedValueOnce({
+        id: 'ing1',
+        tokensAcumulados: 25,
+        peso: 2.5,
+        empresa: { walletAddress: '0xemp' },
+        tipoMaterial: { nombre: 'PLASTICO' },
+        movimientoToken: null,
+      });
+
+      await service.reintentarAcunacion('ing1');
+
+      expect(blockchain.mint).toHaveBeenCalledWith(
+        '0xemp',
+        25,
+        'PLASTICO',
+        2.5,
+      );
+      expect(repository.acunar).toHaveBeenCalled();
+    });
+
+    it('rechaza si el ingreso ya fue acuñado', async () => {
+      repository.findByIdFull.mockResolvedValueOnce({
+        id: 'ing1',
+        movimientoToken: { txHash: '0xtx' },
+      });
+
+      await expect(service.reintentarAcunacion('ing1')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(blockchain.mint).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('misAportes (E6-HU02)', () => {
+    it('mapea el historial y aplica página/límite por defecto', async () => {
+      const res = await service.misAportes('emp1', {});
+
+      expect(repository.findAportesEmpresa).toHaveBeenCalledWith(
+        'emp1',
+        { desde: undefined, hasta: undefined, tipoMaterialId: undefined },
+        0,
+        20,
+      );
+      expect(res).toEqual({
+        data: [
+          {
+            id: 'ing1',
+            fecha: new Date('2026-08-01'),
+            cooperativa: 'Coop Puente Verde',
+            material: 'PLASTICO',
+            peso: 2.5,
+            tokens: 25,
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 20,
+      });
+    });
+
+    it('acota el límite a 500 y calcula el offset de la página', async () => {
+      await service.misAportes('emp1', { page: 3, limit: 9999 });
+
+      expect(repository.findAportesEmpresa).toHaveBeenCalledWith(
+        'emp1',
+        expect.anything(),
+        1000,
+        500,
+      );
+    });
+
+    it('rechaza si el usuario no está asociado a una empresa', async () => {
+      await expect(service.misAportes(null, {})).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(repository.findAportesEmpresa).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('comprobante (E5-HU03)', () => {
+    const ingresoCompleto = {
+      id: 'ing1',
+      empresaId: 'emp1',
+      fechaIngreso: new Date('2026-08-15'),
+      peso: 2.5,
+      tokensAcumulados: 25,
+      cooperativa: { razonSocial: 'Coop Puente Verde' },
+      tipoMaterial: { nombre: 'PLASTICO' },
+      estado: { nombre: 'ACUNADO' },
+      movimientoToken: { txHash: '0xtx' },
+    };
+
+    it('devuelve el comprobante con el link de la acuñación', async () => {
+      repository.findByIdFull.mockResolvedValueOnce(ingresoCompleto);
+
+      await expect(service.comprobante('ing1', 'emp1')).resolves.toEqual({
+        id: 'ing1',
+        fecha: ingresoCompleto.fechaIngreso,
+        cooperativa: 'Coop Puente Verde',
+        material: 'PLASTICO',
+        peso: 2.5,
+        tokens: 25,
+        estado: 'ACUNADO',
+        txHash: '0xtx',
+      });
+    });
+
+    it('txHash es null si el ingreso todavía no fue acuñado', async () => {
+      repository.findByIdFull.mockResolvedValueOnce({
+        ...ingresoCompleto,
+        estado: { nombre: 'REGISTRADO' },
+        movimientoToken: null,
+      });
+
+      const comprobante = await service.comprobante('ing1', 'emp1');
+      expect(comprobante.txHash).toBeNull();
+    });
+
+    it('rechaza si el aporte no existe', async () => {
+      repository.findByIdFull.mockResolvedValueOnce(null);
+
+      await expect(service.comprobante('ing1', 'emp1')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    it('rechaza si el aporte pertenece a otra empresa', async () => {
+      repository.findByIdFull.mockResolvedValueOnce(ingresoCompleto);
+
+      await expect(
+        service.comprobante('ing1', 'otra-empresa'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('rechaza si el usuario no está asociado a una empresa', async () => {
+      await expect(service.comprobante('ing1', null)).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(repository.findByIdFull).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('create', () => {
+    it('debería calcular automáticamente los tokens acumulados basados en peso y factor vigente', async () => {
+      const dto = {
+        peso: 40,
+        empresaId: 'empresa-1',
+        tipoMaterialId: 'mat-1',
+        estadoId: 'estado-1',
+      };
+
+      const resultado = await service.create(dto as any);
+      expect(puntajesService.findVigenteByTipoMaterial).toHaveBeenCalledWith(
+        'mat-1',
+      );
+      expect(resultado.tokensAcumulados).toBe(400); // 40 kg * 10 tokens/kg
+    });
+  });
+
+  describe('calcularPuntaje', () => {
+    it('debería calcular el puntaje de un ingreso con su factor vigente a la fecha de ingreso', async () => {
+      const puntajeCalculado = await service.calcularPuntaje('ingreso-1');
+      expect(puntajesService.findVigenteByTipoMaterial).toHaveBeenCalledWith(
+        'mat-1',
+        mockIngreso.fechaIngreso,
+      );
+      expect(puntajeCalculado).toBe(500); // 50 kg * 10 tokens/kg
+    });
   });
 });

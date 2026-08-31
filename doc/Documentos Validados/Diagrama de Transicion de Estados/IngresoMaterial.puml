@@ -1,0 +1,16 @@
+@startuml IngresoMaterial
+hide empty description
+
+state VALIDADO #f5f5f5 : reservado (seed), sin transicion aun
+
+[*] --> REGISTRADO : 1 Registrar Ingreso /registrar()
+REGISTRADO --> ACUNADO : 2 Acuñar Tokens [mint OK] /acunar()
+REGISTRADO --> REGISTRADO : 2 Acuñar Tokens [mint falla] /acunar()
+ACUNADO --> [*]
+
+note right of REGISTRADO
+  El ingreso se persiste SIEMPRE.
+  La acuñacion es best-effort:
+  si falla, se reintenta.
+end note
+@enduml

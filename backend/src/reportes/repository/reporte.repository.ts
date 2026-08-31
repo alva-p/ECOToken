@@ -27,4 +27,22 @@ export class ReporteRepository {
   remove(id: string) {
     return this.prisma.reporte.delete({ where: { id } });
   }
+
+  /** Ingresos de material en un rango de fechas, con la empresa que los generó (E9-HU02). */
+  findIngresosEnPeriodo(desde?: Date, hasta?: Date) {
+    return this.prisma.ingresoMaterial.findMany({
+      where: {
+        ...((desde || hasta) && {
+          fechaIngreso: {
+            ...(desde && { gte: desde }),
+            ...(hasta && { lte: hasta }),
+          },
+        }),
+      },
+      include: {
+        empresa: { select: { id: true, razonSocial: true } },
+      },
+      orderBy: { fechaIngreso: 'asc' },
+    });
+  }
 }

@@ -16,6 +16,9 @@ export default () => ({
     // Cuenta con ADMIN_ROLE/DEFAULT_ADMIN_ROLE on-chain: es quien puede otorgar
     // roles (p. ej. VALIDATOR_ROLE a una cooperativa, E4-HU01).
     adminPrivateKey: process.env.ADMIN_PRIVATE_KEY ?? '',
+    // Cuenta con MINTER_ROLE on-chain: firma la acuñación de tokens al registrar
+    // un ingreso de material (E5-HU01).
+    minterPrivateKey: process.env.MINTER_PRIVATE_KEY ?? '',
   },
   // Cifra datos sensibles que deben poder recuperarse (p. ej. la clave privada
   // de una billetera custodial) — ver common/helpers/crypto.helper.ts.

@@ -46,12 +46,53 @@ export class ReportesService {
     return null;
   }
 
-  /** Volumen de material reciclado por período, según los filtros. */
-  async obtenerVolumenPorPeriodo(
-    filtros: Record<string, unknown>,
-  ): Promise<unknown> {
-    // TODO: agregar el volumen por período aplicando los filtros.
-    return null;
+  /**
+   * Volumen de material reciclado por canal empresarial en un período (E9-HU02).
+   * Agrega en memoria en vez de vía SQL GROUP BY: a esta escala (proyecto
+   * académico, no miles de ingresos) es más simple que resolver el nombre de
+   * cada empresa aparte, y evita una segunda consulta.
+   */
+  async obtenerVolumenPorPeriodo(filtros: { desde?: string; hasta?: string }) {
+    const desde = filtros.desde ? new Date(filtros.desde) : undefined;
+    const hasta = filtros.hasta ? new Date(filtros.hasta) : undefined;
+    const ingresos = await this.repository.findIngresosEnPeriodo(desde, hasta);
+
+    const porEmpresa = new Map<
+      string,
+      {
+        empresaId: string;
+        razonSocial: string;
+        kgReciclados: number;
+        tokensAcumulados: number;
+        aportes: number;
+      }
+    >();
+    for (const ingreso of ingresos) {
+      const actual = porEmpresa.get(ingreso.empresaId) ?? {
+        empresaId: ingreso.empresaId,
+        razonSocial: ingreso.empresa.razonSocial,
+        kgReciclados: 0,
+        tokensAcumulados: 0,
+        aportes: 0,
+      };
+      actual.kgReciclados += ingreso.peso;
+      actual.tokensAcumulados += ingreso.tokensAcumulados;
+      actual.aportes += 1;
+      porEmpresa.set(ingreso.empresaId, actual);
+    }
+
+    const data = [...porEmpresa.values()].sort(
+      (a, b) => b.kgReciclados - a.kgReciclados,
+    );
+
+    return {
+      data,
+      totalKg: data.reduce((sum, e) => sum + e.kgReciclados, 0),
+      totalTokens: data.reduce((sum, e) => sum + e.tokensAcumulados, 0),
+      empresasActivas: data.length,
+      desde: filtros.desde ?? null,
+      hasta: filtros.hasta ?? null,
+    };
   }
 
   /** Empresas reconocidas en el mes indicado. */

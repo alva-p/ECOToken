@@ -14,26 +14,44 @@ import {
 import {
     PausableUpgradeable
 } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {
+    EIP712Upgradeable
+} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 contract ECOToken is
     Initializable,
     ERC20CappedUpgradeable,
     PausableUpgradeable,
     AccessControlUpgradeable,
-    UUPSUpgradeable
+    UUPSUpgradeable,
+    EIP712Upgradeable
 {
     // Alias del DEFAULT_ADMIN_ROLE de AccessControl: un solo rol administra roles
     // (RN-18, Vault Address) y pausa (RN-19), sin duplicar jerarquia.
     bytes32 public constant ADMIN_ROLE = DEFAULT_ADMIN_ROLE;
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant EMERGENCY_ROLE = keccak256("EMERGENCY_ROLE");
+    bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
+
+    // E2-HU03: EIP-712 typed data que el titular firma off-chain para autorizar
+    // la quema de sus tokens (beneficios opcionales). El nonce vive en `_nonces`
+    // y evita el replay de una misma firma.
+    bytes32 private constant BURN_AUTHORIZATION_TYPEHASH = keccak256(
+        "BurnAuthorization(address titular,uint256 amount,uint256 nonce,uint256 deadline)"
+    );
+
+    mapping(address titular => uint256 nonce) private _nonces;
 
     error ECOToken__ZeroAddress();
+    error ECOToken__FirmaExpirada();
+    error ECOToken__FirmaInvalida();
 
     event EmergencyBurn(address indexed target, uint256 amount, string reason);
     // peso en kg del material validado por la cooperativa; la conversion kg->tokens
     // la calcula el backend (RN-06/RN-07), aqui solo queda registrada la trazabilidad.
     event Minted(address indexed empresa, uint256 amount, string material, uint256 peso);
+    event Burned(address indexed titular, uint256 amount);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -51,6 +69,7 @@ contract ECOToken is
         __ERC20Capped_init(cap_);
         __Pausable_init();
         __AccessControl_init();
+        __EIP712_init("EcoToken", "1");
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin_);
         _grantRole(MINTER_ROLE, minter_);
@@ -70,6 +89,34 @@ contract ECOToken is
 
         _mint(empresa, amount);
         emit Minted(empresa, amount, material, peso);
+    }
+
+    // RN-XX: quema tokens del titular con su autorizacion firmada off-chain
+    // (EIP-712), para beneficios opcionales. Restringido a BURNER_ROLE; el
+    // nonce consumido evita reusar la misma firma dos veces.
+    function burn(address titular, uint256 amount, uint256 deadline, bytes calldata signature)
+        external
+        onlyRole(BURNER_ROLE)
+    {
+        if (block.timestamp > deadline) {
+            revert ECOToken__FirmaExpirada();
+        }
+
+        uint256 nonce = _nonces[titular]++;
+        bytes32 structHash =
+            keccak256(abi.encode(BURN_AUTHORIZATION_TYPEHASH, titular, amount, nonce, deadline));
+        address signer = ECDSA.recover(_hashTypedDataV4(structHash), signature);
+        if (signer != titular) {
+            revert ECOToken__FirmaInvalida();
+        }
+
+        _burn(titular, amount);
+        emit Burned(titular, amount);
+    }
+
+    /// @notice Nonce actual del titular, necesario para armar la proxima firma EIP-712.
+    function nonces(address titular) external view returns (uint256) {
+        return _nonces[titular];
     }
 
     // RN-19: pausa exclusiva del ADMIN. Emite Paused/Unpaused (OZ Pausable).

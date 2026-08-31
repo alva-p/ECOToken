@@ -2,15 +2,20 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import App from '@/App';
 import { ProtectedRoute } from './ProtectedRoute';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
+import { RegistroPage } from '@/features/auth/pages/RegistroPage';
 import { RankingPage } from '@/features/ranking/pages/RankingPage';
 import { VerificarPage } from '@/features/certificados/pages/VerificarPage';
 import { EmpresaLayout } from '@/layouts/EmpresaLayout';
 import { EmpresaDashboardPage } from '@/features/empresa/pages/DashboardPage';
+import { HistorialAportesPage } from '@/features/empresa/pages/HistorialAportesPage';
+import { ComprobanteAportePage } from '@/features/empresa/pages/ComprobanteAportePage';
 import { CooperativaLayout } from '@/layouts/CooperativaLayout';
 import { CooperativaDashboardPage } from '@/features/cooperativa/pages/DashboardPage';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { AdminDashboardPage } from '@/features/admin/pages/DashboardPage';
 import { CooperativasPage } from '@/features/admin/pages/CooperativasPage';
+import { RolesPage } from '@/features/admin/pages/RolesPage';
+import { ContratoPage } from '@/features/admin/pages/ContratoPage';
 import { MunicipioLayout } from '@/layouts/MunicipioLayout';
 import { MunicipioDashboardPage } from '@/features/municipio/pages/DashboardPage';
 
@@ -19,6 +24,7 @@ export const router = createBrowserRouter([
   // Públicas, sin login (E11-HU03).
   { path: '/', element: <App /> },
   { path: '/login', element: <LoginPage /> },
+  { path: '/registro', element: <RegistroPage /> },
   { path: '/ranking', element: <RankingPage /> },
   { path: '/verificar', element: <VerificarPage /> },
   { path: '/verificar/:hash', element: <VerificarPage /> },
@@ -31,7 +37,11 @@ export const router = createBrowserRouter([
         <EmpresaLayout />
       </ProtectedRoute>
     ),
-    children: [{ index: true, element: <EmpresaDashboardPage /> }],
+    children: [
+      { index: true, element: <EmpresaDashboardPage /> },
+      { path: 'aportes', element: <HistorialAportesPage /> },
+      { path: 'aportes/:id', element: <ComprobanteAportePage /> },
+    ],
   },
   {
     path: '/cooperativa',
@@ -52,6 +62,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <AdminDashboardPage /> },
       { path: 'cooperativas', element: <CooperativasPage /> },
+      { path: 'roles', element: <RolesPage /> },
+      { path: 'contrato', element: <ContratoPage /> },
     ],
   },
   {

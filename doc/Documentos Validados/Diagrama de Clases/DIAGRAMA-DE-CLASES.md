@@ -3,8 +3,9 @@
 Este documento describe las clases de dominio de **ECOToken**, sus atributos,
 operaciones principales y relaciones.
 
-La estructura está alineada con el modelo Prisma incorporado en el commit
-`d80d1ba1187805271e53125371ddb607b4a7b328`.
+La estructura está alineada con el modelo Prisma de la rama `develop` luego del
+Sprint 3 (registro y aprobación de empresas, términos y condiciones, billetera
+custodial, cooperativa y despliegue UUPS).
 
 > **Nota de implementación:** las clases `*.entity.ts` representan la estructura
 > de las entidades. Las operaciones de negocio se implementan principalmente en
@@ -12,6 +13,10 @@ La estructura está alineada con el modelo Prisma incorporado en el commit
 >
 > **Cooperativa:** no existe como entidad independiente. Se representa mediante
 > una `Empresa` cuya `categoria` es `COOPERATIVA`.
+>
+> **Estado de la empresa:** desde el Sprint 3, `Empresa.estado` usa el enum
+> `EstadoEmpresa` (`PENDIENTE` → `APROBADA`/`RECHAZADA`, E3-HU04); solo una
+> empresa `APROBADA` puede operar en el sistema.
 
 ---
 
@@ -59,12 +64,15 @@ class Empresa {
   +String domicilio
   +String representanteLegal
   +String emailContacto
-  +String estado
+  +EstadoEmpresa estado
   +CategoriaEmpresa categoria
   +DateTime fechaRegistro
   +String nombre
   +String datosContacto
   +Boolean activa
+  +String walletAddress
+  +String terminosVersion
+  +DateTime terminosAceptadosEn
   +DateTime createdAt
   +DateTime updatedAt
 
@@ -178,6 +186,13 @@ class CategoriaEmpresa {
   COOPERATIVA
 }
 
+class EstadoEmpresa {
+  <<enumeration>>
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+}
+
 Usuario "0..*" --> "0..1" Empresa : pertenece a
 Usuario "0..*" --> "0..1" Municipalidad : pertenece a
 
@@ -195,6 +210,7 @@ IngresoMaterial "1" --> "0..1" MovimientoToken : genera
 
 Usuario --> TipoRol
 Empresa --> CategoriaEmpresa
+Empresa --> EstadoEmpresa
 ```
 
 ---
@@ -219,6 +235,17 @@ Permite distinguir una empresa convencional de una cooperativa validadora.
 ```text
 EMPRESA
 COOPERATIVA
+```
+
+### 2.3. `EstadoEmpresa`
+
+Estado de aprobación de una empresa durante el alta (E3-HU04). Una empresa nace
+`PENDIENTE` y solo puede operar una vez `APROBADA`.
+
+```text
+PENDIENTE
+APROBADA
+RECHAZADA
 ```
 
 ---
@@ -301,13 +328,16 @@ categoria = COOPERATIVA
 | `cuit` | `String` | Sí | CUIT único. |
 | `domicilio` | `String` | No | Domicilio declarado. |
 | `representanteLegal` | `String` | No | Representante legal. |
-| `emailContacto` | `String` | No | Correo de contacto. |
-| `estado` | `String` | No | Estado general de la empresa. |
+| `emailContacto` | `String` | No | Correo de contacto (único). |
+| `estado` | `EstadoEmpresa` | Sí | Estado de aprobación (`default PENDIENTE`, E3-HU04). |
 | `categoria` | `CategoriaEmpresa` | Sí | Empresa convencional o cooperativa. |
 | `fechaRegistro` | `DateTime` | Sí | Fecha de registro. |
 | `nombre` | `String` | No | Nombre comercial. |
 | `datosContacto` | `String` | No | Información adicional de contacto. |
 | `activa` | `Boolean` | Sí | Indica si la empresa está activa. |
+| `walletAddress` | `String` | Sí | Dirección EVM custodial de la empresa (única). |
+| `terminosVersion` | `String` | No | Versión de los T&C aceptados (E3-HU03). |
+| `terminosAceptadosEn` | `DateTime` | No | Fecha/hora de aceptación de los T&C (E3-HU03). |
 | `usuarios` | `List<Usuario>` | No | Usuarios pertenecientes a la empresa. |
 | `ingresos` | `List<IngresoMaterial>` | No | Historial de ingresos de material. |
 | `billeteraCustodial` | `BilleteraCustodial` | No | Billetera custodial asociada. |
@@ -586,9 +616,17 @@ Representa el registro mensual del reconocimiento ambiental de una empresa.
 4. `cantidadPorKilo` se almacena actualmente como `String` para conservar la
    estructura del commit. Una futura revisión podría utilizar `Decimal`.
 
-5. Los campos `estado` de `Empresa` y `Ranking` son texto libre. La entidad
-   `Estado` se utiliza únicamente para `IngresoMaterial`.
+5. `Empresa.estado` usa el enum `EstadoEmpresa` (E3-HU04). El campo `estado` de
+   `Ranking` sigue siendo texto libre. La entidad `Estado` se utiliza únicamente
+   para `IngresoMaterial`.
 
 6. La clave privada de `BilleteraCustodial` no debe exponerse en respuestas,
    logs ni mensajes de error. Debe permanecer cifrada durante su
    almacenamiento.
+
+7. `Empresa` expone además `walletAddress` (dirección EVM custodial, única) como
+   atributo directo, en paralelo a la relación `billeteraCustodial`. La dirección
+   pública puede consultarse sin acceder a la clave privada cifrada.
+
+8. `Empresa` tiene un índice sobre `razonSocial` (`@@index([razonSocial])`) para
+   soportar el buscador con autocompletado de la cooperativa (E4-HU03).

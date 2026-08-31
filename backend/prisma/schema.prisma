@@ -89,7 +89,8 @@ model Empresa {
   terminosAceptadosEn DateTime?
 
   usuarios           Usuario[]
-  ingresos           IngresoMaterial[]
+  ingresos           IngresoMaterial[]        @relation("IngresosDeEmpresa")
+  aportesValidados   IngresoMaterial[]        @relation("IngresosValidadosPorCooperativa")
   billeteraCustodial BilleteraCustodial?
   certificados       CertificadoDigital[]
   reportes           Reporte[]
@@ -173,8 +174,12 @@ model IngresoMaterial {
   fechaIngreso     DateTime @default(now())
   tokensAcumulados Int      @default(0)
 
-  empresa        Empresa      @relation(fields: [empresaId], references: [id])
+  empresa        Empresa      @relation("IngresosDeEmpresa", fields: [empresaId], references: [id])
   empresaId      String
+  // Cooperativa que validó el ingreso (E6-HU02). Nullable: los ingresos previos
+  // a esta migración no la tienen registrada.
+  cooperativa    Empresa?     @relation("IngresosValidadosPorCooperativa", fields: [cooperativaId], references: [id])
+  cooperativaId  String?
   tipoMaterial   TipoMaterial @relation(fields: [tipoMaterialId], references: [id])
   tipoMaterialId String
   estado         Estado       @relation(fields: [estadoId], references: [id])
@@ -205,6 +210,23 @@ model CertificadoDigital {
 
   empresa   Empresa @relation(fields: [empresaId], references: [id])
   empresaId String
+}
+
+/// Acción de pausa/despausa (RN-19) sobre PausaContrato.
+enum AccionPausa {
+  PAUSA
+  DESPAUSA
+}
+
+/// Registro off-chain de cada pausa/despausa del contrato con su motivo,
+/// para trazabilidad de incidentes desde el panel de admin (E10-HU02).
+model PausaContrato {
+  id        String      @id @default(uuid())
+  accion    AccionPausa
+  motivo    String
+  txHash    String?
+  creadoPor String?
+  createdAt DateTime    @default(now())
 }
 
 /// Ranking mensual (snapshot auditable) del reconocimiento ambiental.

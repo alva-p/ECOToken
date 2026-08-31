@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Table } from '@/components/ui/Table';
 import { BuscadorEmpresas } from '../components/BuscadorEmpresas';
+import { RegistrarEntregaForm } from '../components/RegistrarEntregaForm';
 import type { Empresa } from '@/types';
 
-// Página inicial del panel cooperativa. El buscador de empresas es E4-HU03;
-// el formulario de registro de ingresos en sí lo construye E5-HU01.
+// Página inicial del panel cooperativa: buscador de empresas (E4-HU03) +
+// formulario de registro de ingresos (E5-HU01).
 export function CooperativaDashboardPage() {
   const [empresaSeleccionada, setEmpresaSeleccionada] =
     useState<Empresa | null>(null);
@@ -27,17 +28,7 @@ export function CooperativaDashboardPage() {
         </h2>
         <BuscadorEmpresas onSelect={setEmpresaSeleccionada} />
         {empresaSeleccionada && (
-          <Card className="mt-3 border-eco-coop">
-            <div className="text-xs font-semibold uppercase tracking-wide text-eco-ink2">
-              Empresa seleccionada
-            </div>
-            <div className="mt-1 text-sm font-semibold text-eco-ink">
-              {empresaSeleccionada.razonSocial}
-            </div>
-            <div className="text-xs text-eco-ink2">
-              {empresaSeleccionada.cuit}
-            </div>
-          </Card>
+          <RegistrarEntregaForm empresa={empresaSeleccionada} />
         )}
       </div>
 

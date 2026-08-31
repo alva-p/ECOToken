@@ -1,241 +1,401 @@
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/Button';
+import GradientWaves from '@/components/GradientWaves';
+import { Navbar } from '@/components/Navbar';
+import { ImpactoChart } from '@/components/ImpactoChart';
 import {
-  RankingPreview,
-  type RankingPodiumItem,
-  type RankingSummaryItem,
-} from '@/features/ranking/components/RankingPreview';
+  ArrowUpRight,
+  ChevronRight,
+  CircleDot,
+  Leaf,
+  Link2,
+  ShieldCheck,
+  Sparkles,
+  Trophy,
+  Waves,
+} from 'lucide-react';
 
-// Datos de ejemplo (E11-HU04): E7-HU03 reemplaza esto por datos reales del backend
-// sin tocar RankingPreview, que ya recibe todo por props.
-const EXAMPLE_SUMMARY: RankingSummaryItem[] = [
-  { label: 'Organizaciones', value: '47', sub: 'participantes activas' },
-  {
-    label: 'Total reciclado',
-    value: '8.412 kg',
-    sub: '+12% vs el mes anterior',
-  },
-  { label: 'Certificados emitidos', value: '47', sub: 'verificados on-chain' },
+const steps = [
+  [
+    '01',
+    'Entregás el material',
+    'La empresa lleva sus residuos reciclables a una cooperativa adherida.',
+  ],
+  [
+    '02',
+    'Se valida y pesa',
+    'La cooperativa registra el ingreso, tipo de material y peso exacto.',
+  ],
+  [
+    '03',
+    'Se acuñan tokens ECO',
+    'El sistema convierte el peso en reconocimiento digital de forma trazable.',
+  ],
+  [
+    '04',
+    'Subís en el ranking',
+    'Acumulás reconocimiento público y un certificado verificable cada mes.',
+  ],
 ];
 
-const EXAMPLE_PODIUM: RankingPodiumItem[] = [
+const leaders = [
+  ['01', 'Hospital Pasteur', 'Salud pública', '1.250', '489 kg'],
+  ['02', 'Supermercado Top', 'Comercio', '1.050', '412 kg'],
+  ['03', 'Coop. Puente Verde', 'Cooperativa', '980', '376 kg'],
+  ['04', 'GreenPack', 'Industria', '845', '318 kg'],
+  ['05', 'Textil Andina', 'Industria', '790', '295 kg'],
+  ['06', 'Panadería El Trigal', 'Comercio', '640', '241 kg'],
+  ['07', 'Hotel Villa María', 'Turismo', '605', '227 kg'],
+  ['08', 'Cerámica del Sur', 'Industria', '512', '192 kg'],
+  ['09', 'Escuela Técnica N°1', 'Educación', '430', '162 kg'],
+  ['10', 'Farmacia Central', 'Comercio', '388', '146 kg'],
+];
+
+// Kg reciclados por semana (landing pública, ejemplo — E7-HU03 reemplaza
+// esto por datos reales del ranking mensual).
+const impactoSemanal = [
+  { label: 'Sem 1', kg: 5200 },
+  { label: 'Sem 2', kg: 5850 },
+  { label: 'Sem 3', kg: 6100 },
+  { label: 'Sem 4', kg: 6700 },
+  { label: 'Sem 5', kg: 7050 },
+  { label: 'Sem 6', kg: 7480 },
+  { label: 'Sem 7', kg: 7900 },
+  { label: 'Sem 8', kg: 8412 },
+];
+
+// Logos para la franja animada continua
+const partnerLogos = [
   {
-    rank: 1,
-    name: 'Hospital Pasteur',
-    categoria: 'Salud pública',
-    kg: 489,
-    eco: 1250,
+    name: 'Municipalidad de Villa María',
+    src: '/logos/logo-villa-maria.png',
+    label: 'Respaldo Institucional',
   },
   {
-    rank: 2,
-    name: 'Supermercado Top',
-    categoria: 'Comercio',
-    kg: 412,
-    eco: 1050,
+    name: 'Coop. de Trabajo 7 de Febrero',
+    src: '/logos/logo-cooperativa.jpg',
+    isRound: true,
+    label: 'Cooperativa Validadora',
   },
   {
-    rank: 3,
-    name: 'Coop. Puente Verde',
-    categoria: 'Cooperativa',
-    kg: 376,
-    eco: 980,
+    name: 'GreenPack',
+    src: '/logos/logo-greenpack.png',
+    isRound: true,
+    label: 'Empresa Adherida',
+  },
+  {
+    name: 'ECOToken',
+    src: '/logos/logo-ecotoken.png',
+    label: 'Plataforma Web3',
   },
 ];
 
-const STEPS = [
-  {
-    t: 'Entregás el material',
-    d: 'La empresa lleva sus residuos reciclables a la cooperativa adherida.',
-  },
-  {
-    t: 'Se valida y pesa',
-    d: 'La cooperativa registra el ingreso: tipo de material y peso exacto.',
-  },
-  {
-    t: 'Se acuñan tokens ECO',
-    d: 'El sistema convierte el peso en tokens ECO de forma automática y trazable.',
-  },
-  {
-    t: 'Subís en el ranking',
-    d: 'Acumulás reconocimiento público y un certificado digital verificable cada mes.',
-  },
-];
+// Duplicamos el array para lograr un scroll infinito continuo de 360 grados sin cortes
+const tickerItems = [...partnerLogos, ...partnerLogos, ...partnerLogos];
 
-// Landing pública (E11-HU04): puerta de entrada del proyecto antes de tener todos
-// los paneles terminados. Diseño de referencia: doc/assets/ECOToken/screens/
-// ranking-landing.jsx (Nav/Hero) — reutiliza la paleta eco.org ya definida en vez
-// de sumar la paleta institucional separada del mockup.
 function App() {
   return (
-    <div className="bg-eco-bg">
-      <header className="border-b border-eco-border bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <img
-            src="/logos/logo-ecotoken.png"
-            alt="EcoToken"
-            className="h-14 w-auto"
-          />
-          <nav className="flex items-center gap-6">
-            <a
-              href="#como-funciona"
-              className="hidden text-sm font-medium text-eco-ink2 hover:text-eco-ink sm:block"
-            >
-              Cómo funciona
-            </a>
-            <a
-              href="#ranking-preview"
-              className="hidden text-sm font-medium text-eco-ink2 hover:text-eco-ink sm:block"
-            >
-              Ranking
-            </a>
-            <Link to="/login">
-              <Button color="org">Iniciar sesión</Button>
-            </Link>
-          </nav>
-        </div>
-      </header>
+    <main className="site-shell">
+      {/* ═══ NAVBAR FLOTANTE ESTILO MINI-NAVBAR ═══ */}
+      <Navbar />
 
-      <section className="relative overflow-hidden bg-gradient-to-b from-eco-org-soft to-eco-bg">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-32 -top-32 h-[420px] w-[420px] rounded-full bg-eco-org/25 blur-3xl"
+      {/* ═══ HERO RESPONSIVO CON GRADIENT WAVES ═══ */}
+      <section className="hero" id="inicio">
+        <GradientWaves
+          horizonColor="#07110f"
+          waveColor="#0d2d24"
+          crestColor="#baff3c"
+          speed={0.35}
+          amplitude={2.8}
+          waveScale={0.65}
+          waveRatio={0.9}
+          swell={35}
+          turbulence={20}
+          tilt={1.1}
+          zoom={1.0}
+          height={5.5}
+          fogDepth={16}
+          brightness={1.05}
+          opacity={0.8}
         />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-20 left-[-60px] h-64 w-64 rounded-full bg-eco-org/15 blur-3xl"
-        />
-        <div className="relative mx-auto max-w-5xl px-6 py-16 text-center sm:py-24">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-eco-org">
-            Villa María, Córdoba
+        <div className="hero-grid" />
+
+        <div className="hero-content container">
+          <div className="eyebrow">
+            <span className="status-dot" />
+            Villa María, Córdoba <span className="eyebrow-line" /> Proyecto
+            final UTN
           </div>
-          <h1 className="mx-auto mt-5 max-w-2xl text-4xl font-bold tracking-tight text-eco-ink sm:text-5xl">
-            Reconocimiento público para las empresas que reciclan
+          <h1>
+            Reciclar deja
+            <br />
+            <em>huella.</em>
           </h1>
-          <p className="mx-auto mt-5 max-w-xl text-lg text-eco-ink2">
-            EcoToken registra el material que entregan las empresas adheridas,
-            lo valida junto a las cooperativas de reciclaje y reconoce el
-            esfuerzo ambiental con un ranking mensual y un certificado digital
-            verificable — respaldado por la Municipalidad.
+          <p className="hero-copy">
+            La plataforma que convierte acciones reales de reciclaje empresarial
+            en <strong>reconocimiento ambiental verificable</strong> y
+            transparente.
           </p>
+          <div className="hero-actions">
+            <a className="button button-primary" href="#ranking">
+              Ver el ranking <ArrowUpRight size={17} />
+            </a>
+            <a className="button button-ghost" href="#como-funciona">
+              Conocé el proceso <ChevronRight size={17} />
+            </a>
+          </div>
+          <div className="hero-note">
+            <Link2 size={14} /> El token ECO representa reputación ambiental, no
+            dinero.
+          </div>
+        </div>
+
+        <div className="hero-metrics container">
+          <div>
+            <span>47</span>
+            <small>organizaciones activas</small>
+          </div>
+          <div>
+            <span>
+              8.412<span className="metric-unit"> kg</span>
+            </span>
+            <small>reciclados este mes</small>
+          </div>
+          <div>
+            <span>
+              100<span className="metric-unit">%</span>
+            </span>
+            <small>trazabilidad registrada</small>
+          </div>
+        </div>
+        <div className="scroll-cue">
+          <span /> desplazate para explorar
         </div>
       </section>
 
-      <section
-        id="como-funciona"
-        className="border-y border-eco-border bg-white px-6 py-16"
-      >
-        <div className="mx-auto max-w-5xl">
-          <div className="text-center">
-            <div className="text-xs font-semibold uppercase tracking-wide text-eco-org">
-              Cómo funciona
+      {/* ═══ CÓMO FUNCIONA ═══ */}
+      <section className="section process-section" id="como-funciona">
+        <div className="container">
+          <div className="section-heading">
+            <div>
+              <p className="kicker">
+                <CircleDot size={13} /> El circuito
+              </p>
+              <h2>
+                Del residuo al
+                <br />
+                <span>reconocimiento.</span>
+              </h2>
             </div>
-            <h2 className="mt-1 text-2xl font-bold tracking-tight text-eco-ink sm:text-3xl">
-              De la entrega al reconocimiento, en cuatro pasos
-            </h2>
+            <p className="section-intro">
+              Una forma simple de hacer visible el impacto que ya estás
+              generando. Sin intermediarios, sin promesas: datos claros y
+              acciones concretas.
+            </p>
           </div>
-          <div className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {STEPS.map((s, i) => (
-              <div key={s.t}>
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-eco-org-soft text-sm font-bold text-eco-org">
-                  {i + 1}
+          <div className="steps">
+            {steps.map(([n, title, body]) => (
+              <article className="step" key={n}>
+                <span className="step-number">{n}</span>
+                <div className="step-icon">
+                  {n === '01' ? (
+                    <Waves />
+                  ) : n === '02' ? (
+                    <ShieldCheck />
+                  ) : n === '03' ? (
+                    <Sparkles />
+                  ) : (
+                    <Trophy />
+                  )}
                 </div>
-                <div className="mt-3 text-sm font-semibold text-eco-ink">
-                  {s.t}
-                </div>
-                <p className="mt-1.5 text-sm text-eco-ink2">{s.d}</p>
-              </div>
+                <h3>{title}</h3>
+                <p>{body}</p>
+                <span className="step-arrow">
+                  <ArrowUpRight size={17} />
+                </span>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="ranking-preview" className="px-6 py-16">
-        <div className="mx-auto max-w-5xl">
-          <RankingPreview
-            periodo="Abril 2026 · Villa María"
-            summary={EXAMPLE_SUMMARY}
-            podium={EXAMPLE_PODIUM}
-          />
-        </div>
-      </section>
-
-      <section className="border-t border-eco-border bg-white px-6 py-12">
-        <div className="mx-auto flex max-w-5xl flex-col items-center gap-6 text-center">
-          <div className="w-full text-xs font-semibold uppercase tracking-wide text-eco-ink2">
-            Con el respaldo de
-          </div>
-          <div className="flex flex-wrap items-start justify-center gap-x-16 gap-y-8">
-            <div className="flex flex-col items-center gap-3">
-              <img
-                src="/logos/logo-villa-maria.png"
-                alt="Municipalidad Villa María"
-                className="h-16 w-auto"
-              />
-              <span className="text-sm font-semibold text-eco-ink2">
-                Municipalidad Villa María
-              </span>
+      {/* ═══ RANKING / IMPACTO ═══ */}
+      <section className="section impact-section" id="ranking">
+        <div className="container">
+          <div className="impact-head">
+            <div>
+              <p className="kicker">
+                <span className="kicker-bar" /> Impacto local / Abril 2026
+              </p>
+              <h2>
+                Así recicla
+                <br />
+                <span>Villa María.</span>
+              </h2>
             </div>
-            <div className="flex flex-col items-center gap-3">
-              <img
-                src="/logos/logo-cooperativa.jpg"
-                alt="Cooperativa de Trabajo 7 de Febrero"
-                className="h-20 w-20 rounded-full"
-              />
-              <span className="text-center text-sm font-semibold text-eco-ink2">
-                Cooperativa de Trabajo
-                <br />7 de Febrero
-              </span>
-            </div>
-            <div className="flex flex-col items-center gap-3">
-              <img
-                src="/logos/logo-greenpack.png"
-                alt="GreenPack"
-                className="h-20 w-20 rounded-full"
-              />
-              <span className="text-sm font-semibold text-eco-ink2">
-                GreenPack
-              </span>
+            <div className="impact-total">
+              <span>+12%</span>
+              <small>vs. mes anterior</small>
             </div>
           </div>
+          <div className="impact-layout">
+            <div className="impact-card">
+              <div className="card-top">
+                <span>Material recuperado</span>
+                <span className="live-pill">
+                  <i /> en vivo
+                </span>
+              </div>
+              <div className="big-number">
+                8.412 <b>kg</b>
+              </div>
+              <div className="chart">
+                <ImpactoChart data={impactoSemanal} />
+              </div>
+              <div className="impact-footer">
+                <span>
+                  <Leaf size={15} /> 47 participantes activas
+                </span>
+                <span>
+                  Meta mensual <b>78%</b>
+                </span>
+              </div>
+            </div>
+            <div className="leaderboard">
+              <div className="leaderboard-title">
+                <span>Ranking del mes</span>
+                <Link to="/ranking">
+                  Ver ranking completo <ArrowUpRight size={14} />
+                </Link>
+              </div>
+              <div className="leaderboard-list">
+                {leaders.map(([rank, name, type, points, weight]) => (
+                  <div className="leader" key={rank}>
+                    <span className={`rank rank-${rank}`}>{rank}</span>
+                    <div className="leader-info">
+                      <strong>{name}</strong>
+                      <small>{type}</small>
+                    </div>
+                    <div className="leader-weight">
+                      <strong>{weight}</strong>
+                      <small>reciclado</small>
+                    </div>
+                    <div className="leader-points">
+                      <strong>{points}</strong>
+                      <small>puntos ECO</small>
+                    </div>
+                    <ChevronRight className="leader-chevron" size={17} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="border-t border-eco-border bg-eco-ink px-6 py-16 text-center">
-        <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-          ¿Tu empresa ya recicla? Sumala al ranking.
-        </h2>
-        <p className="mx-auto mt-3 max-w-md text-sm text-white/60">
-          Accedé con la cuenta de tu organización para ver tu saldo, tus
-          certificados y tu posición.
-        </p>
-        <div className="mt-6">
-          <Link to="/login">
-            <Button color="org">Iniciar sesión</Button>
-          </Link>
+      {/* ═══ CONFIANZA / RESPALDO ═══ */}
+      <section className="section trust-section" id="respaldo">
+        <div className="container trust-wrap">
+          <div>
+            <p className="kicker">
+              <ShieldCheck size={13} /> Red de confianza
+            </p>
+            <h2>
+              Impacto que se
+              <br />
+              <span>puede comprobar.</span>
+            </h2>
+            <p className="trust-copy">
+              Cada aporte queda registrado, validado y disponible para construir
+              una cultura de reciclaje con evidencia.
+            </p>
+          </div>
+          <div className="trust-orbit">
+            <div className="orbit-ring ring-one" />
+            <div className="orbit-ring ring-two" />
+            <div className="orbit-core">
+              <Leaf size={22} />
+              <span>
+                registro
+                <br />
+                verificable
+              </span>
+            </div>
+            <span className="orbit-label label-top">Municipalidad</span>
+            <span className="orbit-label label-right">Cooperativas</span>
+            <span className="orbit-label label-bottom">Empresas</span>
+          </div>
+        </div>
+
+        {/* ═══ FRANJA CONTINUA TECH DE LOGOS EN MOVIMIENTO ═══ */}
+        <div className="partners-ticker-section">
+          <div className="partners-ticker-title">
+            <span /> Red de alianza e impacto institucional <span />
+          </div>
+          <div className="partners-ticker-track-wrapper">
+            <div className="partners-ticker-track">
+              {tickerItems.map((item, index) => (
+                <div
+                  className="partner-logo-card"
+                  key={`${item.name}-${index}`}
+                >
+                  <img
+                    src={item.src}
+                    alt={item.name}
+                    className={`partner-logo-img ${item.isRound ? 'rounded-full' : ''}`}
+                  />
+                  <span className="partner-logo-text">{item.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="border-t border-eco-border bg-eco-org-soft px-6 py-14 text-center">
-        <h2 className="text-xl font-bold tracking-tight text-eco-ink sm:text-2xl">
-          ¿Tu empresa recicla pero todavía no es parte de EcoToken?
-        </h2>
-        <p className="mx-auto mt-2 max-w-md text-sm text-eco-ink2">
-          Comunicate con nosotros y sumate al programa para empezar a acumular
-          reconocimiento y acceder a los beneficios.
-        </p>
-        <div className="mt-5">
-          <Link to="/login">
-            <Button variant="outline" color="org">
-              Quiero sumarme
-            </Button>
-          </Link>
+      {/* ═══ CTA FINAL ═══ */}
+      <section className="cta-section" id="acceso">
+        <div className="container cta-box">
+          <div>
+            <p className="kicker">
+              <span className="kicker-bar" /> Tu próximo paso
+            </p>
+            <h2>
+              ¿Tu empresa ya
+              <br />
+              <em>recicla?</em>
+            </h2>
+            <p>
+              Sumala al ranking y hacé visible el impacto que generan juntos.
+            </p>
+          </div>
+          <div className="cta-actions">
+            <Link className="button button-primary" to="/login">
+              Iniciar sesión <ArrowUpRight size={17} />
+            </Link>
+            <a
+              className="button button-light"
+              href="mailto:somosecotoken@gmail.com"
+            >
+              Quiero sumarme <ArrowUpRight size={17} />
+            </a>
+          </div>
         </div>
       </section>
 
-      <footer className="bg-white px-6 py-6 text-center text-xs text-eco-ink2">
-        © 2026 EcoToken · Municipalidad de Villa María
+      {/* ═══ FOOTER ═══ */}
+      <footer className="footer">
+        <div className="container footer-inner">
+          <a href="#inicio" className="flex items-center">
+            <img
+              src="/logos/logo-ecotoken.png"
+              alt="ECOToken"
+              className="h-6 w-auto object-contain"
+            />
+          </a>
+          <span>© 2026 EcoToken · Municipalidad de Villa María</span>
+          <span>Proyecto final · UTN</span>
+        </div>
       </footer>
-    </div>
+    </main>
   );
 }
 

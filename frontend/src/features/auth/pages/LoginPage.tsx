@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { Field } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
@@ -106,7 +106,9 @@ export function LoginPage() {
 
         <div className="mt-5 text-center text-sm text-eco-ink2">
           ¿Tu empresa todavía no participa?{' '}
-          <span className="font-semibold text-eco-org">Registrala acá</span>
+          <Link to="/registro" className="font-semibold text-eco-org">
+            Registrala acá
+          </Link>
         </div>
       </div>
     </div>

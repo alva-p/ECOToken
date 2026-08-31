@@ -28,5 +28,13 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Declaraciones ambient para librerías sin tipos propios (p. ej. `ogl`):
+    // `any` es la forma estándar de tipar un módulo externo no tipado.
+    files: ['**/*.d.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
   eslintConfigPrettier,
 );

@@ -8,8 +8,8 @@ const NAV: PanelNavItem[] = [
   { label: 'Empresas', to: '/admin' },
   { label: 'Cooperativas', to: '/admin/cooperativas' },
   { label: 'Conversión' },
-  { label: 'Roles' },
-  { label: 'Contrato' },
+  { label: 'Roles', to: '/admin/roles' },
+  { label: 'Contrato', to: '/admin/contrato' },
 ];
 
 export function AdminLayout() {

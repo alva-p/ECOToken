@@ -1,0 +1,20 @@
+@startuml Empresa
+hide empty description
+
+[*] --> PENDIENTE : 1 Registrar Empresa /registrar()
+PENDIENTE --> APROBADA : 2 Aprobar Alta [rol ADMIN] /aprobar()
+PENDIENTE --> RECHAZADA : 3 Rechazar Alta [rol ADMIN] /rechazar()
+RECHAZADA --> [*]
+
+note right of APROBADA
+  Gate verificarAprobada():
+  solo una empresa APROBADA
+  puede operar (ingresos, tokens)
+end note
+
+note bottom of APROBADA
+  Alta de cooperativa (op. 4 /altaCooperativa(), RN-04):
+  una cooperativa se crea directamente APROBADA por
+  ADMIN, sin pasar por PENDIENTE.
+end note
+@enduml

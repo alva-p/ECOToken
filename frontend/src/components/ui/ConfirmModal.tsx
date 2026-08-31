@@ -5,7 +5,8 @@ interface ConfirmModalProps {
   open: boolean;
   title: string;
   description?: ReactNode;
-  confirmLabel?: string;
+  confirmLabel?: ReactNode;
+  confirmDisabled?: boolean;
   cancelLabel?: string;
   danger?: boolean;
   onConfirm: () => void;
@@ -19,6 +20,7 @@ export function ConfirmModal({
   title,
   description,
   confirmLabel = 'Confirmar',
+  confirmDisabled,
   cancelLabel = 'Cancelar',
   danger,
   onConfirm,
@@ -37,22 +39,26 @@ export function ConfirmModal({
     <dialog
       ref={ref}
       onClose={onClose}
-      className="w-[min(90vw,460px)] rounded-xl border border-eco-border p-0 backdrop:bg-black/45"
+      className="w-[min(90vw,460px)] rounded-xl border border-eco-border bg-eco-surface p-0 backdrop:bg-black/45"
     >
       <div className="p-6">
         <h2 className="text-lg font-bold tracking-tight text-eco-ink">
           {title}
         </h2>
         {description && (
-          <p className="mt-1.5 text-sm leading-relaxed text-eco-ink2">
+          <div className="mt-1.5 text-sm leading-relaxed text-eco-ink2">
             {description}
-          </p>
+          </div>
         )}
         <div className="mt-5 flex justify-end gap-2.5">
           <Button variant="outline" color="ink" onClick={onClose}>
             {cancelLabel}
           </Button>
-          <Button color={danger ? 'danger' : 'org'} onClick={onConfirm}>
+          <Button
+            color={danger ? 'danger' : 'org'}
+            onClick={onConfirm}
+            disabled={confirmDisabled}
+          >
             {confirmLabel}
           </Button>
         </div>
