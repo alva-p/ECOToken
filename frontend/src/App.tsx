@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import GradientWaves from '@/components/GradientWaves';
 import { Navbar } from '@/components/Navbar';
+import { ImpactoChart } from '@/components/ImpactoChart';
 import {
   ArrowUpRight,
   ChevronRight,
@@ -37,9 +38,29 @@ const steps = [
 ];
 
 const leaders = [
-  ['01', 'Supermercado Top', 'Comercio', '1.050', '412 kg'],
-  ['02', 'Hospital Pasteur', 'Salud pública', '1.250', '489 kg'],
+  ['01', 'Hospital Pasteur', 'Salud pública', '1.250', '489 kg'],
+  ['02', 'Supermercado Top', 'Comercio', '1.050', '412 kg'],
   ['03', 'Coop. Puente Verde', 'Cooperativa', '980', '376 kg'],
+  ['04', 'GreenPack', 'Industria', '845', '318 kg'],
+  ['05', 'Textil Andina', 'Industria', '790', '295 kg'],
+  ['06', 'Panadería El Trigal', 'Comercio', '640', '241 kg'],
+  ['07', 'Hotel Villa María', 'Turismo', '605', '227 kg'],
+  ['08', 'Cerámica del Sur', 'Industria', '512', '192 kg'],
+  ['09', 'Escuela Técnica N°1', 'Educación', '430', '162 kg'],
+  ['10', 'Farmacia Central', 'Comercio', '388', '146 kg'],
+];
+
+// Kg reciclados por semana (landing pública, ejemplo — E7-HU03 reemplaza
+// esto por datos reales del ranking mensual).
+const impactoSemanal = [
+  { label: 'Sem 1', kg: 5200 },
+  { label: 'Sem 2', kg: 5850 },
+  { label: 'Sem 3', kg: 6100 },
+  { label: 'Sem 4', kg: 6700 },
+  { label: 'Sem 5', kg: 7050 },
+  { label: 'Sem 6', kg: 7480 },
+  { label: 'Sem 7', kg: 7900 },
+  { label: 'Sem 8', kg: 8412 },
 ];
 
 // Logos para la franja animada continua
@@ -228,9 +249,7 @@ function App() {
                 8.412 <b>kg</b>
               </div>
               <div className="chart">
-                <div className="chart-line" />
-                <span className="chart-label label-a">MAR</span>
-                <span className="chart-label label-b">ABR</span>
+                <ImpactoChart data={impactoSemanal} />
               </div>
               <div className="impact-footer">
                 <span>
@@ -248,24 +267,26 @@ function App() {
                   Ver ranking completo <ArrowUpRight size={14} />
                 </Link>
               </div>
-              {leaders.map(([rank, name, type, points, weight]) => (
-                <div className="leader" key={rank}>
-                  <span className={`rank rank-${rank}`}>{rank}</span>
-                  <div className="leader-info">
-                    <strong>{name}</strong>
-                    <small>{type}</small>
+              <div className="leaderboard-list">
+                {leaders.map(([rank, name, type, points, weight]) => (
+                  <div className="leader" key={rank}>
+                    <span className={`rank rank-${rank}`}>{rank}</span>
+                    <div className="leader-info">
+                      <strong>{name}</strong>
+                      <small>{type}</small>
+                    </div>
+                    <div className="leader-weight">
+                      <strong>{weight}</strong>
+                      <small>reciclado</small>
+                    </div>
+                    <div className="leader-points">
+                      <strong>{points}</strong>
+                      <small>puntos ECO</small>
+                    </div>
+                    <ChevronRight className="leader-chevron" size={17} />
                   </div>
-                  <div className="leader-weight">
-                    <strong>{weight}</strong>
-                    <small>reciclado</small>
-                  </div>
-                  <div className="leader-points">
-                    <strong>{points}</strong>
-                    <small>puntos ECO</small>
-                  </div>
-                  <ChevronRight className="leader-chevron" size={17} />
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
