@@ -26,14 +26,22 @@ Ver reglas de negocio en [`../doc/ESTRUCTURA-PROYECTO.md`](../doc/ESTRUCTURA-PRO
 
 ## Deployment en Sepolia (E2-HU08)
 
+Redesplegado el 2026-08-31 tras la migración a UUPS (E2-HU06) y la quema con
+firma EIP-712 (E2-HU03): el deploy anterior (`0xa649Fe...`) era de un
+contrato no-upgradeable y quedó obsoleto, no compatible con el ABI actual.
+
 | Campo | Valor |
 |-------|-------|
-| **Contrato** | [`0xa649Fe3F78206E4f5Bc2712765A2024AEED52765`](https://sepolia.etherscan.io/address/0xa649Fe3F78206E4f5Bc2712765A2024AEED52765) |
-| **Tx de deploy** | [`0x7053062c...c7d184de`](https://sepolia.etherscan.io/tx/0x7053062c08b936dc38fe539e42eaf828d15825b340eef8b64c70ced5c7d184de) |
-| **Block** | 11219041 |
+| **Contrato (proxy UUPS)** | [`0x659BDe074Dd65f9C443705Be9225bd823029E49E`](https://sepolia.etherscan.io/address/0x659BDe074Dd65f9C443705Be9225bd823029E49E) |
+| **Implementación** | [`0x1aA57bf8A1B4A51514137C42b9c85bB8cDf70057`](https://sepolia.etherscan.io/address/0x1aA57bf8A1B4A51514137C42b9c85bB8cDf70057) |
+| **Tx de deploy (proxy)** | [`0xe5d613a2...44384b6f`](https://sepolia.etherscan.io/tx/0xe5d613a2d2a87259bb0c0c9ea714abd0276567c4bf3b597fa725583e44384b6f) |
+| **Block** | 11606101 |
 | **Cap** | 1.000.000 ECO |
 | **ADMIN + MINTER + EMERGENCY** | Vault `0xE7136d34f62C3c8375a1d3Fe04ec4B2e99F9629E` |
-| **Verificado en Etherscan** | ✅ [código fuente](https://sepolia.etherscan.io/address/0xa649Fe3F78206E4f5Bc2712765A2024AEED52765#code) |
+| **VALIDATOR_ROLE / BURNER_ROLE** | Sin otorgar todavía — `initialize()` no los asigna a nadie por default. Se otorgan post-deploy desde `/admin/roles` (E10-HU01) o por alta de cooperativa (E4-HU01). |
+| **Verificado en Etherscan** | ✅ [código fuente](https://sepolia.etherscan.io/address/0x659BDe074Dd65f9C443705Be9225bd823029E49E#code) |
+
+> **Siempre usar la dirección del proxy** (`0x659BDe...`) en `backend/.env` y en cualquier integración — la implementación es un detalle interno del patrón UUPS, nunca se llama directamente.
 
 ## Vault Address (ADMIN_ROLE)
 
