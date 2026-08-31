@@ -287,7 +287,8 @@ export default function GradientWaves({
     };
 
     const tryStart = () => {
-      if (isVisible && isPageVisible && raf === 0) raf = requestAnimationFrame(loop);
+      if (isVisible && isPageVisible && raf === 0)
+        raf = requestAnimationFrame(loop);
     };
     const tryStop = () => {
       if (raf !== 0) {
@@ -302,7 +303,7 @@ export default function GradientWaves({
         if (isVisible) tryStart();
         else tryStop();
       },
-      { threshold: 0 }
+      { threshold: 0 },
     );
     io.observe(container);
 
@@ -398,5 +399,10 @@ export default function GradientWaves({
     parallaxStrength,
   ]);
 
-  return <div ref={containerRef} className={`gradient-waves-container ${className}`.trim()} />;
+  return (
+    <div
+      ref={containerRef}
+      className={`gradient-waves-container ${className}`.trim()}
+    />
+  );
 }

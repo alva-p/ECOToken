@@ -5,11 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Table } from '@/components/ui/Table';
 import { LoadingState } from '@/components/ui/States';
 import type { TipoMaterial } from '@/types';
-import {
-  listarMateriales,
-  misAportes,
-  type AporteHistorial,
-} from '../api';
+import { listarMateriales, misAportes, type AporteHistorial } from '../api';
 
 const LIMIT = 20;
 const LIMIT_EXPORT = 500;
@@ -25,15 +21,15 @@ function csvCell(value: string | number): string {
 }
 
 function descargarCsv(filas: AporteHistorial[]) {
-  const encabezado = ['Fecha', 'Cooperativa', 'Material', 'Peso (kg)', 'Tokens'];
+  const encabezado = [
+    'Fecha',
+    'Cooperativa',
+    'Material',
+    'Peso (kg)',
+    'Tokens',
+  ];
   const lineas = filas.map((f) =>
-    [
-      formatFecha(f.fecha),
-      f.cooperativa ?? '—',
-      f.material,
-      f.peso,
-      f.tokens,
-    ]
+    [formatFecha(f.fecha), f.cooperativa ?? '—', f.material, f.peso, f.tokens]
       .map(csvCell)
       .join(','),
   );

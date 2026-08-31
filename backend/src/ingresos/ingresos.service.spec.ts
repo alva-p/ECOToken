@@ -372,7 +372,9 @@ describe('IngresosService (E5-HU01)', () => {
       };
 
       const resultado = await service.create(dto as any);
-      expect(puntajesService.findVigenteByTipoMaterial).toHaveBeenCalledWith('mat-1');
+      expect(puntajesService.findVigenteByTipoMaterial).toHaveBeenCalledWith(
+        'mat-1',
+      );
       expect(resultado.tokensAcumulados).toBe(400); // 40 kg * 10 tokens/kg
     });
   });
@@ -380,7 +382,10 @@ describe('IngresosService (E5-HU01)', () => {
   describe('calcularPuntaje', () => {
     it('debería calcular el puntaje de un ingreso con su factor vigente a la fecha de ingreso', async () => {
       const puntajeCalculado = await service.calcularPuntaje('ingreso-1');
-      expect(puntajesService.findVigenteByTipoMaterial).toHaveBeenCalledWith('mat-1', mockIngreso.fechaIngreso);
+      expect(puntajesService.findVigenteByTipoMaterial).toHaveBeenCalledWith(
+        'mat-1',
+        mockIngreso.fechaIngreso,
+      );
       expect(puntajeCalculado).toBe(500); // 50 kg * 10 tokens/kg
     });
   });

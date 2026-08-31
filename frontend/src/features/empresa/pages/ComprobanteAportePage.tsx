@@ -60,8 +60,12 @@ export function ComprobanteAportePage() {
             </Dato>
             <Dato label="Cooperativa">{comprobante.cooperativa ?? '—'}</Dato>
             <Dato label="Material">{comprobante.material}</Dato>
-            <Dato label="Peso">{comprobante.peso.toLocaleString('es-AR')} kg</Dato>
-            <Dato label="Tokens">{comprobante.tokens.toLocaleString('es-AR')} ECO</Dato>
+            <Dato label="Peso">
+              {comprobante.peso.toLocaleString('es-AR')} kg
+            </Dato>
+            <Dato label="Tokens">
+              {comprobante.tokens.toLocaleString('es-AR')} ECO
+            </Dato>
             <Dato label="Estado">{comprobante.estado}</Dato>
           </div>
 

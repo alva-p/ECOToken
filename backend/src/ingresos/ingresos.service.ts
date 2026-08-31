@@ -206,7 +206,9 @@ export class IngresosService {
     },
   ) {
     if (!empresaId) {
-      throw new ForbiddenException('El usuario no está asociado a ninguna empresa');
+      throw new ForbiddenException(
+        'El usuario no está asociado a ninguna empresa',
+      );
     }
     const page = filtros.page && filtros.page > 0 ? filtros.page : 1;
     const limit =
