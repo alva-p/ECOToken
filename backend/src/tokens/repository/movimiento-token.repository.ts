@@ -27,4 +27,16 @@ export class MovimientoTokenRepository {
   remove(id: string) {
     return this.prisma.movimientoToken.delete({ where: { id } });
   }
+
+  /**
+   * Saldo de una empresa (E6-HU01): suma de los movimientos ya acuñados
+   * on-chain (tokens pendientes de acuñación no cuentan todavía).
+   */
+  async sumarSaldoEmpresa(empresaId: string): Promise<number> {
+    const { _sum } = await this.prisma.movimientoToken.aggregate({
+      where: { ingresoMaterial: { empresaId } },
+      _sum: { cantidad: true },
+    });
+    return _sum.cantidad ?? 0;
+  }
 }
