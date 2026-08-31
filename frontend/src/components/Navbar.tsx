@@ -105,7 +105,7 @@ export function Navbar() {
           <div className="relative group shrink-0">
             <div className="absolute inset-0 rounded-full bg-[#baff3c] opacity-35 filter blur-md pointer-events-none transition-all duration-300 group-hover:opacity-75 group-hover:blur-lg"></div>
             <Link
-              to="/login"
+              to="/registro"
               style={{ color: '#07110f' }}
               className="relative z-10 px-7 py-2.5 text-xs font-bold !text-[#07110f] bg-gradient-to-r from-[#baff3c] to-[#a6f427] rounded-full hover:from-[#c7ff57] hover:to-[#baff3c] transition-all duration-200 flex items-center justify-center gap-2 whitespace-nowrap shadow-md"
             >
@@ -179,7 +179,7 @@ export function Navbar() {
             Iniciar sesión
           </Link>
           <Link
-            to="/login"
+            to="/registro"
             onClick={() => setIsOpen(false)}
             style={{ color: '#07110f' }}
             className="w-full py-2.5 text-center !text-[#07110f] font-bold bg-[#baff3c] rounded-full text-xs"
