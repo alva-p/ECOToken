@@ -4,8 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { Field } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
 import { registrarEmpresa } from '../api';
-
-const VERSION_TERMINOS = 'v1';
+import { TerminosModal, VERSION_TERMINOS } from '../components/TerminosModal';
 
 const EMPTY_FORM = {
   razonSocial: '',
@@ -31,6 +30,7 @@ export function RegistroPage() {
   const [enviando, setEnviando] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
   const [enviado, setEnviado] = useState(false);
+  const [mostrarTerminos, setMostrarTerminos] = useState(false);
 
   function setField(field: keyof typeof EMPTY_FORM) {
     return (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -167,9 +167,17 @@ export function RegistroPage() {
                 type="checkbox"
                 checked={aceptaTerminos}
                 onChange={(e) => setAceptaTerminos(e.target.checked)}
-                className="mt-0.5"
+                className="mt-0.5 bg-eco-surface"
               />
-              Acepto los términos y condiciones de uso de ECOToken.
+              Acepto los{' '}
+              <button
+                type="button"
+                onClick={() => setMostrarTerminos(true)}
+                className="font-bold text-eco-org underline-offset-2 hover:underline"
+              >
+                términos y condiciones
+              </button>{' '}
+              de uso de ECOToken.
             </label>
             {errores.aceptaTerminos && (
               <p className="-mt-3 text-xs text-eco-danger">
@@ -193,6 +201,11 @@ export function RegistroPage() {
           </Link>
         </div>
       </div>
+
+      <TerminosModal
+        open={mostrarTerminos}
+        onClose={() => setMostrarTerminos(false)}
+      />
     </div>
   );
 }
