@@ -9,7 +9,7 @@ const NAV: PanelNavItem[] = [
   { label: 'Cooperativas', to: '/admin/cooperativas' },
   { label: 'Conversión' },
   { label: 'Roles', to: '/admin/roles' },
-  { label: 'Contrato' },
+  { label: 'Contrato', to: '/admin/contrato' },
 ];
 
 export function AdminLayout() {

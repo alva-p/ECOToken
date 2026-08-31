@@ -12,6 +12,7 @@ import { AdminLayout } from '@/layouts/AdminLayout';
 import { AdminDashboardPage } from '@/features/admin/pages/DashboardPage';
 import { CooperativasPage } from '@/features/admin/pages/CooperativasPage';
 import { RolesPage } from '@/features/admin/pages/RolesPage';
+import { ContratoPage } from '@/features/admin/pages/ContratoPage';
 import { MunicipioLayout } from '@/layouts/MunicipioLayout';
 import { MunicipioDashboardPage } from '@/features/municipio/pages/DashboardPage';
 
@@ -54,6 +55,7 @@ export const router = createBrowserRouter([
       { index: true, element: <AdminDashboardPage /> },
       { path: 'cooperativas', element: <CooperativasPage /> },
       { path: 'roles', element: <RolesPage /> },
+      { path: 'contrato', element: <ContratoPage /> },
     ],
   },
   {

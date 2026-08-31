@@ -207,6 +207,23 @@ model CertificadoDigital {
   empresaId String
 }
 
+/// Acción de pausa/despausa (RN-19) sobre PausaContrato.
+enum AccionPausa {
+  PAUSA
+  DESPAUSA
+}
+
+/// Registro off-chain de cada pausa/despausa del contrato con su motivo,
+/// para trazabilidad de incidentes desde el panel de admin (E10-HU02).
+model PausaContrato {
+  id        String      @id @default(uuid())
+  accion    AccionPausa
+  motivo    String
+  txHash    String?
+  creadoPor String?
+  createdAt DateTime    @default(now())
+}
+
 /// Ranking mensual (snapshot auditable) del reconocimiento ambiental.
 model Ranking {
   id               String    @id @default(uuid())

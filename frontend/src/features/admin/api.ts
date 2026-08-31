@@ -72,3 +72,27 @@ export function revocarRol(
     body: JSON.stringify({ direccionEVM, rol }),
   });
 }
+
+// ─── E10-HU02: pausar/despausar el contrato con motivo ───
+
+export interface EstadoContrato {
+  pausado: boolean;
+}
+
+export function obtenerEstadoContrato(): Promise<EstadoContrato> {
+  return api<EstadoContrato>('/admin/contrato/estado');
+}
+
+export function pausarContrato(motivo: string): Promise<{ txHash: string }> {
+  return api<{ txHash: string }>('/admin/contrato/pausar', {
+    method: 'POST',
+    body: JSON.stringify({ motivo }),
+  });
+}
+
+export function despausarContrato(motivo: string): Promise<{ txHash: string }> {
+  return api<{ txHash: string }>('/admin/contrato/despausar', {
+    method: 'POST',
+    body: JSON.stringify({ motivo }),
+  });
+}

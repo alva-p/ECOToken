@@ -19,6 +19,9 @@ const ECOTOKEN_ABI = [
   'function revokeRole(bytes32 role, address account) external',
   'function hasRole(bytes32 role, address account) external view returns (bool)',
   'function mint(address empresa, uint256 amount, string material, uint256 peso) external',
+  'function pause() external',
+  'function unpause() external',
+  'function paused() external view returns (bool)',
 ];
 
 /**
@@ -237,5 +240,59 @@ export class BlockchainService {
       throw new BadRequestException(`Rol desconocido: ${rol}`);
     }
     return id(rol);
+  }
+
+  /** Estado actual de pausa del contrato (E10-HU02). */
+  async estaPausado(): Promise<boolean> {
+    if (!this.contract) {
+      throw new ServiceUnavailableException(
+        'No se pudo consultar el estado del contrato: la integración blockchain no está configurada.',
+      );
+    }
+
+    try {
+      return (await this.contract.paused()) as boolean;
+    } catch (err) {
+      this.logger.error(
+        `Falló la consulta de pausa del contrato: ${(err as Error).message}`,
+      );
+      throw new ServiceUnavailableException(
+        'No se pudo consultar el estado del contrato on-chain. Intentá nuevamente más tarde.',
+      );
+    }
+  }
+
+  /** Pausa el contrato (E10-HU02) y devuelve el hash de la tx confirmada. */
+  pausarContrato(): Promise<string> {
+    return this.enviarTransaccionSimple('pause', 'pausar');
+  }
+
+  /** Despausa el contrato (E10-HU02) y devuelve el hash de la tx confirmada. */
+  despausarContrato(): Promise<string> {
+    return this.enviarTransaccionSimple('unpause', 'despausar');
+  }
+
+  private async enviarTransaccionSimple(
+    metodo: 'pause' | 'unpause',
+    accion: string,
+  ): Promise<string> {
+    if (!this.contract) {
+      throw new ServiceUnavailableException(
+        `No se pudo ${accion} el contrato: la integración blockchain no está configurada.`,
+      );
+    }
+
+    try {
+      const tx = await this.contract[metodo]();
+      const receipt = await tx.wait();
+      return receipt.hash as string;
+    } catch (err) {
+      this.logger.error(
+        `Falló el ${accion} del contrato: ${(err as Error).message}`,
+      );
+      throw new ServiceUnavailableException(
+        `No se pudo ${accion} el contrato on-chain. Intentá nuevamente más tarde.`,
+      );
+    }
   }
 }

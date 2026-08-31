@@ -9,6 +9,9 @@ import { BlockchainService } from './blockchain.service';
 const mockGrantRole = jest.fn();
 const mockRevokeRole = jest.fn();
 const mockHasRole = jest.fn();
+const mockPause = jest.fn();
+const mockUnpause = jest.fn();
+const mockPaused = jest.fn();
 const mockWait = jest.fn();
 
 jest.mock('ethers', () => {
@@ -21,6 +24,9 @@ jest.mock('ethers', () => {
       grantRole: mockGrantRole,
       revokeRole: mockRevokeRole,
       hasRole: mockHasRole,
+      pause: mockPause,
+      unpause: mockUnpause,
+      paused: mockPaused,
     })),
   };
 });
@@ -142,6 +148,46 @@ describe('BlockchainService', () => {
       await expect(
         service.revokeRole('VALIDATOR_ROLE', '0xCuenta'),
       ).rejects.toBeInstanceOf(ServiceUnavailableException);
+    });
+  });
+
+  describe('E10-HU02: pausa del contrato', () => {
+    it('estaPausado devuelve el estado leído del contrato', async () => {
+      mockPaused.mockResolvedValue(true);
+      const service = await buildService();
+
+      await expect(service.estaPausado()).resolves.toBe(true);
+    });
+
+    it('pausarContrato pausa y devuelve el hash de la tx', async () => {
+      mockPause.mockResolvedValue({ wait: mockWait });
+      mockWait.mockResolvedValue({ hash: '0xTxPause' });
+      const service = await buildService();
+
+      const txHash = await service.pausarContrato();
+
+      expect(mockPause).toHaveBeenCalled();
+      expect(txHash).toBe('0xTxPause');
+    });
+
+    it('despausarContrato despausa y devuelve el hash de la tx', async () => {
+      mockUnpause.mockResolvedValue({ wait: mockWait });
+      mockWait.mockResolvedValue({ hash: '0xTxUnpause' });
+      const service = await buildService();
+
+      const txHash = await service.despausarContrato();
+
+      expect(mockUnpause).toHaveBeenCalled();
+      expect(txHash).toBe('0xTxUnpause');
+    });
+
+    it('lanza ServiceUnavailableException si pausarContrato falla', async () => {
+      mockPause.mockRejectedValue(new Error('RPC caído'));
+      const service = await buildService();
+
+      await expect(service.pausarContrato()).rejects.toBeInstanceOf(
+        ServiceUnavailableException,
+      );
     });
   });
 });
