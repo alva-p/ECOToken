@@ -5,18 +5,19 @@ import {
   IsString,
 } from 'class-validator';
 
-/** Datos para dar de alta un Puntaje (configuración de tokens por kilo de material). */
+/** Datos para dar de alta o versionar un Puntaje (conversión peso -> tokens por kilo de material). */
 export class CreatePuntajeDto {
+  @IsOptional()
   @IsDateString()
-  fechaDesde: string;
+  fechaDesde?: string;
 
   @IsOptional()
   @IsDateString()
   fechaHasta?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  versionConfig: string;
+  versionConfig?: string;
 
   @IsString()
   @IsNotEmpty()

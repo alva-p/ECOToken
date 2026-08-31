@@ -13,6 +13,7 @@ import { IngresoMaterialRepository } from './repository/ingreso-material.reposit
 import { CreateIngresoMaterialDto } from './dto/create-ingreso-material.dto';
 import { UpdateIngresoMaterialDto } from './dto/update-ingreso-material.dto';
 import { RegistrarIngresoDto } from './dto/registrar-ingreso.dto';
+import { PuntajesService } from '../puntajes/puntajes.service';
 
 const ESTADO_REGISTRADO = 'REGISTRADO';
 const ESTADO_ACUNADO = 'ACUNADO';
@@ -26,9 +27,22 @@ export class IngresosService {
     private readonly repository: IngresoMaterialRepository,
     private readonly empresas: EmpresasService,
     private readonly blockchain: BlockchainService,
+    private readonly puntajesService: PuntajesService,
   ) {}
 
-  create(dto: CreateIngresoMaterialDto) {
+  /**
+   * Registra una entrega de material. Si no se proveen tokensAcumulados,
+   * los calcula automáticamente usando la tabla de conversión peso -> tokens (RN-07).
+   */
+  async create(dto: CreateIngresoMaterialDto) {
+    if (dto.tokensAcumulados === undefined || dto.tokensAcumulados === null) {
+      const factorVigente =
+        await this.puntajesService.findVigenteByTipoMaterial(
+          dto.tipoMaterialId,
+        );
+      const factorNum = parseFloat(factorVigente.cantidadPorKilo) || 1;
+      dto.tokensAcumulados = Math.floor(dto.peso * factorNum);
+    }
     return this.repository.create(dto);
   }
 
@@ -311,5 +325,24 @@ export class IngresosService {
       );
       return null;
     }
+  }
+
+  // ─── Métodos de negocio del diagrama de clases (RN-07) ───
+
+  /** Puntaje del ingreso: peso * cantidadPorKilo del Puntaje vigente del TipoMaterial. */
+  async calcularPuntaje(id: string): Promise<number> {
+    const ingreso = await this.findOne(id);
+    const puntajeVigente = await this.puntajesService.findVigenteByTipoMaterial(
+      ingreso.tipoMaterialId,
+      ingreso.fechaIngreso,
+    );
+    const factorNum = parseFloat(puntajeVigente.cantidadPorKilo) || 1;
+    return Math.floor(ingreso.peso * factorNum);
+  }
+
+  /** True si el estado del ingreso corresponde a "ingresado/registrado". */
+  async esIngresado(id: string): Promise<boolean> {
+    const ingreso = await this.findOne(id);
+    return ingreso.estado?.nombre === 'REGISTRADO';
   }
 }

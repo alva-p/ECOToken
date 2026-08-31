@@ -5,9 +5,10 @@ import { BlockchainModule } from '../blockchain/blockchain.module';
 import { IngresosController } from './ingresos.controller';
 import { IngresosService } from './ingresos.service';
 import { IngresoMaterialRepository } from './repository/ingreso-material.repository';
+import { PuntajesModule } from '../puntajes/puntajes.module';
 
 @Module({
-  imports: [AuthModule, EmpresasModule, BlockchainModule],
+  imports: [AuthModule, EmpresasModule, BlockchainModule, PuntajesModule],
   controllers: [IngresosController],
   providers: [IngresosService, IngresoMaterialRepository],
   exports: [IngresosService],
