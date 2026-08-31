@@ -33,7 +33,7 @@ contrato no-upgradeable y quedó obsoleto, no compatible con el ABI actual.
 | Campo | Valor |
 |-------|-------|
 | **Contrato (proxy UUPS)** | [`0x659BDe074Dd65f9C443705Be9225bd823029E49E`](https://sepolia.etherscan.io/address/0x659BDe074Dd65f9C443705Be9225bd823029E49E) |
-| **Implementación** | [`0x1aA57bf8A1B4A51514137C42b9c85bB8cDf70057`](https://sepolia.etherscan.io/address/0x1aA57bf8A1B4A51514137C42b9c85bB8cDf70057) |
+| **Implementación** | [`0xf74E4E4F239416CFa8A289e6Dc04ea8c5cb86fd3`](https://sepolia.etherscan.io/address/0xf74E4E4F239416CFa8A289e6Dc04ea8c5cb86fd3) (upgrade del 2026-08-31, ver abajo) |
 | **Tx de deploy (proxy)** | [`0xe5d613a2...44384b6f`](https://sepolia.etherscan.io/tx/0xe5d613a2d2a87259bb0c0c9ea714abd0276567c4bf3b597fa725583e44384b6f) |
 | **Block** | 11606101 |
 | **Cap** | 1.000.000 ECO |
@@ -42,6 +42,22 @@ contrato no-upgradeable y quedó obsoleto, no compatible con el ABI actual.
 | **Verificado en Etherscan** | ✅ [código fuente](https://sepolia.etherscan.io/address/0x659BDe074Dd65f9C443705Be9225bd823029E49E#code) |
 
 > **Siempre usar la dirección del proxy** (`0x659BDe...`) en `backend/.env` y en cualquier integración — la implementación es un detalle interno del patrón UUPS, nunca se llama directamente.
+
+### Upgrade 2026-08-31: `decimals()` a 0
+
+El backend acuña `amount` como un entero (1 unidad = 1 ECO, sin escalar por
+`10^18`), pero el contrato heredaba el `decimals()` default de OpenZeppelin
+(18). Wallets y exploradores que respetan decimales (Etherscan, MetaMask)
+mostraban el saldo real como ~0. Se subió una nueva implementación
+(`script/UpgradeECOToken.s.sol`) que pisa `decimals()` para devolver `0`; el
+storage del proxy (balances, roles, cap) no se tocó.
+
+| Campo | Valor |
+|-------|-------|
+| **Nueva implementación** | [`0xf74E4E4F239416CFa8A289e6Dc04ea8c5cb86fd3`](https://sepolia.etherscan.io/address/0xf74E4E4F239416CFa8A289e6Dc04ea8c5cb86fd3) |
+| **Tx de upgrade** | [`0x413d7f01...be5241db`](https://sepolia.etherscan.io/tx/0x413d7f017c95110897287ec65f7cf2b76371e68fc5169e862487a496be5241db) |
+| **Block** | 11607396 |
+| **Verificado en Etherscan** | ✅ |
 
 ## Vault Address (ADMIN_ROLE)
 
