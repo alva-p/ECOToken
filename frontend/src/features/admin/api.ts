@@ -29,3 +29,70 @@ export function altaCooperativa(
     body: JSON.stringify(dto),
   });
 }
+
+// ─── E10-HU01: gestión de roles on-chain ───
+
+export const ROLES_GOBERNABLES = [
+  'MINTER_ROLE',
+  'BURNER_ROLE',
+  'VALIDATOR_ROLE',
+  'EMERGENCY_ROLE',
+] as const;
+
+export type RolOnChain = (typeof ROLES_GOBERNABLES)[number];
+
+export interface CuentaConRoles {
+  direccionEVM: string;
+  empresaId: string;
+  razonSocial: string | null;
+  roles: Record<RolOnChain, boolean>;
+}
+
+/** Cuentas custodiales con el estado on-chain (hasRole) de cada rol gobernable. */
+export function listarCuentasConRoles(): Promise<CuentaConRoles[]> {
+  return api<CuentaConRoles[]>('/admin/roles/cuentas');
+}
+
+export function otorgarRol(
+  direccionEVM: string,
+  rol: RolOnChain,
+): Promise<{ txHash: string }> {
+  return api<{ txHash: string }>('/admin/roles/otorgar', {
+    method: 'POST',
+    body: JSON.stringify({ direccionEVM, rol }),
+  });
+}
+
+export function revocarRol(
+  direccionEVM: string,
+  rol: RolOnChain,
+): Promise<{ txHash: string }> {
+  return api<{ txHash: string }>('/admin/roles/revocar', {
+    method: 'POST',
+    body: JSON.stringify({ direccionEVM, rol }),
+  });
+}
+
+// ─── E10-HU02: pausar/despausar el contrato con motivo ───
+
+export interface EstadoContrato {
+  pausado: boolean;
+}
+
+export function obtenerEstadoContrato(): Promise<EstadoContrato> {
+  return api<EstadoContrato>('/admin/contrato/estado');
+}
+
+export function pausarContrato(motivo: string): Promise<{ txHash: string }> {
+  return api<{ txHash: string }>('/admin/contrato/pausar', {
+    method: 'POST',
+    body: JSON.stringify({ motivo }),
+  });
+}
+
+export function despausarContrato(motivo: string): Promise<{ txHash: string }> {
+  return api<{ txHash: string }>('/admin/contrato/despausar', {
+    method: 'POST',
+    body: JSON.stringify({ motivo }),
+  });
+}

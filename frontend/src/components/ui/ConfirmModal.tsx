@@ -44,9 +44,9 @@ export function ConfirmModal({
           {title}
         </h2>
         {description && (
-          <p className="mt-1.5 text-sm leading-relaxed text-eco-ink2">
+          <div className="mt-1.5 text-sm leading-relaxed text-eco-ink2">
             {description}
-          </p>
+          </div>
         )}
         <div className="mt-5 flex justify-end gap-2.5">
           <Button variant="outline" color="ink" onClick={onClose}>

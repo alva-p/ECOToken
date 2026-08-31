@@ -5,6 +5,7 @@ import { Test } from "forge-std/Test.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { ECOToken } from "../src/ECOToken.sol";
 
 // E2-HU06: implementacion V2 de prueba para el test de upgrade end-to-end. No agrega
@@ -383,5 +384,153 @@ contract ECOTokenTest is Test {
         );
         vm.prank(attacker);
         ecoToken.upgradeToAndCall(address(newImplementation), "");
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                        E2-HU03: QUEMA CON FIRMA EIP-712
+    //////////////////////////////////////////////////////////////*/
+
+    event Burned(address indexed titular, uint256 amount);
+
+    bytes32 private constant BURN_AUTHORIZATION_TYPEHASH = keccak256(
+        "BurnAuthorization(address titular,uint256 amount,uint256 nonce,uint256 deadline)"
+    );
+
+    uint256 private constant TITULAR_PK = 0xB33F;
+
+    address private burner = address(0xB0BB);
+    address private titular = vm.addr(TITULAR_PK);
+
+    function _domainSeparator() private view returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                keccak256(
+                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                ),
+                keccak256(bytes("EcoToken")),
+                keccak256(bytes("1")),
+                block.chainid,
+                address(ecoToken)
+            )
+        );
+    }
+
+    function _signBurn(
+        uint256 pk,
+        address forTitular,
+        uint256 amount,
+        uint256 nonce,
+        uint256 deadline
+    ) private view returns (bytes memory) {
+        bytes32 structHash = keccak256(
+            abi.encode(BURN_AUTHORIZATION_TYPEHASH, forTitular, amount, nonce, deadline)
+        );
+        bytes32 digest = MessageHashUtils.toTypedDataHash(_domainSeparator(), structHash);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
+        return abi.encodePacked(r, s, v);
+    }
+
+    function _grantBurnerRole() private {
+        bytes32 burnerRole = ecoToken.BURNER_ROLE();
+        vm.prank(admin);
+        ecoToken.grantRole(burnerRole, burner);
+    }
+
+    function testBurnerCanBurnWithValidSignature() public {
+        _grantBurnerRole();
+        vm.prank(minter);
+        ecoToken.mint(titular, 100 ether, "plastico", 10);
+
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes memory signature = _signBurn(TITULAR_PK, titular, 40 ether, 0, deadline);
+
+        vm.expectEmit(true, false, false, true);
+        emit Burned(titular, 40 ether);
+
+        vm.prank(burner);
+        ecoToken.burn(titular, 40 ether, deadline, signature);
+
+        assertEq(ecoToken.balanceOf(titular), 60 ether);
+        assertEq(ecoToken.nonces(titular), 1);
+    }
+
+    function testBurnRevertsOnSignatureReplay() public {
+        _grantBurnerRole();
+        vm.prank(minter);
+        ecoToken.mint(titular, 100 ether, "plastico", 10);
+
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes memory signature = _signBurn(TITULAR_PK, titular, 10 ether, 0, deadline);
+
+        vm.prank(burner);
+        ecoToken.burn(titular, 10 ether, deadline, signature);
+
+        vm.expectRevert(ECOToken.ECOToken__FirmaInvalida.selector);
+        vm.prank(burner);
+        ecoToken.burn(titular, 10 ether, deadline, signature);
+    }
+
+    function testBurnRevertsOnWrongSigner() public {
+        _grantBurnerRole();
+        vm.prank(minter);
+        ecoToken.mint(titular, 100 ether, "plastico", 10);
+
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 otherPk = 0xBAD5;
+        bytes memory signature = _signBurn(otherPk, titular, 10 ether, 0, deadline);
+
+        vm.expectRevert(ECOToken.ECOToken__FirmaInvalida.selector);
+        vm.prank(burner);
+        ecoToken.burn(titular, 10 ether, deadline, signature);
+    }
+
+    function testBurnRevertsOnExpiredDeadline() public {
+        _grantBurnerRole();
+        vm.prank(minter);
+        ecoToken.mint(titular, 100 ether, "plastico", 10);
+
+        uint256 deadline = block.timestamp;
+        bytes memory signature = _signBurn(TITULAR_PK, titular, 10 ether, 0, deadline);
+
+        vm.warp(deadline + 1);
+
+        vm.expectRevert(ECOToken.ECOToken__FirmaExpirada.selector);
+        vm.prank(burner);
+        ecoToken.burn(titular, 10 ether, deadline, signature);
+    }
+
+    function testNonBurnerCannotBurn() public {
+        vm.prank(minter);
+        ecoToken.mint(titular, 100 ether, "plastico", 10);
+
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes memory signature = _signBurn(TITULAR_PK, titular, 10 ether, 0, deadline);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                attacker,
+                ecoToken.BURNER_ROLE()
+            )
+        );
+        vm.prank(attacker);
+        ecoToken.burn(titular, 10 ether, deadline, signature);
+    }
+
+    function testBurnRevertsWhilePaused() public {
+        _grantBurnerRole();
+        vm.prank(minter);
+        ecoToken.mint(titular, 100 ether, "plastico", 10);
+
+        vm.prank(admin);
+        ecoToken.pause();
+
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes memory signature = _signBurn(TITULAR_PK, titular, 10 ether, 0, deadline);
+
+        vm.expectRevert(Pausable.EnforcedPause.selector);
+        vm.prank(burner);
+        ecoToken.burn(titular, 10 ether, deadline, signature);
     }
 }

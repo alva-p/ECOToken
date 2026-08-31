@@ -4,7 +4,7 @@ import { PanelLayout, type PanelNavItem } from './PanelLayout';
 
 const NAV: PanelNavItem[] = [
   { label: 'Resumen', to: '/empresa' },
-  { label: 'Aportes' },
+  { label: 'Aportes', to: '/empresa/aportes' },
   { label: 'Ranking' },
   { label: 'Certificados' },
 ];
