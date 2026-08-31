@@ -23,7 +23,7 @@ function csvCell(value: string | number): string {
 function descargarCsv(filas: AporteHistorial[]) {
   const encabezado = [
     'Fecha',
-    'Cooperativa',
+    'Validado por',
     'Material',
     'Peso (kg)',
     'Tokens',
@@ -161,7 +161,7 @@ export function HistorialAportesPage() {
           <Table
             columns={[
               { label: 'Fecha' },
-              { label: 'Cooperativa' },
+              { label: 'Validado por' },
               { label: 'Material' },
               { label: 'Peso (kg)', align: 'right' },
               { label: 'Tokens', align: 'right' },
