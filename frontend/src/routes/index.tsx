@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import App from '@/App';
 import { ProtectedRoute } from './ProtectedRoute';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
+import { RegistroPage } from '@/features/auth/pages/RegistroPage';
 import { RankingPage } from '@/features/ranking/pages/RankingPage';
 import { VerificarPage } from '@/features/certificados/pages/VerificarPage';
 import { EmpresaLayout } from '@/layouts/EmpresaLayout';
@@ -23,6 +24,7 @@ export const router = createBrowserRouter([
   // Públicas, sin login (E11-HU03).
   { path: '/', element: <App /> },
   { path: '/login', element: <LoginPage /> },
+  { path: '/registro', element: <RegistroPage /> },
   { path: '/ranking', element: <RankingPage /> },
   { path: '/verificar', element: <VerificarPage /> },
   { path: '/verificar/:hash', element: <VerificarPage /> },

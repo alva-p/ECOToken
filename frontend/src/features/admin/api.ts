@@ -96,3 +96,27 @@ export function despausarContrato(motivo: string): Promise<{ txHash: string }> {
     body: JSON.stringify({ motivo }),
   });
 }
+
+// ─── E3-HU04: aprobar/rechazar altas de empresa pendientes ───
+
+export interface AprobarEmpresaResponse {
+  empresa: Empresa;
+  credencialesTemporales: {
+    email: string;
+    passwordTemporal: string;
+  };
+}
+
+export function listarEmpresasPendientes(): Promise<Empresa[]> {
+  return api<Empresa[]>('/empresas/pendientes');
+}
+
+export function aprobarEmpresa(id: string): Promise<AprobarEmpresaResponse> {
+  return api<AprobarEmpresaResponse>(`/empresas/${id}/aprobar`, {
+    method: 'PATCH',
+  });
+}
+
+export function rechazarEmpresa(id: string): Promise<Empresa> {
+  return api<Empresa>(`/empresas/${id}/rechazar`, { method: 'PATCH' });
+}

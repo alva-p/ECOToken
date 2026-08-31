@@ -269,19 +269,46 @@ describe('EmpresasService', () => {
   });
 
   describe('aprobar / rechazar (E3-HU04)', () => {
-    it('aprueba una empresa PENDIENTE → APROBADA', async () => {
+    it('aprueba una empresa PENDIENTE → APROBADA y crea su usuario de acceso', async () => {
       repository.findById.mockResolvedValue(empresaBase);
       repository.updateEstado.mockResolvedValue({
         ...empresaBase,
         estado: EstadoEmpresa.APROBADA,
       });
+      usuariosService.create.mockResolvedValue({
+        id: 'u1',
+        email: empresaBase.emailContacto,
+      });
 
-      await service.aprobar('e1');
+      const res = await service.aprobar('e1');
 
       expect(repository.updateEstado).toHaveBeenCalledWith(
         'e1',
         EstadoEmpresa.APROBADA,
       );
+      expect(usuariosService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: empresaBase.emailContacto,
+          tipoRol: TipoRol.EMPRESA,
+          empresaId: empresaBase.id,
+        }),
+      );
+      expect(res.credencialesTemporales.email).toBe(empresaBase.emailContacto);
+      expect(res.credencialesTemporales.passwordTemporal).toEqual(
+        expect.any(String),
+      );
+    });
+
+    it('rechaza aprobar si la empresa no tiene email de contacto', async () => {
+      repository.findById.mockResolvedValue({
+        ...empresaBase,
+        emailContacto: null,
+      });
+
+      await expect(service.aprobar('e1')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(repository.updateEstado).not.toHaveBeenCalled();
     });
 
     it('rechaza una empresa PENDIENTE → RECHAZADA', async () => {

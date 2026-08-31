@@ -352,7 +352,7 @@ function App() {
             </Link>
             <a
               className="button button-light"
-              href="mailto:ecotoken@utn.edu.ar"
+              href="mailto:somosecotoken@gmail.com"
             >
               Quiero sumarme <ArrowUpRight size={17} />
             </a>

@@ -160,7 +160,12 @@ export class EmpresasService {
     return this.repository.findByEstado(EstadoEmpresa.PENDIENTE);
   }
 
-  /** Aprueba una empresa PENDIENTE → APROBADA. */
+  /**
+   * Aprueba una empresa PENDIENTE → APROBADA y crea el Usuario con el que va
+   * a iniciar sesión (mismo patrón que altaCooperativa, E4-HU01), con una
+   * contraseña temporal que se devuelve una única vez en la respuesta para
+   * que el admin se la comparta a la empresa.
+   */
   async aprobar(id: string) {
     const empresa = await this.findOne(id);
     if (empresa.estado !== EstadoEmpresa.PENDIENTE) {
@@ -168,7 +173,28 @@ export class EmpresasService {
         `Solo se puede aprobar una empresa PENDIENTE (estado actual: ${empresa.estado})`,
       );
     }
-    return this.repository.updateEstado(id, EstadoEmpresa.APROBADA);
+    if (!empresa.emailContacto) {
+      throw new BadRequestException(
+        'La empresa no tiene email de contacto: no se puede crear su usuario de acceso',
+      );
+    }
+    const aprobada = await this.repository.updateEstado(
+      id,
+      EstadoEmpresa.APROBADA,
+    );
+
+    const passwordTemporal = generarPasswordTemporal();
+    const usuario = await this.usuariosService.create({
+      email: empresa.emailContacto,
+      passwordHash: await bcrypt.hash(passwordTemporal, BCRYPT_ROUNDS),
+      tipoRol: TipoRol.EMPRESA,
+      empresaId: empresa.id,
+    });
+
+    return {
+      empresa: aprobada,
+      credencialesTemporales: { email: usuario.email, passwordTemporal },
+    };
   }
 
   /** Rechaza una empresa PENDIENTE → RECHAZADA. */
