@@ -33,6 +33,7 @@ describe('IngresosService (E5-HU01)', () => {
     registrar: jest.Mock;
     findByIdFull: jest.Mock;
     acunar: jest.Mock;
+    findAportesEmpresa: jest.Mock;
   };
   let empresas: { verificarAprobada: jest.Mock };
   let blockchain: {
@@ -64,6 +65,19 @@ describe('IngresosService (E5-HU01)', () => {
       acunar: jest
         .fn()
         .mockResolvedValue({ id: 'ing1', movimientoToken: { txHash: '0xtx' } }),
+      findAportesEmpresa: jest.fn().mockResolvedValue({
+        data: [
+          {
+            id: 'ing1',
+            fechaIngreso: new Date('2026-08-01'),
+            tokensAcumulados: 25,
+            peso: 2.5,
+            cooperativa: { razonSocial: 'Coop Puente Verde' },
+            tipoMaterial: { nombre: 'PLASTICO' },
+          },
+        ],
+        total: 1,
+      }),
     };
     empresas = {
       verificarAprobada: jest
@@ -207,6 +221,52 @@ describe('IngresosService (E5-HU01)', () => {
         BadRequestException,
       );
       expect(blockchain.mint).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('misAportes (E6-HU02)', () => {
+    it('mapea el historial y aplica página/límite por defecto', async () => {
+      const res = await service.misAportes('emp1', {});
+
+      expect(repository.findAportesEmpresa).toHaveBeenCalledWith(
+        'emp1',
+        { desde: undefined, hasta: undefined, tipoMaterialId: undefined },
+        0,
+        20,
+      );
+      expect(res).toEqual({
+        data: [
+          {
+            id: 'ing1',
+            fecha: new Date('2026-08-01'),
+            cooperativa: 'Coop Puente Verde',
+            material: 'PLASTICO',
+            peso: 2.5,
+            tokens: 25,
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 20,
+      });
+    });
+
+    it('acota el límite a 500 y calcula el offset de la página', async () => {
+      await service.misAportes('emp1', { page: 3, limit: 9999 });
+
+      expect(repository.findAportesEmpresa).toHaveBeenCalledWith(
+        'emp1',
+        expect.anything(),
+        1000,
+        500,
+      );
+    });
+
+    it('rechaza si el usuario no está asociado a una empresa', async () => {
+      await expect(service.misAportes(null, {})).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(repository.findAportesEmpresa).not.toHaveBeenCalled();
     });
   });
 });

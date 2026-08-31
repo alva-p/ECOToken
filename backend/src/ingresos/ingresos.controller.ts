@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { TipoRol } from '@prisma/client';
@@ -38,6 +39,27 @@ export class IngresosController {
   @Post(':id/acunar')
   reintentarAcunacion(@Param('id') id: string) {
     return this.service.reintentarAcunacion(id);
+  }
+
+  // ─── E6-HU02: historial de aportes de la empresa logueada ───
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.EMPRESA)
+  @Get('mis-aportes')
+  misAportes(
+    @CurrentUser() user: JwtPayload,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('desde') desde?: string,
+    @Query('hasta') hasta?: string,
+    @Query('tipoMaterialId') tipoMaterialId?: string,
+  ) {
+    return this.service.misAportes(user.empresaId, {
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
+      desde,
+      hasta,
+      tipoMaterialId,
+    });
   }
 
   // ─── CRUD genérico (interno / admin) ───

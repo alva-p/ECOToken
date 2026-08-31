@@ -120,6 +120,7 @@ export class IngresosService {
     }
     const ingreso = await this.repository.registrar({
       empresaId: dto.empresaId,
+      cooperativaId,
       tipoMaterialId: dto.tipoMaterialId,
       estadoId: registrado.id,
       peso: dto.peso,
@@ -171,6 +172,56 @@ export class IngresosService {
       bloque,
       acunado.id,
     );
+  }
+
+  // ─── E6-HU02: historial de aportes de la empresa ───
+
+  /**
+   * Historial paginado de aportes de la empresa logueada, para auditoría interna.
+   * `limit` se acota a 500 para permitir exportar el historial filtrado completo
+   * a CSV en una sola página sin abrir un endpoint de exportación aparte.
+   */
+  async misAportes(
+    empresaId: string | null,
+    filtros: {
+      page?: number;
+      limit?: number;
+      desde?: string;
+      hasta?: string;
+      tipoMaterialId?: string;
+    },
+  ) {
+    if (!empresaId) {
+      throw new ForbiddenException('El usuario no está asociado a ninguna empresa');
+    }
+    const page = filtros.page && filtros.page > 0 ? filtros.page : 1;
+    const limit =
+      filtros.limit && filtros.limit > 0 ? Math.min(filtros.limit, 500) : 20;
+
+    const { data, total } = await this.repository.findAportesEmpresa(
+      empresaId,
+      {
+        desde: filtros.desde ? new Date(filtros.desde) : undefined,
+        hasta: filtros.hasta ? new Date(filtros.hasta) : undefined,
+        tipoMaterialId: filtros.tipoMaterialId,
+      },
+      (page - 1) * limit,
+      limit,
+    );
+
+    return {
+      data: data.map((ingreso) => ({
+        id: ingreso.id,
+        fecha: ingreso.fechaIngreso,
+        cooperativa: ingreso.cooperativa?.razonSocial ?? null,
+        material: ingreso.tipoMaterial.nombre,
+        peso: ingreso.peso,
+        tokens: ingreso.tokensAcumulados,
+      })),
+      total,
+      page,
+      limit,
+    };
   }
 
   /** tokens = peso × cantidadPorKilo del puntaje vigente, redondeado. */

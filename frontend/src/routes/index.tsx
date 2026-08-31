@@ -6,6 +6,7 @@ import { RankingPage } from '@/features/ranking/pages/RankingPage';
 import { VerificarPage } from '@/features/certificados/pages/VerificarPage';
 import { EmpresaLayout } from '@/layouts/EmpresaLayout';
 import { EmpresaDashboardPage } from '@/features/empresa/pages/DashboardPage';
+import { HistorialAportesPage } from '@/features/empresa/pages/HistorialAportesPage';
 import { CooperativaLayout } from '@/layouts/CooperativaLayout';
 import { CooperativaDashboardPage } from '@/features/cooperativa/pages/DashboardPage';
 import { AdminLayout } from '@/layouts/AdminLayout';
@@ -31,7 +32,10 @@ export const router = createBrowserRouter([
         <EmpresaLayout />
       </ProtectedRoute>
     ),
-    children: [{ index: true, element: <EmpresaDashboardPage /> }],
+    children: [
+      { index: true, element: <EmpresaDashboardPage /> },
+      { path: 'aportes', element: <HistorialAportesPage /> },
+    ],
   },
   {
     path: '/cooperativa',

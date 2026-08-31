@@ -6,6 +6,7 @@ import { UpdateIngresoMaterialDto } from '../dto/update-ingreso-material.dto';
 /** Datos internos para dar de alta un ingreso ya validado (E5-HU01). */
 export interface RegistrarIngresoData {
   empresaId: string;
+  cooperativaId: string;
   tipoMaterialId: string;
   estadoId: string;
   peso: number;
@@ -15,6 +16,7 @@ export interface RegistrarIngresoData {
 /** Relaciones que se devuelven al consultar un ingreso completo. */
 const INGRESO_INCLUDE = {
   empresa: true,
+  cooperativa: true,
   tipoMaterial: true,
   estado: true,
   movimientoToken: true,
@@ -79,6 +81,43 @@ export class IngresoMaterialRepository {
       data,
       include: INGRESO_INCLUDE,
     });
+  }
+
+  // ─── E6-HU02: historial de aportes de la empresa ───
+
+  /** Ingresos de una empresa, paginados y filtrados por fecha/material. */
+  async findAportesEmpresa(
+    empresaId: string,
+    filtros: { desde?: Date; hasta?: Date; tipoMaterialId?: string },
+    skip: number,
+    take: number,
+  ) {
+    const where = {
+      empresaId,
+      ...(filtros.tipoMaterialId && {
+        tipoMaterialId: filtros.tipoMaterialId,
+      }),
+      ...((filtros.desde || filtros.hasta) && {
+        fechaIngreso: {
+          ...(filtros.desde && { gte: filtros.desde }),
+          ...(filtros.hasta && { lte: filtros.hasta }),
+        },
+      }),
+    };
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.ingresoMaterial.findMany({
+        where,
+        include: {
+          cooperativa: { select: { razonSocial: true } },
+          tipoMaterial: { select: { nombre: true } },
+        },
+        orderBy: { fechaIngreso: 'desc' },
+        skip,
+        take,
+      }),
+      this.prisma.ingresoMaterial.count({ where }),
+    ]);
+    return { data, total };
   }
 
   /**
