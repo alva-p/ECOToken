@@ -55,10 +55,7 @@ export class ReportesService {
   async obtenerVolumenPorPeriodo(filtros: { desde?: string; hasta?: string }) {
     const desde = filtros.desde ? new Date(filtros.desde) : undefined;
     const hasta = filtros.hasta ? new Date(filtros.hasta) : undefined;
-    const ingresos = await this.repository.findIngresosEnPeriodo(
-      desde,
-      hasta,
-    );
+    const ingresos = await this.repository.findIngresosEnPeriodo(desde, hasta);
 
     const porEmpresa = new Map<
       string,
