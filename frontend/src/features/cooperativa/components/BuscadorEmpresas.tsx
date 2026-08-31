@@ -96,7 +96,7 @@ export function BuscadorEmpresas({ onSelect }: BuscadorEmpresasProps) {
         onKeyDown={handleKeyDown}
         placeholder="Buscar por razón social o CUIT…"
         aria-label="Buscar empresa"
-        className="w-full rounded-lg border border-eco-border-strong px-3.5 py-2.5 text-sm text-eco-ink placeholder:text-eco-ink3 focus:outline-none focus:ring-2 focus:ring-eco-coop/30"
+        className="w-full rounded-lg border border-eco-border-strong bg-eco-surface px-3.5 py-2.5 text-sm text-eco-ink placeholder:text-eco-ink3 focus:outline-none focus:ring-2 focus:ring-eco-coop/30"
       />
       {mostrarDropdown && (
         <Card className="absolute z-10 mt-1 w-full p-1">
