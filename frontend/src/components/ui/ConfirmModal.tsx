@@ -5,7 +5,8 @@ interface ConfirmModalProps {
   open: boolean;
   title: string;
   description?: ReactNode;
-  confirmLabel?: string;
+  confirmLabel?: ReactNode;
+  confirmDisabled?: boolean;
   cancelLabel?: string;
   danger?: boolean;
   onConfirm: () => void;
@@ -19,6 +20,7 @@ export function ConfirmModal({
   title,
   description,
   confirmLabel = 'Confirmar',
+  confirmDisabled,
   cancelLabel = 'Cancelar',
   danger,
   onConfirm,
@@ -52,7 +54,11 @@ export function ConfirmModal({
           <Button variant="outline" color="ink" onClick={onClose}>
             {cancelLabel}
           </Button>
-          <Button color={danger ? 'danger' : 'org'} onClick={onConfirm}>
+          <Button
+            color={danger ? 'danger' : 'org'}
+            onClick={onConfirm}
+            disabled={confirmDisabled}
+          >
             {confirmLabel}
           </Button>
         </div>
