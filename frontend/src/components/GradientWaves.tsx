@@ -154,7 +154,10 @@ void main() {
 }
 `;
 
-const ctxMap = new WeakMap<HTMLElement, any>();
+const ctxMap = new WeakMap<
+  HTMLElement,
+  { renderer: Renderer; program: Program; mesh: Mesh }
+>();
 
 export default function GradientWaves({
   horizonColor = '#07110f',
@@ -296,7 +299,8 @@ export default function GradientWaves({
     const io = new IntersectionObserver(
       ([entry]) => {
         isVisible = entry.isIntersecting;
-        isVisible ? tryStart() : tryStop();
+        if (isVisible) tryStart();
+        else tryStop();
       },
       { threshold: 0 }
     );
@@ -304,7 +308,8 @@ export default function GradientWaves({
 
     const onVisibility = () => {
       isPageVisible = !document.hidden;
-      isPageVisible ? tryStart() : tryStop();
+      if (isPageVisible) tryStart();
+      else tryStop();
     };
     document.addEventListener('visibilitychange', onVisibility);
 
@@ -320,7 +325,9 @@ export default function GradientWaves({
       ctxMap.delete(container);
       try {
         container.removeChild(canvas);
-      } catch {}
+      } catch {
+        // ya pudo haber sido desmontado por StrictMode/HMR; no es un error real.
+      }
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
   }, []);
