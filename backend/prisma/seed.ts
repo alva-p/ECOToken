@@ -104,7 +104,7 @@ async function main() {
         categoria: 'COOPERATIVA',
         estado: 'APROBADA',
         activa: true,
-        walletAddress: '0x1111111111111111111111111111111111111a',
+        walletAddress: '0x111111111111111111111111111111111111111a',
       },
     });
     await prisma.billeteraCustodial.upsert({
