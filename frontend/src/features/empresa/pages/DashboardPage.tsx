@@ -2,16 +2,26 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Table } from '@/components/ui/Table';
-import { miSaldo } from '../api';
+import { miSaldo, misAportes, type AporteHistorial } from '../api';
 
 const POLL_MS = 30_000;
+const DIAS_ULTIMOS_APORTES = 7;
 
-// Página inicial del panel empresa (E11-HU03). El historial de aportes lo
-// conecta E6-HU02.
+function hace7Dias(): string {
+  const fecha = new Date();
+  fecha.setDate(fecha.getDate() - DIAS_ULTIMOS_APORTES);
+  return fecha.toISOString().slice(0, 10);
+}
+
+// Página inicial del panel empresa (E11-HU03). El historial completo lo
+// muestra E6-HU02.
 export function EmpresaDashboardPage() {
   const [saldo, setSaldo] = useState<number | null>(null);
   const [cargando, setCargando] = useState(true);
   const [sinConexion, setSinConexion] = useState(false);
+
+  const [ultimosAportes, setUltimosAportes] = useState<AporteHistorial[]>([]);
+  const [cargandoAportes, setCargandoAportes] = useState(true);
 
   useEffect(() => {
     let cancelado = false;
@@ -37,6 +47,13 @@ export function EmpresaDashboardPage() {
     };
   }, []);
 
+  useEffect(() => {
+    misAportes({ desde: hace7Dias(), limit: 20 })
+      .then((res) => setUltimosAportes(res.data))
+      .catch(() => setUltimosAportes([]))
+      .finally(() => setCargandoAportes(false));
+  }, []);
+
   return (
     <div className="flex flex-col gap-5">
       <Card>
@@ -52,17 +69,28 @@ export function EmpresaDashboardPage() {
       </Card>
       <div>
         <h2 className="mb-3 text-sm font-semibold text-eco-ink">
-          Últimos aportes
+          Últimos aportes (últimos {DIAS_ULTIMOS_APORTES} días)
         </h2>
         <Table
           columns={[
             { label: 'Fecha' },
             { label: 'Material' },
-            { label: 'Peso' },
+            { label: 'Peso (kg)' },
             { label: 'Tokens', align: 'right' },
           ]}
-          rows={[]}
-          emptyLabel="Todavía no registraste aportes."
+          rows={ultimosAportes.map((a) => ({
+            cells: [
+              new Date(a.fecha).toLocaleDateString('es-AR'),
+              a.material,
+              a.peso.toLocaleString('es-AR'),
+              a.tokens.toLocaleString('es-AR'),
+            ],
+          }))}
+          emptyLabel={
+            cargandoAportes
+              ? 'Cargando…'
+              : `Todavía no registraste aportes en los últimos ${DIAS_ULTIMOS_APORTES} días.`
+          }
         />
       </div>
     </div>
