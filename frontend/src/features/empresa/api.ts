@@ -63,7 +63,12 @@ export function comprobanteAporte(id: string): Promise<ComprobanteAporte> {
   return api<ComprobanteAporte>(`/ingresos/${id}/comprobante`);
 }
 
-/** Saldo actual de tokens ECO de la empresa logueada (E6-HU01). */
-export function miSaldo(): Promise<{ saldo: number }> {
-  return api<{ saldo: number }>('/tokens/mi-saldo');
+/** Saldo actual de tokens ECO y dirección EVM de la empresa logueada (E6-HU01). */
+export function miSaldo(): Promise<{
+  saldo: number;
+  walletAddress: string | null;
+}> {
+  return api<{ saldo: number; walletAddress: string | null }>(
+    '/tokens/mi-saldo',
+  );
 }
