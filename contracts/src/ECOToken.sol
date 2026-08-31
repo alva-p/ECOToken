@@ -119,6 +119,13 @@ contract ECOToken is
         return _nonces[titular];
     }
 
+    // El backend acuna 1 unidad = 1 ECO (RN-06/RN-07 convierten kg a un entero de
+    // tokens, sin escalar por 10^18); sin este override, wallets y exploradores que
+    // asumen los 18 decimales default de ERC20 muestran el saldo como ~0.
+    function decimals() public pure override returns (uint8) {
+        return 0;
+    }
+
     // RN-19: pausa exclusiva del ADMIN. Emite Paused/Unpaused (OZ Pausable).
     function pause() external onlyRole(ADMIN_ROLE) {
         _pause();
