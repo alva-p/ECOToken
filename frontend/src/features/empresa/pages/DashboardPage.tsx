@@ -1,10 +1,42 @@
+import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Table } from '@/components/ui/Table';
+import { miSaldo } from '../api';
 
-// Página inicial de demo del panel empresa (E11-HU03). Sin datos reales todavía:
-// el saldo y el historial los conectan E6-HU01/E6-HU02.
+const POLL_MS = 30_000;
+
+// Página inicial del panel empresa (E11-HU03). El historial de aportes lo
+// conecta E6-HU02.
 export function EmpresaDashboardPage() {
+  const [saldo, setSaldo] = useState<number | null>(null);
+  const [cargando, setCargando] = useState(true);
+  const [sinConexion, setSinConexion] = useState(false);
+
+  useEffect(() => {
+    let cancelado = false;
+
+    async function cargarSaldo() {
+      try {
+        const { saldo } = await miSaldo();
+        if (cancelado) return;
+        setSaldo(saldo);
+        setSinConexion(false);
+      } catch {
+        if (!cancelado) setSinConexion(true);
+      } finally {
+        if (!cancelado) setCargando(false);
+      }
+    }
+
+    cargarSaldo();
+    const interval = setInterval(cargarSaldo, POLL_MS);
+    return () => {
+      cancelado = true;
+      clearInterval(interval);
+    };
+  }, []);
+
   return (
     <div className="flex flex-col gap-5">
       <Card>
@@ -13,9 +45,9 @@ export function EmpresaDashboardPage() {
         </div>
         <div className="mt-1.5 flex items-center gap-2">
           <span className="text-3xl font-bold tracking-tight text-eco-ink">
-            — ECO
+            {cargando ? '—' : saldo} ECO
           </span>
-          <Badge color="org">Próximamente</Badge>
+          {sinConexion && <Badge color="danger">Sin conexión</Badge>}
         </div>
       </Card>
       <div>
