@@ -39,7 +39,7 @@ export function ConfirmModal({
     <dialog
       ref={ref}
       onClose={onClose}
-      className="w-[min(90vw,460px)] rounded-xl border border-eco-border p-0 backdrop:bg-black/45"
+      className="w-[min(90vw,460px)] rounded-xl border border-eco-border bg-eco-surface p-0 backdrop:bg-black/45"
     >
       <div className="p-6">
         <h2 className="text-lg font-bold tracking-tight text-eco-ink">
