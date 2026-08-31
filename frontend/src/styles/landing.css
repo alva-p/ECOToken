@@ -436,36 +436,49 @@
   height: 118px;
   margin: 20px 0 24px;
   position: relative;
-  overflow: hidden;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent 0 38px,
-    rgba(174, 255, 197, 0.1) 39px
-  );
 }
 
-.chart-line {
+.impacto-chart {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.impacto-chart-svg {
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+.impacto-chart-svg rect:focus-visible {
+  outline: 1px solid rgba(238, 249, 241, 0.5);
+  outline-offset: -1px;
+}
+
+.impacto-chart-tooltip {
   position: absolute;
-  inset: 18px 0 0;
-  background: linear-gradient(
-    145deg,
-    transparent 4%,
-    #baff3c 5%,
-    transparent 6%,
-    transparent 23%,
-    #50eda3 24%,
-    transparent 25%,
-    transparent 42%,
-    #baff3c 43%,
-    transparent 44%,
-    transparent 62%,
-    #50eda3 63%,
-    transparent 64%,
-    transparent 78%,
-    #baff3c 79%,
-    transparent 80%
-  );
-  opacity: 0.75;
+  top: 0;
+  transform: translateX(-50%);
+  background: #101f19;
+  border: 1px solid rgba(174, 255, 197, 0.25);
+  border-radius: 6px;
+  padding: 5px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.impacto-chart-tooltip strong {
+  font: 12px var(--font-mono);
+  color: var(--foreground);
+}
+
+.impacto-chart-tooltip span {
+  font: 9px var(--font-mono);
+  color: #8ca49a;
+  text-transform: uppercase;
 }
 
 .chart-label {
@@ -505,6 +518,19 @@
 
 .leaderboard {
   padding: 25px;
+  display: flex;
+  flex-direction: column;
+}
+
+.leaderboard-list {
+  overflow-y: auto;
+  max-height: 394px;
+  mask-image: linear-gradient(to bottom, black calc(100% - 24px), transparent);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black calc(100% - 24px),
+    transparent
+  );
 }
 
 .leaderboard-title {
