@@ -120,6 +120,7 @@ export class IngresosService {
     }
     const ingreso = await this.repository.registrar({
       empresaId: dto.empresaId,
+      cooperativaId,
       tipoMaterialId: dto.tipoMaterialId,
       estadoId: registrado.id,
       peso: dto.peso,
@@ -171,6 +172,88 @@ export class IngresosService {
       bloque,
       acunado.id,
     );
+  }
+
+  // ─── E6-HU02: historial de aportes de la empresa ───
+
+  /**
+   * Historial paginado de aportes de la empresa logueada, para auditoría interna.
+   * `limit` se acota a 500 para permitir exportar el historial filtrado completo
+   * a CSV en una sola página sin abrir un endpoint de exportación aparte.
+   */
+  async misAportes(
+    empresaId: string | null,
+    filtros: {
+      page?: number;
+      limit?: number;
+      desde?: string;
+      hasta?: string;
+      tipoMaterialId?: string;
+    },
+  ) {
+    if (!empresaId) {
+      throw new ForbiddenException('El usuario no está asociado a ninguna empresa');
+    }
+    const page = filtros.page && filtros.page > 0 ? filtros.page : 1;
+    const limit =
+      filtros.limit && filtros.limit > 0 ? Math.min(filtros.limit, 500) : 20;
+
+    const { data, total } = await this.repository.findAportesEmpresa(
+      empresaId,
+      {
+        desde: filtros.desde ? new Date(filtros.desde) : undefined,
+        hasta: filtros.hasta ? new Date(filtros.hasta) : undefined,
+        tipoMaterialId: filtros.tipoMaterialId,
+      },
+      (page - 1) * limit,
+      limit,
+    );
+
+    return {
+      data: data.map((ingreso) => ({
+        id: ingreso.id,
+        fecha: ingreso.fechaIngreso,
+        cooperativa: ingreso.cooperativa?.razonSocial ?? null,
+        material: ingreso.tipoMaterial.nombre,
+        peso: ingreso.peso,
+        tokens: ingreso.tokensAcumulados,
+      })),
+      total,
+      page,
+      limit,
+    };
+  }
+
+  // ─── E5-HU03: comprobante digital de un aporte ───
+
+  /**
+   * Comprobante de un aporte puntual, solo para la empresa dueña del ingreso.
+   * Se genera al confirmarse el ingreso: existe desde que el ingreso queda
+   * REGISTRADO, con `txHash`/`bloque` recién disponibles una vez ACUÑADO.
+   */
+  async comprobante(id: string, empresaId: string | null) {
+    if (!empresaId) {
+      throw new ForbiddenException(
+        'El usuario no está asociado a ninguna empresa',
+      );
+    }
+    const ingreso = await this.repository.findByIdFull(id);
+    if (!ingreso) {
+      throw new NotFoundException(`IngresoMaterial ${id} no encontrado`);
+    }
+    if (ingreso.empresaId !== empresaId) {
+      throw new ForbiddenException('Este aporte no pertenece a tu empresa');
+    }
+    return {
+      id: ingreso.id,
+      fecha: ingreso.fechaIngreso,
+      cooperativa: ingreso.cooperativa?.razonSocial ?? null,
+      material: ingreso.tipoMaterial.nombre,
+      peso: ingreso.peso,
+      tokens: ingreso.tokensAcumulados,
+      estado: ingreso.estado.nombre,
+      txHash: ingreso.movimientoToken?.txHash ?? null,
+    };
   }
 
   /** tokens = peso × cantidadPorKilo del puntaje vigente, redondeado. */
