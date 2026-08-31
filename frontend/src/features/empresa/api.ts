@@ -46,3 +46,19 @@ export function misAportes(
 export function listarMateriales(): Promise<TipoMaterial[]> {
   return api<TipoMaterial[]>('/materiales');
 }
+
+/** Comprobante digital de un aporte puntual (E5-HU03). */
+export interface ComprobanteAporte {
+  id: string;
+  fecha: string;
+  cooperativa: string | null;
+  material: string;
+  peso: number;
+  tokens: number;
+  estado: string;
+  txHash: string | null;
+}
+
+export function comprobanteAporte(id: string): Promise<ComprobanteAporte> {
+  return api<ComprobanteAporte>(`/ingresos/${id}/comprobante`);
+}

@@ -1,5 +1,9 @@
 import { Test } from '@nestjs/testing';
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { IngresosService } from './ingresos.service';
 import { IngresoMaterialRepository } from './repository/ingreso-material.repository';
 import { EmpresasService } from '../empresas/empresas.service';
@@ -267,6 +271,69 @@ describe('IngresosService (E5-HU01)', () => {
         ForbiddenException,
       );
       expect(repository.findAportesEmpresa).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('comprobante (E5-HU03)', () => {
+    const ingresoCompleto = {
+      id: 'ing1',
+      empresaId: 'emp1',
+      fechaIngreso: new Date('2026-08-15'),
+      peso: 2.5,
+      tokensAcumulados: 25,
+      cooperativa: { razonSocial: 'Coop Puente Verde' },
+      tipoMaterial: { nombre: 'PLASTICO' },
+      estado: { nombre: 'ACUNADO' },
+      movimientoToken: { txHash: '0xtx' },
+    };
+
+    it('devuelve el comprobante con el link de la acuñación', async () => {
+      repository.findByIdFull.mockResolvedValueOnce(ingresoCompleto);
+
+      await expect(service.comprobante('ing1', 'emp1')).resolves.toEqual({
+        id: 'ing1',
+        fecha: ingresoCompleto.fechaIngreso,
+        cooperativa: 'Coop Puente Verde',
+        material: 'PLASTICO',
+        peso: 2.5,
+        tokens: 25,
+        estado: 'ACUNADO',
+        txHash: '0xtx',
+      });
+    });
+
+    it('txHash es null si el ingreso todavía no fue acuñado', async () => {
+      repository.findByIdFull.mockResolvedValueOnce({
+        ...ingresoCompleto,
+        estado: { nombre: 'REGISTRADO' },
+        movimientoToken: null,
+      });
+
+      const comprobante = await service.comprobante('ing1', 'emp1');
+      expect(comprobante.txHash).toBeNull();
+    });
+
+    it('rechaza si el aporte no existe', async () => {
+      repository.findByIdFull.mockResolvedValueOnce(null);
+
+      await expect(service.comprobante('ing1', 'emp1')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    it('rechaza si el aporte pertenece a otra empresa', async () => {
+      repository.findByIdFull.mockResolvedValueOnce(ingresoCompleto);
+
+      await expect(
+        service.comprobante('ing1', 'otra-empresa'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('rechaza si el usuario no está asociado a una empresa', async () => {
+      await expect(service.comprobante('ing1', null)).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(repository.findByIdFull).not.toHaveBeenCalled();
     });
   });
 });

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table } from '@/components/ui/Table';
@@ -168,6 +169,7 @@ export function HistorialAportesPage() {
               { label: 'Material' },
               { label: 'Peso (kg)', align: 'right' },
               { label: 'Tokens', align: 'right' },
+              { label: '' },
             ]}
             rows={data.map((a) => ({
               cells: [
@@ -176,6 +178,13 @@ export function HistorialAportesPage() {
                 a.material,
                 a.peso.toLocaleString('es-AR'),
                 a.tokens.toLocaleString('es-AR'),
+                <Link
+                  key={a.id}
+                  to={`/empresa/aportes/${a.id}`}
+                  className="font-semibold text-eco-org"
+                >
+                  Ver comprobante
+                </Link>,
               ],
             }))}
             emptyLabel="No hay aportes registrados con estos filtros."

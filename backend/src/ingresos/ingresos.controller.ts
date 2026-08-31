@@ -62,6 +62,14 @@ export class IngresosController {
     });
   }
 
+  // ─── E5-HU03: comprobante digital de un aporte propio ───
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.EMPRESA)
+  @Get(':id/comprobante')
+  comprobante(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.service.comprobante(id, user.empresaId);
+  }
+
   // ─── CRUD genérico (interno / admin) ───
   @Post()
   create(@Body() dto: CreateIngresoMaterialDto) {

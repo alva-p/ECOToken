@@ -224,6 +224,38 @@ export class IngresosService {
     };
   }
 
+  // ─── E5-HU03: comprobante digital de un aporte ───
+
+  /**
+   * Comprobante de un aporte puntual, solo para la empresa dueña del ingreso.
+   * Se genera al confirmarse el ingreso: existe desde que el ingreso queda
+   * REGISTRADO, con `txHash`/`bloque` recién disponibles una vez ACUÑADO.
+   */
+  async comprobante(id: string, empresaId: string | null) {
+    if (!empresaId) {
+      throw new ForbiddenException(
+        'El usuario no está asociado a ninguna empresa',
+      );
+    }
+    const ingreso = await this.repository.findByIdFull(id);
+    if (!ingreso) {
+      throw new NotFoundException(`IngresoMaterial ${id} no encontrado`);
+    }
+    if (ingreso.empresaId !== empresaId) {
+      throw new ForbiddenException('Este aporte no pertenece a tu empresa');
+    }
+    return {
+      id: ingreso.id,
+      fecha: ingreso.fechaIngreso,
+      cooperativa: ingreso.cooperativa?.razonSocial ?? null,
+      material: ingreso.tipoMaterial.nombre,
+      peso: ingreso.peso,
+      tokens: ingreso.tokensAcumulados,
+      estado: ingreso.estado.nombre,
+      txHash: ingreso.movimientoToken?.txHash ?? null,
+    };
+  }
+
   /** tokens = peso × cantidadPorKilo del puntaje vigente, redondeado. */
   private calcularTokens(peso: number, cantidadPorKilo: string): number {
     const factor = Number(cantidadPorKilo);
