@@ -19,7 +19,7 @@ export function Field({ label, error, id, className, ...props }: FieldProps) {
       <input
         id={inputId}
         className={cx(
-          'w-full rounded-lg border px-3.5 py-2.5 text-sm text-eco-ink placeholder:text-eco-ink3 focus:outline-none focus:ring-2 focus:ring-offset-1',
+          'w-full rounded-lg border bg-eco-surface px-3.5 py-2.5 text-sm text-eco-ink placeholder:text-eco-ink3 focus:outline-none focus:ring-2 focus:ring-offset-1',
           error
             ? 'border-eco-danger focus:ring-eco-danger/30'
             : 'border-eco-border-strong focus:ring-eco-org/30',
