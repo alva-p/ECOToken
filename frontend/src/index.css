@@ -1,3 +1,6 @@
+/* Estilos de la landing page (nueva identidad visual) */
+@import './styles/landing.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
