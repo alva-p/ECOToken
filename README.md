@@ -1,14 +1,42 @@
-# ECOToken — Plataforma de incentivos al reciclaje empresarial
+# 🌱 ECOToken
 
-Proyecto Final 2026 · UTN FRVM · Ingeniería en Sistemas de Información · Equipo **ClusterPA**.
+### Reciclar tiene recompensa
 
-ECOToken registra, mide y visibiliza el reciclaje de empresas adheridas mediante puntos **ECO** (token ERC-20 sin valor monetario), ranking mensual, certificados ambientales verificables y una capa de trazabilidad **blockchain** sobre **Sepolia** testnet. Modelo **custodial**: el backend administra las claves y absorbe el gas; empresas y cooperativas no manejan wallet.
+Proyecto Final 2026 · UTN FRVM · Ingeniería en Sistemas de Información · Equipo **ClusterPA**
+
+---
+
+## El problema
+
+Las empresas que reciclan hoy no tienen forma de **demostrarlo**. No hay un registro confiable de cuánto material entregan, las cooperativas que retiran los residuos no tienen un sistema en común con ellas, y todo ese esfuerzo ambiental queda invisible: no suma reputación, no se puede mostrar a clientes o municipios, y no hay ningún incentivo real para reciclar más.
+
+## La solución
+
+**ECOToken** convierte el reciclaje empresarial en un dato público, verificable y a prueba de manipulación.
+
+- Una **empresa adherida** entrega material reciclable a una **cooperativa validadora**.
+- La cooperativa registra el ingreso (tipo de material, peso).
+- El sistema reconoce ese esfuerzo con puntos **ECO**, un token que representa **reputación ambiental**, no dinero.
+- Cada mes se arma un **ranking público** de empresas más comprometidas, y quien recicló recibe un **certificado digital verificable**.
+- La **municipalidad** respalda el reconocimiento institucionalmente.
+
+```mermaid
+flowchart LR
+    A[🏢 Empresa entrega material] --> B[♻️ Cooperativa valida y pesa]
+    B --> C[🪙 Se acuñan puntos ECO]
+    C --> D[🏆 Ranking mensual]
+    C --> E[📜 Certificado verificable]
+```
+
+Todo el movimiento de puntos queda registrado sobre **blockchain** (Ethereum, testnet Sepolia), así nadie —ni el sistema, ni una empresa, ni la cooperativa— puede alterar el historial después de que ocurrió. Es un libro de contabilidad ambiental que nadie puede borrar.
+
+Para que ninguna empresa o cooperativa tenga que lidiar con criptomonedas, billeteras o gas: el sistema es **custodial**. ECOToken administra esa complejidad por detrás; para el usuario, es solo una web donde entra, ve su historial y descarga su certificado.
 
 > Documentación técnica completa: [`doc/ESTRUCTURA-PROYECTO.md`](doc/ESTRUCTURA-PROYECTO.md).
 
 ## Estado del proyecto
 
-Etapa **Sprint 0**: definición de la estructura del monorepo, estrategia de ramas, acuerdos de trabajo y preparación técnica mínima para iniciar el desarrollo.
+**Sprint 4** en curso.
 
 ## Estructura del monorepo
 
