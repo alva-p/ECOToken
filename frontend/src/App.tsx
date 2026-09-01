@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import GradientWaves from '@/components/GradientWaves';
 import { Navbar } from '@/components/Navbar';
@@ -92,18 +93,36 @@ const partnerLogos = [
 // Duplicamos el array para lograr un scroll infinito continuo de 360 grados sin cortes
 const tickerItems = [...partnerLogos, ...partnerLogos, ...partnerLogos];
 
+type LandingTheme = 'light' | 'dark';
+const THEME_KEY = 'ecotoken-landing-theme';
+
 function App() {
+  const [theme, setTheme] = useState<LandingTheme>(() =>
+    localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark',
+  );
+  const isDark = theme === 'dark';
+
+  useEffect(() => {
+    localStorage.setItem(THEME_KEY, theme);
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', isDark ? '#07110f' : '#f3f7f1');
+  }, [isDark, theme]);
+
   return (
-    <main className="site-shell">
+    <main className={`site-shell ${theme}`}>
       {/* ═══ NAVBAR FLOTANTE ESTILO MINI-NAVBAR ═══ */}
-      <Navbar />
+      <Navbar
+        isDark={isDark}
+        onToggleTheme={() => setTheme(isDark ? 'light' : 'dark')}
+      />
 
       {/* ═══ HERO RESPONSIVO CON GRADIENT WAVES ═══ */}
       <section className="hero" id="inicio">
         <GradientWaves
-          horizonColor="#07110f"
-          waveColor="#0d2d24"
-          crestColor="#baff3c"
+          horizonColor={isDark ? '#07110f' : '#dbeadb'}
+          waveColor={isDark ? '#0d2d24' : '#2f7650'}
+          crestColor={isDark ? '#baff3c' : '#5f9f43'}
           speed={0.35}
           amplitude={2.8}
           waveScale={0.65}
@@ -115,7 +134,7 @@ function App() {
           height={5.5}
           fogDepth={16}
           brightness={1.05}
-          opacity={0.8}
+          opacity={isDark ? 0.8 : 0.92}
         />
         <div className="hero-grid" />
 
