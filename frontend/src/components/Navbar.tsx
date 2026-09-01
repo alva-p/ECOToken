@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, Moon, Sun } from 'lucide-react';
+
+interface NavbarProps {
+  isDark: boolean;
+  onToggleTheme: () => void;
+}
 
 interface AnimatedNavLinkProps {
   href: string;
@@ -16,7 +21,7 @@ const AnimatedNavLink = ({ href, children, onClick }: AnimatedNavLinkProps) => {
       className="group relative inline-block h-6 overflow-hidden text-sm font-medium whitespace-nowrap"
     >
       <div className="flex flex-col transition-transform duration-300 ease-out transform group-hover:-translate-y-1/2">
-        <span className="flex h-6 items-center text-gray-300 whitespace-nowrap">
+        <span className="nav-link-default flex h-6 items-center text-gray-300 whitespace-nowrap">
           {children}
         </span>
         <span className="flex h-6 items-center text-[#baff3c] whitespace-nowrap font-semibold">
@@ -27,7 +32,7 @@ const AnimatedNavLink = ({ href, children, onClick }: AnimatedNavLinkProps) => {
   );
 };
 
-export function Navbar() {
+export function Navbar({ isDark, onToggleTheme }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [headerShapeClass, setHeaderShapeClass] = useState('rounded-full');
   const shapeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -64,7 +69,7 @@ export function Navbar() {
 
   return (
     <header
-      className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-40
+      className={`landing-navbar fixed top-4 left-1/2 transform -translate-x-1/2 z-40
                  flex flex-col items-center
                  px-6 py-2.5 sm:px-8 sm:py-3 backdrop-blur-xl
                  ${headerShapeClass}
@@ -73,17 +78,35 @@ export function Navbar() {
                  transition-[border-radius] duration-300 ease-in-out shadow-2xl`}
     >
       <div className="flex items-center justify-between w-full gap-x-6 sm:gap-x-10">
+        <button
+          type="button"
+          className="theme-switch"
+          onClick={onToggleTheme}
+          role="switch"
+          aria-checked={isDark}
+          aria-label={`Cambiar a modo ${isDark ? 'claro' : 'oscuro'}`}
+          title={`Cambiar a modo ${isDark ? 'claro' : 'oscuro'}`}
+        >
+          {isDark ? <Moon size={15} /> : <Sun size={15} />}
+          <span className="theme-switch-label">
+            {isDark ? 'Oscuro' : 'Claro'}
+          </span>
+          <span className="theme-switch-track" aria-hidden="true">
+            <span />
+          </span>
+        </button>
+
         {/* Official ECOToken Brand Logo */}
         <a href="#inicio" className="flex items-center shrink-0 pr-2">
           <img
             src="/logos/logo-ecotoken.png"
             alt="ECOToken"
-            className="h-7 sm:h-8 w-auto object-contain transition-transform duration-200 hover:scale-105"
+            className="landing-logo h-7 sm:h-8 w-auto object-contain transition-transform duration-200 hover:scale-105"
           />
         </a>
 
         {/* Desktop Nav Links */}
-        <nav className="hidden md:flex items-center space-x-8 shrink-0">
+        <nav className="hidden lg:flex items-center space-x-8 shrink-0">
           {navLinksData.map((link) => (
             <AnimatedNavLink key={link.href} href={link.href}>
               {link.label}
@@ -92,10 +115,10 @@ export function Navbar() {
         </nav>
 
         {/* Desktop Action Buttons (Amplio padding horizontal px-7.5 para cuerpo de botón espacioso) */}
-        <div className="hidden sm:flex items-center gap-3.5 shrink-0 pl-2">
+        <div className="hidden lg:flex items-center gap-3.5 shrink-0 pl-2">
           <Link
             to="/login"
-            className="px-7 py-2.5 text-xs font-semibold text-gray-300 hover:text-white border border-white/15 bg-white/5 rounded-full hover:border-[#baff3c]/50 hover:bg-[#baff3c]/10 transition-all duration-200 flex items-center justify-center gap-2 whitespace-nowrap"
+            className="nav-login px-7 py-2.5 text-xs font-semibold text-gray-300 hover:text-white border border-white/15 bg-white/5 rounded-full hover:border-[#baff3c]/50 hover:bg-[#baff3c]/10 transition-all duration-200 flex items-center justify-center gap-2 whitespace-nowrap"
           >
             <span>Iniciar sesión</span>
             <ArrowUpRight size={13} />
@@ -117,7 +140,7 @@ export function Navbar() {
 
         {/* Mobile Hamburger Button */}
         <button
-          className="md:hidden flex items-center justify-center w-8 h-8 text-gray-300 focus:outline-none"
+          className="nav-menu-button lg:hidden flex items-center justify-center w-8 h-8 text-gray-300 focus:outline-none"
           onClick={toggleMenu}
           aria-label={isOpen ? 'Cerrar menú' : 'Abrir menú'}
         >
@@ -155,7 +178,7 @@ export function Navbar() {
 
       {/* Mobile Dropdown Menu */}
       <div
-        className={`md:hidden flex flex-col items-center w-full transition-all ease-in-out duration-300 overflow-hidden
+        className={`lg:hidden flex flex-col items-center w-full transition-all ease-in-out duration-300 overflow-hidden
                    ${isOpen ? 'max-h-[300px] opacity-100 pt-4 pb-2' : 'max-h-0 opacity-0 pt-0 pb-0 pointer-events-none'}`}
       >
         <nav className="flex flex-col items-center space-y-3 text-sm w-full">
@@ -164,7 +187,7 @@ export function Navbar() {
               key={link.href}
               href={link.href}
               onClick={() => setIsOpen(false)}
-              className="text-gray-300 hover:text-[#baff3c] transition-colors w-full text-center py-1 font-medium"
+              className="mobile-nav-link text-gray-300 hover:text-[#baff3c] transition-colors w-full text-center py-1 font-medium"
             >
               {link.label}
             </a>

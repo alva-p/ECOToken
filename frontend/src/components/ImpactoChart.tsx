@@ -72,8 +72,8 @@ export function ImpactoChart({ data }: ImpactoChartProps) {
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#baff3c" stopOpacity="0.22" />
-            <stop offset="100%" stopColor="#baff3c" stopOpacity="0" />
+            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.22" />
+            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
           </linearGradient>
         </defs>
 
@@ -87,7 +87,7 @@ export function ImpactoChart({ data }: ImpactoChartProps) {
               x2={WIDTH - PAD_X}
               y1={y}
               y2={y}
-              stroke="rgba(174, 255, 197, 0.1)"
+              stroke="var(--chart-grid)"
               strokeWidth={1}
             />
           );
@@ -97,7 +97,7 @@ export function ImpactoChart({ data }: ImpactoChartProps) {
         <path
           d={lineaPath}
           fill="none"
-          stroke="#baff3c"
+          stroke="var(--primary)"
           strokeWidth={2}
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -110,7 +110,7 @@ export function ImpactoChart({ data }: ImpactoChartProps) {
             x2={activo.x}
             y1={PAD_TOP}
             y2={PAD_TOP + innerH}
-            stroke="rgba(238, 249, 241, 0.35)"
+            stroke="var(--chart-crosshair)"
             strokeWidth={1}
           />
         )}
@@ -125,8 +125,8 @@ export function ImpactoChart({ data }: ImpactoChartProps) {
               cx={p.x}
               cy={p.y}
               r={esActivo ? 5 : 4}
-              fill="#baff3c"
-              stroke="#0b1a15"
+              fill="var(--primary)"
+              stroke="var(--card-background)"
               strokeWidth={2}
             />
           );
