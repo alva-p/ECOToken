@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Table } from '@/components/ui/Table';
+import { addressLink } from '@/lib/explorer';
 import { miSaldo, misAportes, type AporteHistorial } from '../api';
 
 const POLL_MS = 30_000;
@@ -17,6 +18,7 @@ function hace7Dias(): string {
 // muestra E6-HU02.
 export function EmpresaDashboardPage() {
   const [saldo, setSaldo] = useState<number | null>(null);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
   const [sinConexion, setSinConexion] = useState(false);
 
@@ -28,9 +30,10 @@ export function EmpresaDashboardPage() {
 
     async function cargarSaldo() {
       try {
-        const { saldo } = await miSaldo();
+        const { saldo, walletAddress } = await miSaldo();
         if (cancelado) return;
         setSaldo(saldo);
+        setWalletAddress(walletAddress);
         setSinConexion(false);
       } catch {
         if (!cancelado) setSinConexion(true);
@@ -66,6 +69,16 @@ export function EmpresaDashboardPage() {
           </span>
           {sinConexion && <Badge color="danger">Sin conexión</Badge>}
         </div>
+        {walletAddress && (
+          <a
+            href={addressLink(walletAddress)}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-block font-mono text-xs text-eco-ink2 hover:text-eco-org"
+          >
+            {walletAddress} ↗
+          </a>
+        )}
       </Card>
       <div>
         <h2 className="mb-3 text-sm font-semibold text-eco-ink">

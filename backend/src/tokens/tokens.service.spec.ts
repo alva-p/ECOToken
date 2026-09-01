@@ -2,18 +2,26 @@ import { Test } from '@nestjs/testing';
 import { ForbiddenException } from '@nestjs/common';
 import { TokensService } from './tokens.service';
 import { MovimientoTokenRepository } from './repository/movimiento-token.repository';
+import { PrismaService } from '../prisma/prisma.service';
 
 describe('TokensService', () => {
   let service: TokensService;
   let repository: { sumarSaldoEmpresa: jest.Mock };
+  let prisma: { empresa: { findUnique: jest.Mock } };
 
   beforeEach(async () => {
     repository = { sumarSaldoEmpresa: jest.fn().mockResolvedValue(165) };
+    prisma = {
+      empresa: {
+        findUnique: jest.fn().mockResolvedValue({ walletAddress: '0xabc' }),
+      },
+    };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
         TokensService,
         { provide: MovimientoTokenRepository, useValue: repository },
+        { provide: PrismaService, useValue: prisma },
       ],
     }).compile();
 
@@ -26,7 +34,10 @@ describe('TokensService', () => {
 
   describe('miSaldo (E6-HU01)', () => {
     it('devuelve la suma de movimientos acuñados de la empresa', async () => {
-      await expect(service.miSaldo('emp1')).resolves.toEqual({ saldo: 165 });
+      await expect(service.miSaldo('emp1')).resolves.toEqual({
+        saldo: 165,
+        walletAddress: '0xabc',
+      });
       expect(repository.sumarSaldoEmpresa).toHaveBeenCalledWith('emp1');
     });
 
