@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { TipoRol } from '@prisma/client';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { UsuariosService } from '../../usuarios/usuarios.service';
 
 /**
  * Claims del JWT. El frontend (`lib/auth.ts`, `feat/E11-HU03-base-frontend`)
@@ -19,7 +20,10 @@ export interface JwtPayload {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(config: ConfigService) {
+  constructor(
+    config: ConfigService,
+    private readonly usuariosService: UsuariosService,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -28,7 +32,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   /** Lo que devuelve queda disponible como `request.user` (ver @CurrentUser). */
-  validate(payload: JwtPayload): JwtPayload {
+  async validate(payload: JwtPayload): Promise<JwtPayload> {
+    const usuario = await this.usuariosService
+      .findOne(payload.sub)
+      .catch(() => null);
+    if (!usuario?.activo) {
+      throw new UnauthorizedException('La cuenta está inactiva');
+    }
     return payload;
   }
 }

@@ -8,13 +8,13 @@ import {
   Body,
   Query,
   UseGuards,
+  ParseEnumPipe,
 } from '@nestjs/common';
-import { TipoRol } from '@prisma/client';
+import { CategoriaEmpresa, TipoRol } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { EmpresasService } from './empresas.service';
-import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 import { RegistrarEmpresaDto } from './dto/registrar-empresa.dto';
 import { AltaCooperativaDto } from './dto/alta-cooperativa.dto';
@@ -68,27 +68,33 @@ export class EmpresasController {
     return this.service.buscar(q ?? '');
   }
 
-  // ─── CRUD genérico (interno / admin) ───
-  @Post()
-  create(@Body() dto: CreateEmpresaDto) {
-    return this.service.create(dto);
-  }
-
+  // ─── Consulta, modificación y baja lógica (solo admin) ───
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.ADMIN)
   @Get()
-  findAll() {
-    return this.service.findAll();
+  findAll(
+    @Query('categoria', new ParseEnumPipe(CategoriaEmpresa, { optional: true }))
+    categoria?: CategoriaEmpresa,
+  ) {
+    return this.service.findAll(categoria);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.ADMIN)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.ADMIN)
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateEmpresaDto) {
     return this.service.update(id, dto);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.ADMIN)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.service.remove(id);

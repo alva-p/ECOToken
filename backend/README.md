@@ -27,6 +27,7 @@ npm install
 cp .env.example .env                 # completar DATABASE_URL, JWT_SECRET, etc.
 npx prisma migrate dev               # crea/actualiza el esquema
 npx prisma db seed                   # datos iniciales (roles, tabla de conversión)
+npm run prisma:seed:demo             # datos de demostración (ejecutar una sola vez)
 npm run start:dev                    # http://localhost:3000
 ```
 

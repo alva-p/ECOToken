@@ -18,7 +18,7 @@ export function AdminLayout() {
     <PanelLayout
       actorColor="muni"
       subtitle="Panel de administración"
-      title="Empresas"
+      title="Administración"
       who={user?.email ?? ''}
       whoRole="Administrador"
       nav={NAV}
