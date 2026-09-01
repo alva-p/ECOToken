@@ -1,5 +1,5 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { CreateEmpresaDto } from './create-empresa.dto';
+import { AltaCooperativaDto } from './alta-cooperativa.dto';
 
-/** Actualización de Empresa: todos los campos opcionales. */
-export class UpdateEmpresaDto extends PartialType(CreateEmpresaDto) {}
+/** Datos básicos editables por el administrador. */
+export class UpdateEmpresaDto extends PartialType(AltaCooperativaDto) {}

@@ -34,8 +34,8 @@ export class EmpresasService {
     return this.crearConBilletera(dto);
   }
 
-  findAll() {
-    return this.repository.findAll();
+  findAll(categoria?: CategoriaEmpresa) {
+    return this.repository.findAll(categoria);
   }
 
   async findOne(id: string) {
@@ -45,13 +45,40 @@ export class EmpresasService {
   }
 
   async update(id: string, dto: UpdateEmpresaDto) {
-    await this.findOne(id);
+    const actual = await this.findOne(id);
+    if (dto.cuit && dto.cuit !== actual.cuit) {
+      const porCuit = await this.repository.findByCuit(dto.cuit);
+      if (porCuit) {
+        throw new ConflictException('Ya existe una empresa con ese CUIT');
+      }
+    }
+    if (dto.emailContacto && dto.emailContacto !== actual.emailContacto) {
+      const porEmail = await this.repository.findByEmailContacto(
+        dto.emailContacto,
+      );
+      const usuario = await this.usuariosService.findByEmail(dto.emailContacto);
+      if (porEmail || (usuario && usuario.empresaId !== id)) {
+        throw new ConflictException('Ya existe una cuenta con ese correo');
+      }
+    }
     return this.repository.update(id, dto);
   }
 
   async remove(id: string) {
-    await this.findOne(id);
-    return this.repository.remove(id);
+    const empresa = await this.findOne(id);
+    if (!empresa.activa) {
+      throw new BadRequestException('La empresa ya está dada de baja');
+    }
+
+    let txHash: string | null = null;
+    if (empresa.categoria === CategoriaEmpresa.COOPERATIVA) {
+      txHash = await this.blockchainService.revokeRole(
+        'VALIDATOR_ROLE',
+        empresa.walletAddress,
+      );
+    }
+
+    return { empresa: await this.repository.deactivate(id), txHash };
   }
 
   // ─── E3-HU01: registro público de empresa ───
@@ -214,9 +241,9 @@ export class EmpresasService {
    */
   async verificarAprobada(id: string) {
     const empresa = await this.findOne(id);
-    if (empresa.estado !== EstadoEmpresa.APROBADA) {
+    if (empresa.estado !== EstadoEmpresa.APROBADA || !empresa.activa) {
       throw new ForbiddenException(
-        `La empresa ${id} no está habilitada para operar (estado: ${empresa.estado})`,
+        `La empresa ${id} no está habilitada para operar (estado: ${empresa.estado}, activa: ${empresa.activa})`,
       );
     }
     return empresa;

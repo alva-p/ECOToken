@@ -78,15 +78,17 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 **Incertidumbre:** Baja. El requerimiento es claro y no tiene dudas técnicas.
 **SP: 2**
 
-### E3-HU04 — Aprobar alta de empresa
+### E3-HU04 — Gestionar empresas adheridas
 
-**Como** administrador **yo puedo** ver las empresas pendientes de alta y aprobarlas o rechazarlas desde mi panel **de forma tal que** se eviten fraudes en el piloto habilitando solo empresas validadas.
+**Como** administrador **yo puedo** consultar, aprobar, editar y dar de baja empresas adheridas desde mi panel **de forma tal que** mantenga actualizado y seguro el padrón de participantes.
 
 **Criterios de aceptación:**
-- El panel de administración lista las empresas pendientes con sus datos principales (razón social, CUIT, fecha de alta).
+- El panel de administración lista todas las empresas con sus datos principales, estado y actividad.
+- El listado se puede buscar por razón social, CUIT o email.
 - Las acciones de aprobar y rechazar requieren confirmación y muestran el resultado de la operación.
-- El estado de cada empresa (pendiente, aprobada, rechazada) es visible en el listado.
-- Una empresa solo puede operar en el sistema si fue aprobada.
+- Se pueden editar razón social, CUIT, email, domicilio y representante legal con las mismas validaciones de alta.
+- La baja requiere confirmación, conserva el historial y desactiva el acceso del usuario.
+- Una empresa solo puede operar en el sistema si fue aprobada y está activa.
 
 **Complejidad:** Media. Incluye la primera pantalla del panel de administración y el cambio de estado con sus efectos sobre el resto del sistema.
 **Esfuerzo:** Medio. Tabla, acciones con confirmación y conexión con el backend; sin prototipo previo.
@@ -97,14 +99,18 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 
 ## E4 — Registro y operación de cooperativa
 
-### E4-HU01 — Dar de alta cooperativa
+### E4-HU01 — Gestionar cooperativas
 
-**Como** administrador **yo puedo** dar de alta una cooperativa desde un formulario de mi panel **de forma tal que** quede autorizada a registrar ingresos de material con su rol de validadora.
+**Como** administrador **yo puedo** dar de alta, consultar, editar y dar de baja una cooperativa desde mi panel **de forma tal que** controle qué entidades están autorizadas a validar ingresos de material.
 
 **Criterios de aceptación:**
 - El formulario de alta valida los campos antes de enviar.
 - Durante el alta se muestra el progreso de la operación (creación de cuenta y otorgamiento del rol en el contrato); si falla, el error es visible y la operación puede reintentarse.
 - La cooperativa queda activa y aparece en el listado del panel.
+- El listado se puede buscar por razón social, CUIT o email.
+- Se pueden editar razón social, CUIT, email, domicilio y representante legal.
+- La baja requiere confirmación y revoca VALIDATOR_ROLE antes de desactivar la cooperativa.
+- Si la revocación on-chain falla, la cooperativa continúa activa; su historial siempre se conserva.
 
 **Complejidad:** Media. La pantalla es un formulario simple, pero el flujo involucra una transacción on-chain cuyo resultado hay que reflejar en la interfaz.
 **Esfuerzo:** Medio. Formulario más manejo de estados de la transacción.

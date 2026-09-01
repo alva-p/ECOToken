@@ -1,6 +1,52 @@
 import { api } from '@/lib/api';
 import type { Empresa } from '@/types';
 
+const normalizarBusqueda = (valor: string) =>
+  valor
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('es')
+    .replace(/[^a-z0-9]/g, '');
+
+export const filtrarEmpresas = (empresas: Empresa[], busqueda: string) =>
+  empresas.filter((empresa) =>
+    normalizarBusqueda(
+      `${empresa.razonSocial}${empresa.cuit}${empresa.emailContacto ?? ''}`,
+    ).includes(normalizarBusqueda(busqueda)),
+  );
+
+export interface EditarEmpresaInput {
+  razonSocial?: string;
+  cuit?: string;
+  emailContacto?: string;
+  domicilio?: string;
+  representanteLegal?: string;
+}
+
+export function listarEmpresas(
+  categoria: Empresa['categoria'],
+): Promise<Empresa[]> {
+  return api<Empresa[]>(`/empresas?categoria=${categoria}`);
+}
+
+export function editarEmpresa(
+  id: string,
+  dto: EditarEmpresaInput,
+): Promise<Empresa> {
+  return api<Empresa>(`/empresas/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(dto),
+  });
+}
+
+export function darDeBajaEmpresa(
+  id: string,
+): Promise<{ empresa: Empresa; txHash: string | null }> {
+  return api<{ empresa: Empresa; txHash: string | null }>(`/empresas/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 export interface AltaCooperativaInput {
   razonSocial: string;
   cuit: string;

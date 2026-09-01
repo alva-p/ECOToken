@@ -277,15 +277,18 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Baja. Requerimiento claro.
 **Prio: Alta | SP: 2**
 
-### E3-HU04 — Aprobar alta de empresa
+### E3-HU04 — Gestionar empresas adheridas
 
-**Como** administrador **yo puedo** validar/aprobar el alta de una empresa antes de habilitarla **de forma tal que** se eviten fraudes en el piloto.
+**Como** administrador **yo puedo** consultar, aprobar, editar y dar de baja empresas adheridas **de forma tal que** mantenga actualizado y seguro el padrón de participantes.
 
 **Criterios de aceptación:**
 - Debe quedar en estado pendiente tras el alta.
-- Debe listar las pendientes en el panel admin.
+- Debe listar todas las empresas y mostrar su estado y actividad en el panel admin.
+- El listado debe poder buscarse por razón social, CUIT o email.
 - Debe permitir aprobar/rechazar.
-- Debe poder operar solo si está aprobada.
+- Debe permitir editar razón social, CUIT, email, domicilio y representante legal.
+- La baja debe ser lógica, conservar el historial y desactivar el acceso del usuario.
+- Debe poder operar solo si está aprobada y activa.
 
 **Complejidad:** Media. Flujo de estados que condiciona la operación del resto del sistema.
 **Esfuerzo:** Medio. Listado en panel admin con acciones y cambio de estado.
@@ -296,14 +299,18 @@ Backlog completo reformulado según el formato de User Story:
 
 ## E4 — Registro y operación de cooperativa
 
-### E4-HU01 — Dar de alta cooperativa
+### E4-HU01 — Gestionar cooperativas
 
-**Como** administrador **yo puedo** dar de alta una cooperativa y generar su cuenta VALIDATOR_ROLE **de forma tal que** quede autorizada a registrar ingresos.
+**Como** administrador **yo puedo** dar de alta, consultar, editar y dar de baja una cooperativa **de forma tal que** controle qué entidades están autorizadas a validar ingresos.
 
 **Criterios de aceptación:**
 - Debe tener un formulario de alta de cooperativa.
 - Debe generar el sistema la cuenta operadora y otorgar VALIDATOR_ROLE on-chain.
-- Debe quedar activa la cooperativa.
+- Debe quedar activa y aparecer en el listado del panel.
+- El listado debe poder buscarse por razón social, CUIT o email.
+- Debe permitir editar razón social, CUIT, email, domicilio y representante legal.
+- La baja debe revocar VALIDATOR_ROLE antes de desactivar la cooperativa; si la transacción falla, debe continuar activa.
+- La baja debe conservar su historial y desactivar el acceso del usuario.
 
 **Complejidad:** Media. El alta combina persistencia off-chain con una transacción on-chain de otorgamiento de rol.
 **Esfuerzo:** Medio. Formulario más generación de cuenta y grant on-chain.

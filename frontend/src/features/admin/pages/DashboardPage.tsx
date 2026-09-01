@@ -2,17 +2,22 @@ import { useEffect, useState } from 'react';
 import { Table } from '@/components/ui/Table';
 import { Button } from '@/components/ui/Button';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { Field } from '@/components/ui/Field';
 import { LoadingState } from '@/components/ui/States';
 import type { Empresa } from '@/types';
+import { EditarEmpresaModal } from '../components/EditarEmpresaModal';
 import {
-  listarEmpresasPendientes,
   aprobarEmpresa,
+  darDeBajaEmpresa,
+  editarEmpresa,
+  filtrarEmpresas,
+  listarEmpresas,
   rechazarEmpresa,
 } from '../api';
 
 interface AccionPendiente {
   empresa: Empresa;
-  accion: 'aprobar' | 'rechazar';
+  accion: 'aprobar' | 'rechazar' | 'baja';
 }
 
 interface Credenciales {
@@ -21,30 +26,21 @@ interface Credenciales {
   passwordTemporal: string;
 }
 
-function Spinner() {
-  return (
-    <span
-      aria-hidden
-      className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white"
-    />
-  );
-}
-
-// Empresas pendientes de alta (E3-HU04): backend ya existía desde Sprint 3
-// (registro, aprobar, rechazar) pero nunca se conectó a esta pantalla.
 export function AdminDashboardPage() {
-  const [pendientes, setPendientes] = useState<Empresa[] | null>(null);
+  const [empresas, setEmpresas] = useState<Empresa[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendiente, setPendiente] = useState<AccionPendiente | null>(null);
+  const [editando, setEditando] = useState<Empresa | null>(null);
+  const [busqueda, setBusqueda] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [credenciales, setCredenciales] = useState<Credenciales | null>(null);
 
   async function cargar() {
     setError(null);
     try {
-      setPendientes(await listarEmpresasPendientes());
+      setEmpresas(await listarEmpresas('EMPRESA'));
     } catch {
-      setError('No se pudieron cargar las empresas pendientes.');
+      setError('No se pudieron cargar las empresas.');
     }
   }
 
@@ -65,30 +61,48 @@ export function AdminDashboardPage() {
           email: res.credencialesTemporales.email,
           passwordTemporal: res.credencialesTemporales.passwordTemporal,
         });
-      } else {
+      } else if (accion === 'rechazar') {
         await rechazarEmpresa(empresa.id);
+      } else {
+        await darDeBajaEmpresa(empresa.id);
       }
       setPendiente(null);
       await cargar();
     } catch {
       setError(
-        `No se pudo ${pendiente.accion} a ${pendiente.empresa.razonSocial}. Intentá de nuevo.`,
+        `No se pudo completar la operación sobre ${pendiente.empresa.razonSocial}.`,
       );
     } finally {
       setEnviando(false);
     }
   }
 
-  if (!pendientes && !error) {
-    return <LoadingState label="Cargando empresas pendientes…" />;
+  if (!empresas && !error) {
+    return <LoadingState label="Cargando empresas…" />;
   }
+
+  const empresasVisibles = filtrarEmpresas(empresas ?? [], busqueda);
 
   return (
     <div className="flex flex-col gap-5">
-      <h2 className="text-sm font-semibold text-eco-ink">
-        Empresas pendientes de alta
-      </h2>
+      <div>
+        <h2 className="text-sm font-semibold text-eco-ink">Empresas</h2>
+        <p className="mt-1 text-xs text-eco-ink2">
+          Las altas se originan en el registro público y se habilitan al
+          aprobarlas.
+        </p>
+      </div>
       {error && <p className="text-xs text-eco-danger">{error}</p>}
+
+      <div className="max-w-sm">
+        <Field
+          label="Buscar empresa"
+          type="search"
+          placeholder="Razón social, CUIT o email"
+          value={busqueda}
+          onChange={(event) => setBusqueda(event.target.value)}
+        />
+      </div>
 
       {credenciales && (
         <div className="flex items-start justify-between gap-3 rounded-lg border border-eco-org bg-eco-org-soft px-4 py-3 text-sm">
@@ -96,9 +110,7 @@ export function AdminDashboardPage() {
             <div className="font-semibold text-eco-ink">
               {credenciales.razonSocial} aprobada
             </div>
-            <p className="mt-1 text-eco-ink2">
-              Credenciales temporales (comunicárselas a la empresa):
-            </p>
+            <p className="mt-1 text-eco-ink2">Credenciales temporales:</p>
             <p className="mt-0.5 text-eco-ink">
               {credenciales.email} /{' '}
               <span className="font-mono">{credenciales.passwordTemporal}</span>
@@ -119,65 +131,102 @@ export function AdminDashboardPage() {
         columns={[
           { label: 'Empresa' },
           { label: 'CUIT' },
-          { label: 'Solicitud' },
+          { label: 'Estado' },
+          { label: 'Actividad' },
           { label: 'Acciones', align: 'right' },
         ]}
-        rows={(pendientes ?? []).map((empresa) => ({
+        rows={empresasVisibles.map((empresa) => ({
           cells: [
-            empresa.razonSocial,
+            <div key="empresa">
+              <div>{empresa.razonSocial}</div>
+              <div className="text-xs text-eco-ink2">
+                {empresa.emailContacto}
+              </div>
+            </div>,
             empresa.cuit,
-            new Date(empresa.fechaRegistro).toLocaleDateString('es-AR'),
-            <div key="acciones" className="flex justify-end gap-2">
+            empresa.estado,
+            empresa.activa ? 'Activa' : 'Baja',
+            <div key="acciones" className="flex flex-wrap justify-end gap-2">
               <Button
                 variant="outline"
-                color="danger"
+                color="ink"
                 className="px-2.5 py-1 text-xs"
-                onClick={() => setPendiente({ empresa, accion: 'rechazar' })}
+                onClick={() => setEditando(empresa)}
               >
-                Rechazar
+                Editar
               </Button>
-              <Button
-                color="org"
-                className="px-2.5 py-1 text-xs"
-                onClick={() => setPendiente({ empresa, accion: 'aprobar' })}
-              >
-                Aprobar
-              </Button>
+              {empresa.activa && empresa.estado === 'PENDIENTE' && (
+                <>
+                  <Button
+                    variant="outline"
+                    color="danger"
+                    className="px-2.5 py-1 text-xs"
+                    onClick={() =>
+                      setPendiente({ empresa, accion: 'rechazar' })
+                    }
+                  >
+                    Rechazar
+                  </Button>
+                  <Button
+                    color="org"
+                    className="px-2.5 py-1 text-xs"
+                    onClick={() => setPendiente({ empresa, accion: 'aprobar' })}
+                  >
+                    Aprobar
+                  </Button>
+                </>
+              )}
+              {empresa.activa && (
+                <Button
+                  variant="ghost"
+                  color="danger"
+                  className="px-2.5 py-1 text-xs"
+                  onClick={() => setPendiente({ empresa, accion: 'baja' })}
+                >
+                  Dar de baja
+                </Button>
+              )}
             </div>,
           ],
         }))}
-        emptyLabel="No hay solicitudes pendientes."
+        emptyLabel={
+          busqueda
+            ? 'No hay empresas que coincidan con la búsqueda.'
+            : 'No hay empresas registradas.'
+        }
+      />
+
+      <EditarEmpresaModal
+        empresa={editando}
+        onClose={() => setEditando(null)}
+        onSave={async (dto) => {
+          if (!editando) return;
+          await editarEmpresa(editando.id, dto);
+          setEditando(null);
+          await cargar();
+        }}
       />
 
       <ConfirmModal
         open={pendiente !== null}
         title={
-          pendiente
-            ? `${pendiente.accion === 'aprobar' ? 'Aprobar' : 'Rechazar'} empresa`
-            : ''
+          pendiente?.accion === 'baja'
+            ? 'Dar de baja empresa'
+            : `${pendiente?.accion === 'aprobar' ? 'Aprobar' : 'Rechazar'} empresa`
         }
         description={
           pendiente && (
             <>
-              Esto {pendiente.accion === 'aprobar' ? 'aprueba' : 'rechaza'} el
-              alta de <strong>{pendiente.empresa.razonSocial}</strong> (CUIT{' '}
-              {pendiente.empresa.cuit}).{' '}
-              {pendiente.accion === 'aprobar' &&
-                'Se le crea su usuario y contraseña temporal de acceso.'}
+              ¿Confirmás la operación sobre{' '}
+              <strong>{pendiente.empresa.razonSocial}</strong>?
+              {pendiente.accion === 'baja' &&
+                ' Se conservará su historial, pero no podrá iniciar sesión ni operar.'}
             </>
           )
         }
-        confirmLabel={
-          enviando ? (
-            <span className="inline-flex items-center gap-2">
-              <Spinner /> Enviando…
-            </span>
-          ) : (
-            'Confirmar'
-          )
-        }
+        confirmLabel={enviando ? 'Procesando…' : 'Confirmar'}
         confirmDisabled={enviando}
-        danger={pendiente?.accion === 'rechazar'}
+        danger={pendiente?.accion !== 'aprobar'}
         onConfirm={confirmar}
         onClose={() => !enviando && setPendiente(null)}
       />

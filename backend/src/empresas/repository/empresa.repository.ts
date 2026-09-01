@@ -61,8 +61,11 @@ export class EmpresaRepository {
     });
   }
 
-  findAll() {
-    return this.prisma.empresa.findMany();
+  findAll(categoria?: CategoriaEmpresa) {
+    return this.prisma.empresa.findMany({
+      where: categoria ? { categoria } : undefined,
+      orderBy: { razonSocial: 'asc' },
+    });
   }
 
   findById(id: string) {
@@ -90,6 +93,7 @@ export class EmpresaRepository {
       where: {
         estado: EstadoEmpresa.APROBADA,
         categoria: CategoriaEmpresa.EMPRESA,
+        activa: true,
         OR: [
           { razonSocial: { contains: query, mode: 'insensitive' } },
           { cuit: { contains: query } },
@@ -128,7 +132,31 @@ export class EmpresaRepository {
   }
 
   update(id: string, dto: UpdateEmpresaDto) {
-    return this.prisma.empresa.update({ where: { id }, data: dto });
+    return this.prisma.$transaction(async (tx) => {
+      const empresa = await tx.empresa.update({ where: { id }, data: dto });
+      if (dto.emailContacto) {
+        await tx.usuario.updateMany({
+          where: { empresaId: id },
+          data: { email: dto.emailContacto },
+        });
+      }
+      return empresa;
+    });
+  }
+
+  /** Baja lógica: conserva trazabilidad y bloquea el acceso de sus usuarios. */
+  deactivate(id: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const empresa = await tx.empresa.update({
+        where: { id },
+        data: { activa: false },
+      });
+      await tx.usuario.updateMany({
+        where: { empresaId: id },
+        data: { activo: false },
+      });
+      return empresa;
+    });
   }
 
   /** Transición del estado de aprobación (E3-HU04). */

@@ -1,8 +1,19 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Field } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
-import { altaCooperativa, type AltaCooperativaResponse } from '../api';
+import { Table } from '@/components/ui/Table';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import type { Empresa } from '@/types';
+import { EditarEmpresaModal } from '../components/EditarEmpresaModal';
+import {
+  altaCooperativa,
+  darDeBajaEmpresa,
+  editarEmpresa,
+  filtrarEmpresas,
+  listarEmpresas,
+  type AltaCooperativaResponse,
+} from '../api';
 
 const EMPTY_FORM = {
   razonSocial: '',
@@ -12,37 +23,66 @@ const EMPTY_FORM = {
   representanteLegal: '',
 };
 
-// Formulario de alta de cooperativa (E4-HU01): da de alta la Empresa
-// (categoria COOPERATIVA), genera su cuenta operadora on-chain (VALIDATOR_ROLE)
-// y las credenciales con las que va a iniciar sesión (E4-HU02).
 export function CooperativasPage() {
   const [form, setForm] = useState(EMPTY_FORM);
+  const [cooperativas, setCooperativas] = useState<Empresa[]>([]);
+  const [editando, setEditando] = useState<Empresa | null>(null);
+  const [dandoBaja, setDandoBaja] = useState<Empresa | null>(null);
+  const [busqueda, setBusqueda] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [errores, setErrores] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [resultado, setResultado] = useState<AltaCooperativaResponse | null>(
     null,
   );
 
+  async function cargar() {
+    try {
+      setCooperativas(await listarEmpresas('COOPERATIVA'));
+    } catch {
+      setError('No se pudieron cargar las cooperativas.');
+    }
+  }
+
+  useEffect(() => {
+    cargar();
+  }, []);
+
   function setField(field: keyof typeof EMPTY_FORM) {
-    return (e: React.ChangeEvent<HTMLInputElement>) =>
-      setForm((f) => ({ ...f, [field]: e.target.value }));
+    return (event: React.ChangeEvent<HTMLInputElement>) =>
+      setForm((actual) => ({ ...actual, [field]: event.target.value }));
   }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
     setResultado(null);
+    const nuevosErrores: Record<string, string> = {};
+    if (!form.razonSocial.trim()) {
+      nuevosErrores.razonSocial = 'La razón social es obligatoria.';
+    }
+    const cuit = form.cuit.replace(/\D/g, '');
+    if (cuit.length !== 11) {
+      nuevosErrores.cuit = 'El CUIT debe tener 11 dígitos.';
+    }
+    if (!/^\S+@\S+\.\S+$/.test(form.emailContacto)) {
+      nuevosErrores.emailContacto = 'Ingresá un email válido.';
+    }
+    setErrores(nuevosErrores);
+    if (Object.keys(nuevosErrores).length) return;
+
     setSubmitting(true);
     try {
       const res = await altaCooperativa({
-        razonSocial: form.razonSocial,
-        cuit: form.cuit,
-        emailContacto: form.emailContacto,
-        domicilio: form.domicilio || undefined,
-        representanteLegal: form.representanteLegal || undefined,
+        razonSocial: form.razonSocial.trim(),
+        cuit,
+        emailContacto: form.emailContacto.trim(),
+        domicilio: form.domicilio.trim() || undefined,
+        representanteLegal: form.representanteLegal.trim() || undefined,
       });
       setResultado(res);
       setForm(EMPTY_FORM);
+      await cargar();
     } catch {
       setError(
         'No se pudo dar de alta la cooperativa. Verificá los datos e intentá de nuevo.',
@@ -51,6 +91,25 @@ export function CooperativasPage() {
       setSubmitting(false);
     }
   }
+
+  async function confirmarBaja() {
+    if (!dandoBaja) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await darDeBajaEmpresa(dandoBaja.id);
+      setDandoBaja(null);
+      await cargar();
+    } catch {
+      setError(
+        'No se pudo revocar VALIDATOR_ROLE. La cooperativa continúa activa.',
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const cooperativasVisibles = filtrarEmpresas(cooperativas, busqueda);
 
   return (
     <div className="flex flex-col gap-5">
@@ -68,6 +127,7 @@ export function CooperativasPage() {
             required
             value={form.razonSocial}
             onChange={setField('razonSocial')}
+            error={errores.razonSocial}
           />
           <Field
             label="CUIT"
@@ -75,13 +135,15 @@ export function CooperativasPage() {
             value={form.cuit}
             onChange={setField('cuit')}
             placeholder="20-12345678-6"
+            error={errores.cuit}
           />
           <Field
-            label="Email de contacto (también es el email de acceso)"
+            label="Email de contacto y acceso"
             type="email"
             required
             value={form.emailContacto}
             onChange={setField('emailContacto')}
+            error={errores.emailContacto}
           />
           <Field
             label="Domicilio"
@@ -93,49 +155,121 @@ export function CooperativasPage() {
             value={form.representanteLegal}
             onChange={setField('representanteLegal')}
           />
-          {error && <p className="text-xs text-eco-danger">{error}</p>}
           <Button type="submit" color="muni" disabled={submitting}>
             {submitting ? 'Dando de alta…' : 'Dar de alta'}
           </Button>
         </form>
       </Card>
 
+      {error && <p className="text-xs text-eco-danger">{error}</p>}
+
       {resultado && (
         <Card className="max-w-lg border-eco-org p-6">
           <h2 className="mb-3 text-sm font-semibold text-eco-ink">
             Cooperativa dada de alta
           </h2>
-          <dl className="flex flex-col gap-2 text-sm">
-            <div>
-              <dt className="text-xs font-semibold uppercase text-eco-ink2">
-                Cuenta operadora (VALIDATOR_ROLE)
-              </dt>
-              <dd className="break-all font-mono text-eco-ink">
-                {resultado.direccionEVM}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold uppercase text-eco-ink2">
-                Transacción on-chain
-              </dt>
-              <dd className="break-all font-mono text-eco-ink">
-                {resultado.txHash}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold uppercase text-eco-ink2">
-                Credenciales temporales (comunicárselas a la cooperativa)
-              </dt>
-              <dd className="text-eco-ink">
-                {resultado.credencialesTemporales.email} /{' '}
-                <span className="font-mono">
-                  {resultado.credencialesTemporales.passwordTemporal}
-                </span>
-              </dd>
-            </div>
-          </dl>
+          <p className="break-all text-sm text-eco-ink">
+            VALIDATOR_ROLE:{' '}
+            <span className="font-mono">{resultado.direccionEVM}</span>
+          </p>
+          <p className="mt-2 text-sm text-eco-ink">
+            Credenciales: {resultado.credencialesTemporales.email} /{' '}
+            <span className="font-mono">
+              {resultado.credencialesTemporales.passwordTemporal}
+            </span>
+          </p>
         </Card>
       )}
+
+      <div>
+        <h2 className="mb-3 text-sm font-semibold text-eco-ink">
+          Cooperativas registradas
+        </h2>
+        <div className="mb-4 max-w-sm">
+          <Field
+            label="Buscar cooperativa"
+            type="search"
+            placeholder="Razón social, CUIT o email"
+            value={busqueda}
+            onChange={(event) => setBusqueda(event.target.value)}
+          />
+        </div>
+        <Table
+          columns={[
+            { label: 'Cooperativa' },
+            { label: 'CUIT' },
+            { label: 'Actividad' },
+            { label: 'Acciones', align: 'right' },
+          ]}
+          rows={cooperativasVisibles.map((cooperativa) => ({
+            cells: [
+              <div key="cooperativa">
+                <div>{cooperativa.razonSocial}</div>
+                <div className="text-xs text-eco-ink2">
+                  {cooperativa.emailContacto}
+                </div>
+              </div>,
+              cooperativa.cuit,
+              cooperativa.activa ? 'Activa' : 'Baja',
+              <div key="acciones" className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  color="ink"
+                  className="px-2.5 py-1 text-xs"
+                  onClick={() => setEditando(cooperativa)}
+                >
+                  Editar
+                </Button>
+                {cooperativa.activa && (
+                  <Button
+                    variant="ghost"
+                    color="danger"
+                    className="px-2.5 py-1 text-xs"
+                    onClick={() => setDandoBaja(cooperativa)}
+                  >
+                    Dar de baja
+                  </Button>
+                )}
+              </div>,
+            ],
+          }))}
+          emptyLabel={
+            busqueda
+              ? 'No hay cooperativas que coincidan con la búsqueda.'
+              : 'No hay cooperativas registradas.'
+          }
+        />
+      </div>
+
+      <EditarEmpresaModal
+        empresa={editando}
+        onClose={() => setEditando(null)}
+        onSave={async (dto) => {
+          if (!editando) return;
+          await editarEmpresa(editando.id, dto);
+          setEditando(null);
+          await cargar();
+        }}
+      />
+
+      <ConfirmModal
+        open={dandoBaja !== null}
+        title="Dar de baja cooperativa"
+        description={
+          dandoBaja && (
+            <>
+              Se revocará el VALIDATOR_ROLE de{' '}
+              <strong>{dandoBaja.razonSocial}</strong> y luego se bloqueará su
+              acceso. Su historial se conservará.
+            </>
+          )
+        }
+        confirmLabel={submitting ? 'Revocando rol…' : 'Confirmar baja'}
+        confirmDisabled={submitting}
+        danger
+        onConfirm={confirmarBaja}
+        onClose={() => !submitting && setDandoBaja(null)}
+      />
     </div>
   );
 }

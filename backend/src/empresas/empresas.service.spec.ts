@@ -43,6 +43,7 @@ describe('EmpresasService', () => {
   let service: EmpresasService;
   let repository: {
     create: jest.Mock;
+    findAll: jest.Mock;
     findByCuit: jest.Mock;
     findByEmailContacto: jest.Mock;
     registrar: jest.Mock;
@@ -51,15 +52,25 @@ describe('EmpresasService', () => {
     updateEstado: jest.Mock;
     altaCooperativa: jest.Mock;
     remove: jest.Mock;
+    update: jest.Mock;
+    deactivate: jest.Mock;
     buscar: jest.Mock;
   };
   let billeterasService: { generarBilleteraCustodial: jest.Mock };
-  let blockchainService: { grantValidatorRole: jest.Mock };
-  let usuariosService: { create: jest.Mock; remove: jest.Mock };
+  let blockchainService: {
+    grantValidatorRole: jest.Mock;
+    revokeRole: jest.Mock;
+  };
+  let usuariosService: {
+    create: jest.Mock;
+    remove: jest.Mock;
+    findByEmail: jest.Mock;
+  };
 
   beforeEach(async () => {
     repository = {
       create: jest.fn(),
+      findAll: jest.fn(),
       findByCuit: jest.fn(),
       findByEmailContacto: jest.fn(),
       registrar: jest.fn(),
@@ -68,13 +79,19 @@ describe('EmpresasService', () => {
       updateEstado: jest.fn(),
       altaCooperativa: jest.fn(),
       remove: jest.fn().mockResolvedValue(undefined),
+      update: jest.fn(),
+      deactivate: jest.fn(),
       buscar: jest.fn(),
     };
     billeterasService = { generarBilleteraCustodial: jest.fn() };
-    blockchainService = { grantValidatorRole: jest.fn() };
+    blockchainService = {
+      grantValidatorRole: jest.fn(),
+      revokeRole: jest.fn(),
+    };
     usuariosService = {
       create: jest.fn(),
       remove: jest.fn().mockResolvedValue(undefined),
+      findByEmail: jest.fn(),
     };
 
     const moduleRef = await Test.createTestingModule({
@@ -347,6 +364,41 @@ describe('EmpresasService', () => {
     });
   });
 
+  describe('baja lógica administrativa', () => {
+    const cooperativa = {
+      ...empresaBase,
+      categoria: CategoriaEmpresa.COOPERATIVA,
+      walletAddress: '0xCoopWallet',
+    };
+
+    it('revoca VALIDATOR_ROLE antes de desactivar una cooperativa', async () => {
+      repository.findById.mockResolvedValue(cooperativa);
+      blockchainService.revokeRole.mockResolvedValue('0xTxHash');
+      repository.deactivate.mockResolvedValue({
+        ...cooperativa,
+        activa: false,
+      });
+
+      const resultado = await service.remove(cooperativa.id);
+
+      expect(blockchainService.revokeRole).toHaveBeenCalledWith(
+        'VALIDATOR_ROLE',
+        cooperativa.walletAddress,
+      );
+      expect(repository.deactivate).toHaveBeenCalledWith(cooperativa.id);
+      expect(resultado.txHash).toBe('0xTxHash');
+    });
+
+    it('no desactiva la cooperativa si falla la revocación on-chain', async () => {
+      repository.findById.mockResolvedValue(cooperativa);
+      blockchainService.revokeRole.mockRejectedValue(new Error('RPC caído'));
+
+      await expect(service.remove(cooperativa.id)).rejects.toThrow('RPC caído');
+
+      expect(repository.deactivate).not.toHaveBeenCalled();
+    });
+  });
+
   describe('verificarAprobada (gate "solo opera si aprobada")', () => {
     it('devuelve la empresa si está APROBADA', async () => {
       const aprobada = { ...empresaBase, estado: EstadoEmpresa.APROBADA };
@@ -357,6 +409,18 @@ describe('EmpresasService', () => {
 
     it('lanza ForbiddenException si no está APROBADA', async () => {
       repository.findById.mockResolvedValue(empresaBase);
+
+      await expect(service.verificarAprobada('e1')).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+    });
+
+    it('lanza ForbiddenException si está dada de baja', async () => {
+      repository.findById.mockResolvedValue({
+        ...empresaBase,
+        estado: EstadoEmpresa.APROBADA,
+        activa: false,
+      });
 
       await expect(service.verificarAprobada('e1')).rejects.toBeInstanceOf(
         ForbiddenException,
