@@ -1,0 +1,55 @@
+@startuml ECOToken - Diagrama de Despliegue
+' Distribucion fisica: cliente web, hosting estatico (Vercel/CDN), servidor de
+' aplicaciones (Render/NestJS), base de datos gestionada (PostgreSQL) y capa
+' on-chain en Ethereum Sepolia (testnet).
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+node "Cliente Web" <<device>> {
+  component "Explorador (Navegador)" as Explorador #f6c9a4
+  artifact "SPA React (bundle Vite)\nCapa de Presentación" as SPA #d6f5d6
+}
+
+cloud "Servidor de Presentación — Vercel (CDN)" {
+  component "Capa de Presentación\n(frontend/dist servido como estático)" as HostingEstatico #d6f5d6
+}
+
+node "Servidor de Aplicaciones — Render" {
+  component "Runtime Node.js 22\n(NestJS · REST + WebSocket)" as WebServer #e9e9e9
+  component "Autenticación y Autorización" as SAuth #e9e9e9
+  component "Capa Lógica de Negocio Persistente\nEmpresas · Cooperativas · Municipalidades ·\nIngresos · Tokens · Certificados · Ranking · Usuarios" as SNegP #e9e9e9
+  component "Capa Lógica de Negocio No Persistente\nReportes · Integración Blockchain / Custodia" as SNegNP #e9e9e9
+  component "Persistencia (PrismaService)" as Persistencia #e9e9e9
+}
+
+node "Servidor de Base de Datos\n(PostgreSQL gestionado / VPS)" {
+  database "BaseDeDatos (PostgreSQL 16)\nesquema Prisma (migrations)" as BaseDeDatos #f8d0d8
+}
+
+cloud "Red Ethereum Sepolia (testnet)" <<externo>> {
+  component "Nodo RPC (Infura / Alchemy)" as NodoRPC #f6c9a4
+  artifact "ContratoECOToken desplegado\n0xa649Fe3F...52765" as ContratoECO #f6c9a4
+  component "Explorador Etherscan" as Etherscan #f6c9a4
+  NodoRPC --> ContratoECO
+}
+
+' ===================== Conexiones de despliegue =====================
+Explorador --> HostingEstatico : descarga del SPA
+SPA --> WebServer : REST (IAutenticacion · IGestion*)
+SPA --> WebServer : WebSocket (IRankingTiempoReal)
+SPA ..> Etherscan : ILinksVerificacion
+
+WebServer -- SAuth
+WebServer -- SNegP
+WebServer -- SNegNP
+
+SNegP --> Persistencia : IMaterializar / IDesmaterializar
+Persistencia --> BaseDeDatos : SQL
+SNegNP --> NodoRPC : IJsonRpc (ethers)
+ContratoECO ..> SNegNP : IEventosContrato
+
+legend right
+  Verde: Presentación · Gris: Servicios
+  Rosa: Base de datos · Naranja: Externos
+endlegend
+@enduml
