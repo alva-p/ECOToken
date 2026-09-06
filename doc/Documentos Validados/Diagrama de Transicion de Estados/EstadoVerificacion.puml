@@ -1,0 +1,32 @@
+@startuml EstadoVerificacion
+' Diagrama de transicion de estados - Verificacion de Empresa (EstadoVerificacion, E3-HU05)
+' Convencion: N Evento [guarda] /accion()
+' Es independiente del estado de aprobacion (EstadoEmpresa): una empresa puede estar
+' APROBADA para operar y a la vez SIN_VERIFICAR.
+hide empty description
+
+[*] --> SIN_VERIFICAR : alta de empresa
+
+SIN_VERIFICAR --> EN_REVISION : 1 Solicitar Verificación [adjunta documentación] /solicitarVerificacion()
+EN_REVISION --> VERIFICADA : 2 Aprobar Verificación [rol ADMIN] /aprobarVerificacion()
+EN_REVISION --> RECHAZADA : 3 Rechazar Verificación [rol ADMIN] /rechazarVerificacion()
+RECHAZADA --> EN_REVISION : 1 Solicitar Verificación [reenvía documentación] /solicitarVerificacion()
+
+note right of SIN_VERIFICAR
+  Estado inicial: la empresa se registra
+  SIN_VERIFICAR. Independiente del estado
+  de aprobacion (EstadoEmpresa).
+end note
+
+note right of EN_REVISION
+  La empresa adjunta la documentacion (acta
+  de constitucion, licencia comercial, doc.
+  impositivo) y queda a la espera de revision.
+end note
+
+note bottom of VERIFICADA
+  Estado deseado y estable: la empresa queda
+  verificada (KYB). La revision la realiza el
+  ADMIN (a futuro, podria hacerla la municipalidad).
+end note
+@enduml

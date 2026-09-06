@@ -1,0 +1,232 @@
+@startuml ECOToken - Diagrama de Clases
+' Diagrama de clases de ECOToken (dominio).
+' Los campos/entidades de verificacion (pais, codigoPostal, telefono, sitioWeb,
+' estadoVerificacion, DocumentoVerificacion) son PLANIFICADOS para E3-HU05 (Sprint 5),
+' aun no presentes en el modelo Prisma.
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+class Usuario {
+  + id : String
+  + email : String
+  + passwordHash : String
+  + tipoRol : TipoRol
+  + activo : Boolean
+  + empresa : Empresa
+  + municipalidad : Municipalidad
+  + createdAt : DateTime
+  + updatedAt : DateTime
+  --
+  + autenticar(email, password) : Boolean
+  + cerrarSesion() : void
+  + recuperarCuenta() : void
+  + cambiarPassword(actual, nueva) : Boolean
+}
+
+class Municipalidad {
+  + id : String
+  + nombre : String
+  + ciudad : String
+  + createdAt : DateTime
+  + updatedAt : DateTime
+  --
+  + login(email, pass) : Session
+  + consultarReporte(periodo) : Reporte
+  + exportarReporte(id, formato) : Archivo
+  + verRankingPublico(mes, anio) : Ranking
+  + listarEmpresasReconocidas(mes) : List<Empresa>
+}
+
+class Empresa {
+  + id : String
+  + razonSocial : String
+  + cuit : String
+  + domicilio : String
+  + representanteLegal : String
+  + emailContacto : String
+  + estado : EstadoEmpresa
+  + categoria : CategoriaEmpresa
+  + fechaRegistro : DateTime
+  + nombre : String
+  + datosContacto : String
+  + activa : Boolean
+  + pais : String
+  + codigoPostal : String
+  + telefono : String
+  + sitioWeb : String
+  + estadoVerificacion : EstadoVerificacion
+  + walletAddress : String
+  + terminosVersion : String
+  + terminosAceptadosEn : DateTime
+  + createdAt : DateTime
+  + updatedAt : DateTime
+  --
+  + esCooperativa() : Boolean
+  + registrar(datos) : Empresa
+  + actualizarPerfil(datos) : void
+  + obtenerTokens() : Integer
+  + obtenerHistorialAportes() : List<IngresoMaterial>
+  + obtenerPosicionRanking(mes, anio) : Object
+  + obtenerCertificados() : List<CertificadoDigital>
+  + exportarHistorial() : CSV
+}
+
+class BilleteraCustodial {
+  + id : String
+  + direccionEVM : String
+  + clavePrivadaCifrada : String
+  + tipoRolOnChain : String
+  + createdAt : DateTime
+  + updatedAt : DateTime
+}
+
+class DocumentoVerificacion {
+  + id : String
+  + tipo : TipoDocumento
+  + url : String
+  + fechaSubida : DateTime
+  + createdAt : DateTime
+  + updatedAt : DateTime
+}
+
+class Reporte {
+  + id : String
+  + periodo : String
+  + fechaGeneracion : DateTime
+  + datosConsolidados : JSON
+  + creadorPor : String
+  --
+  + generar(tipo, periodo) : Reporte
+  + exportar(formato) : Archivo
+  + obtenerVolumenPorPeriodo(filtros) : JSON
+  + obtenerEmpresasReconocidas(mes) : List<Empresa>
+}
+
+class TipoMaterial {
+  + id : String
+  + nombre : String
+  + descripcion : String
+  + createdAt : DateTime
+  + updatedAt : DateTime
+}
+
+class Estado {
+  + id : String
+  + nombre : String
+  + descripcion : String
+}
+
+class Puntaje {
+  + id : String
+  + fechaDesde : DateTime
+  + fechaHasta : DateTime
+  + versionConfig : String
+  + cantidadPorKilo : String
+  + createdAt : DateTime
+  + updatedAt : DateTime
+}
+
+class IngresoMaterial {
+  + id : String
+  + peso : Float
+  + fechaIngreso : DateTime
+  + tokensAcumulados : Integer
+  --
+  + calcularPuntaje() : Integer
+  + esIngresado() : Boolean
+}
+
+class MovimientoToken {
+  + id : String
+  + cantidad : Integer
+  + txHash : String
+  + bloque : Integer
+  + fecha : DateTime
+}
+
+class CertificadoDigital {
+  + id : String
+  + fechaEmision : DateTime
+  + hashVerificacion : String
+  + urlPDF : String
+  + txHashOnChain : String
+}
+
+class Ranking {
+  + id : String
+  + mes : Integer
+  + anio : Integer
+  + fechaCierre : DateTime
+  + hashSnapshot : String
+  + bloqueReferencia : Integer
+  + estado : String
+  --
+  + consultarPuntaje() : Integer
+  + armarGrilla() : void
+  + generarCertificado() : void
+}
+
+enum TipoRol {
+  EMPRESA
+  COOPERATIVA
+  MUNICIPALIDAD
+  ADMIN
+}
+
+enum CategoriaEmpresa {
+  EMPRESA
+  COOPERATIVA
+}
+
+enum EstadoEmpresa {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+}
+
+enum EstadoVerificacion {
+  SIN_VERIFICAR
+  EN_REVISION
+  VERIFICADA
+  RECHAZADA
+}
+
+enum TipoDocumento {
+  ACTA_CONSTITUCION
+  LICENCIA_COMERCIAL
+  DOCUMENTO_IMPOSITIVO
+  FACTURA_SERVICIOS
+}
+
+' ── Relaciones ──
+Usuario "0..*" --> "0..1" Empresa : pertenece a
+Usuario "0..*" --> "0..1" Municipalidad : pertenece a
+
+Empresa "1" --> "0..1" BilleteraCustodial : posee
+Empresa "1" --> "0..*" IngresoMaterial : registra
+Empresa "1" --> "0..*" CertificadoDigital : recibe
+Empresa "1" --> "0..*" DocumentoVerificacion : presenta
+Empresa "0..1" <-- "0..*" Reporte : asociado a
+Empresa "0..1" <-- "0..*" Ranking : asociado a
+
+TipoMaterial "1" --> "0..*" Puntaje : configura
+TipoMaterial "1" --> "0..*" IngresoMaterial : clasifica
+Estado "1" --> "0..*" IngresoMaterial : determina
+
+IngresoMaterial "1" --> "0..1" MovimientoToken : genera
+
+' ── Uso de enumeraciones ──
+Usuario ..> TipoRol
+Empresa ..> CategoriaEmpresa
+Empresa ..> EstadoEmpresa
+Empresa ..> EstadoVerificacion
+DocumentoVerificacion ..> TipoDocumento
+
+note as N1
+  Verificacion de empresa (E3-HU05, planificado - Sprint 5):
+  pais, codigoPostal, telefono, sitioWeb, estadoVerificacion
+  y DocumentoVerificacion forman el modelo KYB.
+  Aun no estan en el modelo Prisma.
+end note
+@enduml

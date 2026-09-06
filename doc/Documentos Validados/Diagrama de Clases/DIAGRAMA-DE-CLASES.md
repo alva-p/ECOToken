@@ -17,6 +17,12 @@ custodial, cooperativa y despliegue UUPS).
 > **Estado de la empresa:** desde el Sprint 3, `Empresa.estado` usa el enum
 > `EstadoEmpresa` (`PENDIENTE` → `APROBADA`/`RECHAZADA`, E3-HU04); solo una
 > empresa `APROBADA` puede operar en el sistema.
+>
+> **Verificación de empresa (E3-HU05, planificado — Sprint 5):** los campos
+> `pais`, `codigoPostal`, `telefono`, `sitioWeb` y `estadoVerificacion`, junto con
+> la entidad `DocumentoVerificacion`, corresponden a la ampliación del registro
+> para profesionalizar el alta (modelo KYB, *Know Your Business*). **Aún no están
+> en el modelo Prisma**; se incorporan en el Sprint 5.
 
 ---
 
@@ -70,6 +76,11 @@ class Empresa {
   +String nombre
   +String datosContacto
   +Boolean activa
+  +String pais
+  +String codigoPostal
+  +String telefono
+  +String sitioWeb
+  +EstadoVerificacion estadoVerificacion
   +String walletAddress
   +String terminosVersion
   +DateTime terminosAceptadosEn
@@ -193,6 +204,31 @@ class EstadoEmpresa {
   RECHAZADA
 }
 
+class EstadoVerificacion {
+  <<enumeration>>
+  SIN_VERIFICAR
+  EN_REVISION
+  VERIFICADA
+  RECHAZADA
+}
+
+class DocumentoVerificacion {
+  +String id
+  +TipoDocumento tipo
+  +String url
+  +DateTime fechaSubida
+  +DateTime createdAt
+  +DateTime updatedAt
+}
+
+class TipoDocumento {
+  <<enumeration>>
+  ACTA_CONSTITUCION
+  LICENCIA_COMERCIAL
+  DOCUMENTO_IMPOSITIVO
+  FACTURA_SERVICIOS
+}
+
 Usuario "0..*" --> "0..1" Empresa : pertenece a
 Usuario "0..*" --> "0..1" Municipalidad : pertenece a
 
@@ -208,9 +244,13 @@ Estado "1" --> "0..*" IngresoMaterial : determina
 
 IngresoMaterial "1" --> "0..1" MovimientoToken : genera
 
+Empresa "1" --> "0..*" DocumentoVerificacion : presenta
+
 Usuario --> TipoRol
 Empresa --> CategoriaEmpresa
 Empresa --> EstadoEmpresa
+Empresa --> EstadoVerificacion
+DocumentoVerificacion --> TipoDocumento
 ```
 
 ---
@@ -246,6 +286,30 @@ Estado de aprobación de una empresa durante el alta (E3-HU04). Una empresa nace
 PENDIENTE
 APROBADA
 RECHAZADA
+```
+
+### 2.4. `EstadoVerificacion` *(E3-HU05, planificado)*
+
+Estado del proceso de verificación KYB de una empresa. Es independiente del
+`estado` de aprobación: una empresa puede estar `APROBADA` para operar y a la vez
+`SIN_VERIFICAR`.
+
+```text
+SIN_VERIFICAR
+EN_REVISION
+VERIFICADA
+RECHAZADA
+```
+
+### 2.5. `TipoDocumento` *(E3-HU05, planificado)*
+
+Tipo de documento que una empresa presenta para su verificación.
+
+```text
+ACTA_CONSTITUCION
+LICENCIA_COMERCIAL
+DOCUMENTO_IMPOSITIVO
+FACTURA_SERVICIOS
 ```
 
 ---
@@ -335,6 +399,11 @@ categoria = COOPERATIVA
 | `nombre` | `String` | No | Nombre comercial. |
 | `datosContacto` | `String` | No | Información adicional de contacto. |
 | `activa` | `Boolean` | Sí | Indica si la empresa está activa. |
+| `pais` | `String` | No | País de registro de la empresa (verificación, E3-HU05). |
+| `codigoPostal` | `String` | No | Código postal (verificación, E3-HU05). |
+| `telefono` | `String` | No | Teléfono del negocio (verificación, E3-HU05). |
+| `sitioWeb` | `String` | No | Sitio web de la empresa (verificación, E3-HU05). |
+| `estadoVerificacion` | `EstadoVerificacion` | No | Estado del proceso de verificación KYB (`default SIN_VERIFICAR`, E3-HU05). |
 | `walletAddress` | `String` | Sí | Dirección EVM custodial de la empresa (única). |
 | `terminosVersion` | `String` | No | Versión de los T&C aceptados (E3-HU03). |
 | `terminosAceptadosEn` | `DateTime` | No | Fecha/hora de aceptación de los T&C (E3-HU03). |
@@ -344,6 +413,7 @@ categoria = COOPERATIVA
 | `certificados` | `List<CertificadoDigital>` | No | Certificados emitidos. |
 | `reportes` | `List<Reporte>` | No | Reportes asociados. |
 | `rankings` | `List<Ranking>` | No | Registros de ranking asociados. |
+| `documentos` | `List<DocumentoVerificacion>` | No | Documentos de verificación presentados (E3-HU05). |
 | `createdAt` | `DateTime` | Sí | Fecha de creación técnica. |
 | `updatedAt` | `DateTime` | Sí | Fecha de última actualización. |
 
@@ -582,6 +652,34 @@ Representa el registro mensual del reconocimiento ambiental de una empresa.
 
 ---
 
+## 3.13. `DocumentoVerificacion` *(E3-HU05, planificado)*
+
+Representa un documento que una empresa presenta para su verificación (KYB). Una
+empresa puede presentar varios documentos, de distintos tipos.
+
+### Atributos
+
+| Atributo | Tipo | Obligatorio | Descripción |
+|---|---|---:|---|
+| `id` | `String` | Sí | Identificador único. |
+| `tipo` | `TipoDocumento` | Sí | Tipo de documento presentado. |
+| `url` | `String` | Sí | Ubicación del archivo cargado. |
+| `fechaSubida` | `DateTime` | Sí | Fecha/hora de la carga. |
+| `empresa` | `Empresa` | Sí | Empresa que presenta el documento. |
+| `createdAt` | `DateTime` | Sí | Fecha de creación. |
+| `updatedAt` | `DateTime` | Sí | Fecha de última actualización. |
+
+### Operaciones
+
+No se definieron operaciones de dominio específicas. El módulo expone operaciones
+CRUD mediante su servicio.
+
+> **Nota:** el archivo en sí no se guarda en la base; `url` apunta al almacenamiento
+> definido para los documentos. No se contempla el extracto bancario (dato
+> financiero sensible, fuera del alcance del piloto académico).
+
+---
+
 ## 4. Relaciones y multiplicidades
 
 | Relación | Multiplicidad | Descripción |
@@ -593,6 +691,7 @@ Representa el registro mensual del reconocimiento ambiental de una empresa.
 | `Empresa` — `CertificadoDigital` | `1` a `0..*` | Una empresa puede recibir múltiples certificados. |
 | `Empresa` — `Reporte` | `0..1` a `0..*` | Un reporte puede estar asociado opcionalmente con una empresa. |
 | `Empresa` — `Ranking` | `0..1` a `0..*` | Un registro de ranking puede estar asociado opcionalmente con una empresa. |
+| `Empresa` — `DocumentoVerificacion` | `1` a `0..*` | Una empresa puede presentar múltiples documentos de verificación (E3-HU05). |
 | `TipoMaterial` — `Puntaje` | `1` a `0..*` | Un material puede tener configuraciones históricas de puntaje. |
 | `TipoMaterial` — `IngresoMaterial` | `1` a `0..*` | Un tipo de material clasifica múltiples ingresos. |
 | `Estado` — `IngresoMaterial` | `1` a `0..*` | Un estado puede ser utilizado por múltiples ingresos. |
@@ -630,3 +729,12 @@ Representa el registro mensual del reconocimiento ambiental de una empresa.
 
 8. `Empresa` tiene un índice sobre `razonSocial` (`@@index([razonSocial])`) para
    soportar el buscador con autocompletado de la cooperativa (E4-HU03).
+
+9. **Verificación de empresa (E3-HU05, planificado):** los campos `pais`,
+   `codigoPostal`, `telefono`, `sitioWeb` y `estadoVerificacion`, junto con la
+   entidad `DocumentoVerificacion`, forman el modelo KYB para profesionalizar el
+   alta. Son opcionales y aún no están en el modelo Prisma; se incorporan en el
+   Sprint 5. El nombre legal se cubre con `razonSocial`, la dirección con
+   `domicilio`, el identificador fiscal con `cuit` y el email empresarial con
+   `emailContacto` (por eso no se agregan campos duplicados). El **extracto
+   bancario** se descarta por ser un dato financiero sensible fuera del alcance.
