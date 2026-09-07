@@ -43,6 +43,52 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 **Incertidumbre:** Media. Falta definir el diseño visual y el copy final con el equipo.
 **SP: 3**
 
+### E11-HU05 — Panel por rol Empresa *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+
+**Como** empresa **yo puedo** acceder a un panel específico para mi rol **de forma tal que** visualice de forma centralizada mi saldo ECO, historial de aportes, comprobantes y el resto de las funcionalidades disponibles para mi organización.
+
+**Criterios de aceptación:**
+- El panel de empresa muestra únicamente las funcionalidades habilitadas para ese rol (saldo ECO, historial de aportes, comprobantes).
+- La navegación y el layout del panel son consistentes con el resto de EcoToken.
+- Un usuario con otro rol no puede acceder a las rutas del panel de empresa.
+- Un usuario sin sesión iniciada es redirigido al login al intentar acceder.
+
+**Complejidad:** Baja. Ordena y restringe la navegación de pantallas ya existentes o en evolución del rol empresa.
+**Esfuerzo:** Bajo. Ajustes de rutas protegidas y layout sobre funcionalidades ya construidas.
+**Incertidumbre:** Baja. El alcance del rol empresa está definido.
+**SP: 3**
+
+### E11-HU06 — Panel por rol Cooperativa *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+
+**Como** cooperativa **yo puedo** acceder a un panel específico para mi rol **de forma tal que** gestione desde un mismo lugar la carga y consulta de ingresos de material reciclable asociados a empresas aprobadas.
+
+**Criterios de aceptación:**
+- El panel de cooperativa muestra únicamente las funcionalidades habilitadas para ese rol (registro de ingresos, búsqueda de empresas aprobadas).
+- La navegación y el layout del panel son consistentes con el resto de EcoToken.
+- Un usuario con otro rol no puede acceder a las rutas del panel de cooperativa.
+- Un usuario sin sesión iniciada es redirigido al login al intentar acceder.
+
+**Complejidad:** Baja. Se apoya en componentes y flujos ya desarrollados para cooperativas.
+**Esfuerzo:** Bajo. Ajustes de rutas protegidas y presentación sobre funcionalidades existentes.
+**Incertidumbre:** Baja. El alcance del panel está alineado al flujo de ingresos ya implementado.
+**SP: 3**
+
+### E11-HU07 — Panel por rol Administrador y Municipalidad *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+
+**Como** usuario administrador o autoridad municipal **yo puedo** acceder a un panel diferenciado según mi rol **de forma tal que** utilice únicamente las funcionalidades administrativas o de consulta institucional que correspondan a mis permisos.
+
+**Criterios de aceptación:**
+- La navegación y las pantallas visibles difieren según el usuario autenticado sea Administrador o Municipalidad.
+- El rol Administrador accede a las funcionalidades de gestión y administración del sistema.
+- El rol Municipalidad accede únicamente a funcionalidades de consulta y reportes.
+- No es posible acceder de forma cruzada a funcionalidades del otro rol cambiando la URL directamente.
+- Un usuario sin sesión iniciada es redirigido al login al intentar acceder.
+
+**Complejidad:** Media. Debe diferenciar layout, navegación y rutas protegidas entre dos roles con necesidades distintas.
+**Esfuerzo:** Medio. Ajustes de rutas, layout y validación de permisos por rol.
+**Incertidumbre:** Baja. Los roles están definidos, aunque las funcionalidades de municipalidad pueden seguir evolucionando.
+**SP: 5**
+
 ---
 
 ## E3 — Registro de empresa adherida
@@ -93,6 +139,38 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 **Complejidad:** Media. Incluye la primera pantalla del panel de administración y el cambio de estado con sus efectos sobre el resto del sistema.
 **Esfuerzo:** Medio. Tabla, acciones con confirmación y conexión con el backend; sin prototipo previo.
 **Incertidumbre:** Media. No hay prototipo del panel admin y falta definir si el rechazo notifica a la empresa.
+**SP: 5**
+
+### E3-HU05 — Ampliar registro y verificación de empresas *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+
+**Como** representante de empresa **yo puedo** completar un formulario de registro ampliado con nuevos campos y validaciones **de forma tal que** mi alta como empresa sea más confiable y con menos errores antes de pasar a validación administrativa.
+
+**Criterios de aceptación:**
+- El formulario incorpora los nuevos campos definidos por el equipo, cada uno con su validación correspondiente.
+- El CUIT y el email se validan en formato antes de enviar; el email también se valida por unicidad contra el backend.
+- Cada campo con error muestra su mensaje específico junto al campo; no se puede enviar el formulario con errores.
+- Al confirmar el envío se informa que la empresa queda en estado pendiente de validación.
+- La pantalla es usable desde dispositivos móviles y de escritorio.
+
+**Complejidad:** Media. Se agregan campos y validaciones sobre un formulario existente, coordinando con las nuevas reglas del backend.
+**Esfuerzo:** Medio. Ampliación de formulario, validaciones y manejo de estados/errores.
+**Incertidumbre:** Baja. El flujo de registro ya existe; se trata de una ampliación acotada.
+**SP: 5**
+
+### E3-HU06 — Rework del registro y login *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+
+**Como** usuario del sistema **yo puedo** utilizar un flujo de registro e inicio de sesión corregido y unificado **de forma tal que** la experiencia de acceso sea clara, consistente y segura para cualquiera de mis roles en EcoToken.
+
+**Criterios de aceptación:**
+- Las pantallas de registro y login comparten el mismo lenguaje visual y de layout.
+- El login valida los campos y ante credenciales inválidas muestra un mensaje de error genérico.
+- Tras un login exitoso, el usuario es redirigido automáticamente al panel correspondiente a su rol.
+- Las rutas privadas no son accesibles sin sesión iniciada y redirigen al login.
+- Se corrigen las inconsistencias visuales y de comportamiento detectadas en el flujo actual de registro/login.
+
+**Complejidad:** Media. Afecta navegación, autenticación, redirección por rol y experiencia de usuario en pantallas ya existentes.
+**Esfuerzo:** Medio. Requiere ajustes coordinados de frontend y backend sobre el flujo actual.
+**Incertidumbre:** Media. Puede aparecer trabajo adicional al corregir inconsistencias no documentadas del flujo vigente.
 **SP: 5**
 
 ---
@@ -387,3 +465,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 ## Historias sin trabajo de frontend (sin cambios)
 
 E3-HU02 (billetera custodial), E5-HU04 (listener de eventos), E7-HU01 y E7-HU02 (cálculo y cierre de ranking), E8-HU01 (emisión de certificados) son de backend/sistema y mantienen su redacción original. E11-HU01 (e2e) ejercita el frontend pero como suite de pruebas, no como pantalla.
+
+---
+
+*E3-HU05, E3-HU06, E11-HU05, E11-HU06 y E11-HU07 fueron incorporadas al Product Backlog en el refinamiento posterior al cierre del Sprint 4, para su desarrollo en Sprint 5. No formaban parte del backlog original del Sprint 0.*
