@@ -145,7 +145,7 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Baja. Requerimiento claro con parámetros definidos.
 **Prio: Alta | SP: 5**
 
-### E2-HU03 — Quemar tokens con firma
+### E2-HU03 — Quemar tokens con firma ✅ Completada (Sprint 4)
 
 **Como** BURNER_ROLE **yo puedo** ejecutar la quema de tokens de una empresa previa firma off-chain válida del titular **de forma tal que** se soporten beneficios opcionales.
 
@@ -233,7 +233,7 @@ Backlog completo reformulado según el formato de User Story:
 
 ## E3 — Registro de empresa adherida
 
-### E3-HU01 — Registrar empresa
+### E3-HU01 — Registrar empresa ✅ Completada (Sprint 4)
 
 **Como** representante de empresa **yo puedo** registrarme con razón social, CUIT, domicilio, datos del representante legal y email **de forma tal que** mi empresa participe del ecosistema.
 
@@ -263,7 +263,7 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Media. Hay decisiones técnicas de custodia y cifrado por cerrar.
 **Prio: Alta | SP: 8**
 
-### E3-HU03 — Aceptar términos y condiciones
+### E3-HU03 — Aceptar términos y condiciones ✅ Completada (Sprint 4)
 
 **Como** representante legal **yo puedo** aceptar los T&C antes de operar **de forma tal que** quede constancia formal de mi aceptación.
 
@@ -277,7 +277,7 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Baja. Requerimiento claro.
 **Prio: Alta | SP: 2**
 
-### E3-HU04 — Gestionar empresas adheridas
+### E3-HU04 — Gestionar empresas adheridas ✅ Completada (Sprint 4)
 
 **Como** administrador **yo puedo** consultar, aprobar, editar y dar de baja empresas adheridas **de forma tal que** mantenga actualizado y seguro el padrón de participantes.
 
@@ -299,7 +299,7 @@ Backlog completo reformulado según el formato de User Story:
 
 ## E4 — Registro y operación de cooperativa
 
-### E4-HU01 — Gestionar cooperativas
+### E4-HU01 — Gestionar cooperativas ✅ Completada (Sprint 4)
 
 **Como** administrador **yo puedo** dar de alta, consultar, editar y dar de baja una cooperativa **de forma tal que** controle qué entidades están autorizadas a validar ingresos.
 
@@ -348,7 +348,7 @@ Backlog completo reformulado según el formato de User Story:
 
 ## E5 — Captura de material y emisión de tokens
 
-### E5-HU01 — Registrar ingreso de material
+### E5-HU01 — Registrar ingreso de material ✅ Completada (Sprint 4)
 
 **Como** cooperativa **yo puedo** registrar un ingreso de material con empresa, tipo, peso y fecha **de forma tal que** se acuñen los tokens correspondientes.
 
@@ -363,7 +363,7 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Media. Hay dudas sobre los tiempos de confirmación del mint y su reflejo en el sistema.
 **Prio: Alta | SP: 8**
 
-### E5-HU02 — Calcular tokens por conversión
+### E5-HU02 — Calcular tokens por conversión ✅ Completada (Sprint 4)
 
 **Como** sistema **yo puedo** calcular tokens usando una tabla de conversión peso → tokens configurable por tipo de material **de forma tal que** la acuñación responda a reglas ajustables.
 
@@ -378,7 +378,7 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Baja. Regla de cálculo definida con precisión.
 **Prio: Alta | SP: 3**
 
-### E5-HU03 — Recibir comprobante de aporte
+### E5-HU03 — Recibir comprobante de aporte ✅ Completada (Sprint 4)
 
 **Como** empresa **yo puedo** recibir un comprobante digital por cada aporte con fecha, cooperativa, material, peso y tokens **de forma tal que** tenga respaldo de cada contribución.
 
@@ -410,7 +410,7 @@ Backlog completo reformulado según el formato de User Story:
 
 ## E6 — Dashboard de empresa
 
-### E6-HU01 — Ver saldo de tokens
+### E6-HU01 — Ver saldo de tokens ✅ Completada (Sprint 4)
 
 **Como** empresa **yo puedo** ver mi saldo actual de tokens ECO **de forma tal que** conozca mi reputación acumulada.
 
@@ -423,7 +423,7 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Media. Falta decidir el mecanismo (WebSocket o polling).
 **Prio: Alta | SP: 3**
 
-### E6-HU02 — Ver historial de aportes
+### E6-HU02 — Ver historial de aportes ✅ Completada (Sprint 4)
 
 **Como** empresa **yo puedo** ver el historial cronológico de mis aportes (cooperativa, material, peso, tokens) **de forma tal que** pueda realizar auditoría interna.
 
@@ -566,7 +566,7 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Baja. Sin dudas técnicas.
 **Prio: Media | SP: 3**
 
-### E9-HU02 — Consultar volumen reciclado
+### E9-HU02 — Consultar volumen reciclado ✅ Completada (Sprint 4)
 
 **Como** autoridad municipal **yo puedo** ver el volumen reciclado por canal empresarial en un período **de forma tal que** evalúe el impacto.
 
@@ -596,7 +596,7 @@ Backlog completo reformulado según el formato de User Story:
 
 ## E10 — Administración y gobernanza
 
-### E10-HU01 — Gestionar roles del contrato
+### E10-HU01 — Gestionar roles del contrato ✅ Completada (Sprint 4)
 
 **Como** ADMIN_ROLE **yo puedo** otorgar y revocar roles (MINTER, BURNER, VALIDATOR, EMERGENCY) desde un panel de admin **de forma tal que** gobierne el contrato sin herramientas técnicas.
 
@@ -610,7 +610,7 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Media. Hay dudas sobre el manejo de errores de red y la firma de las transacciones del administrador.
 **Prio: Media | SP: 5**
 
-### E10-HU02 — Pausar contrato con motivo
+### E10-HU02 — Pausar contrato con motivo ✅ Completada (Sprint 4)
 
 **Como** ADMIN_ROLE **yo puedo** pausar y despausar el contrato desde el panel de admin con un motivo registrado **de forma tal que** gestione incidentes con trazabilidad.
 
