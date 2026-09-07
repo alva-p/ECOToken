@@ -47,7 +47,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 
 ## E3 — Registro de empresa adherida
 
-### E3-HU01 — Registrar empresa
+### E3-HU01 — Registrar empresa ✅ Completada (Sprint 4)
 
 **Como** representante de empresa **yo puedo** completar un formulario web de registro con razón social, CUIT, domicilio, datos del representante legal y email **de forma tal que** mi empresa solicite su participación en el ecosistema.
 
@@ -64,7 +64,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 **Incertidumbre:** Media. Falta definir el diseño visual y el detalle del flujo posterior al registro.
 **SP: 8**
 
-### E3-HU03 — Aceptar términos y condiciones
+### E3-HU03 — Aceptar términos y condiciones ✅ Completada (Sprint 4)
 
 **Como** representante legal **yo puedo** leer y aceptar los términos y condiciones dentro del flujo de registro **de forma tal que** quede constancia formal de mi aceptación antes de operar.
 
@@ -78,7 +78,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 **Incertidumbre:** Baja. El requerimiento es claro y no tiene dudas técnicas.
 **SP: 2**
 
-### E3-HU04 — Gestionar empresas adheridas
+### E3-HU04 — Gestionar empresas adheridas ✅ Completada (Sprint 4)
 
 **Como** administrador **yo puedo** consultar, aprobar, editar y dar de baja empresas adheridas desde mi panel **de forma tal que** mantenga actualizado y seguro el padrón de participantes.
 
@@ -99,7 +99,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 
 ## E4 — Registro y operación de cooperativa
 
-### E4-HU01 — Gestionar cooperativas
+### E4-HU01 — Gestionar cooperativas ✅ Completada (Sprint 4)
 
 **Como** administrador **yo puedo** dar de alta, consultar, editar y dar de baja una cooperativa desde mi panel **de forma tal que** controle qué entidades están autorizadas a validar ingresos de material.
 
@@ -150,7 +150,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 
 ## E5 — Captura de material y emisión de tokens
 
-### E5-HU01 — Registrar ingreso de material
+### E5-HU01 — Registrar ingreso de material ✅ Completada (Sprint 4)
 
 **Como** cooperativa **yo puedo** registrar un ingreso de material indicando empresa, tipo, peso y fecha desde mi panel **de forma tal que** se acuñen automáticamente los tokens que le corresponden a la empresa.
 
@@ -166,7 +166,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 **Incertidumbre:** Media. El contrato ya existe, pero hay dudas sobre los tiempos de confirmación y cómo reflejarlos en la interfaz.
 **SP: 8**
 
-### E5-HU02 — Configurar tabla de conversión
+### E5-HU02 — Configurar tabla de conversión ✅ Completada (Sprint 4)
 
 **Como** administrador **yo puedo** ver y editar la tabla de conversión peso → tokens por tipo de material desde mi panel **de forma tal que** el cálculo de tokens sea configurable sin intervención técnica.
 
@@ -181,7 +181,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 **Incertidumbre:** Baja. Requerimiento claro con reglas simples.
 **SP: 5**
 
-### E5-HU03 — Ver comprobante de aporte
+### E5-HU03 — Ver comprobante de aporte ✅ Completada (Sprint 4)
 
 **Como** empresa **yo puedo** visualizar un comprobante digital por cada aporte con fecha, cooperativa, material, peso y tokens **de forma tal que** tenga respaldo verificable de cada contribución.
 
@@ -199,7 +199,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 
 ## E6 — Dashboard de empresa
 
-### E6-HU01 — Ver saldo de tokens
+### E6-HU01 — Ver saldo de tokens ✅ Completada (Sprint 4)
 
 **Como** empresa **yo puedo** ver mi saldo actual de tokens ECO en la vista principal de mi panel **de forma tal que** conozca mi reputación acumulada en todo momento.
 
@@ -213,7 +213,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 **Incertidumbre:** Media. Falta decidir el mecanismo de actualización (WebSocket o polling).
 **SP: 3**
 
-### E6-HU02 — Ver historial de aportes
+### E6-HU02 — Ver historial de aportes ✅ Completada (Sprint 4)
 
 **Como** empresa **yo puedo** consultar el historial cronológico de mis aportes con cooperativa, material, peso y tokens **de forma tal que** pueda realizar auditoría interna de mi actividad.
 
@@ -322,7 +322,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 **Incertidumbre:** Baja. Flujo estándar sin dudas técnicas.
 **SP: 3**
 
-### E9-HU02 — Consultar volumen reciclado
+### E9-HU02 — Consultar volumen reciclado ✅ Completada (Sprint 4)
 
 **Como** autoridad municipal **yo puedo** ver el volumen reciclado por canal empresarial filtrado por período **de forma tal que** evalúe el impacto del programa en la ciudad.
 
@@ -354,7 +354,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 
 ## E10 — Administración y gobernanza
 
-### E10-HU01 — Gestionar roles del contrato
+### E10-HU01 — Gestionar roles del contrato ✅ Completada (Sprint 4)
 
 **Como** administrador (ADMIN_ROLE) **yo puedo** otorgar y revocar roles (MINTER, BURNER, VALIDATOR, EMERGENCY) desde una vista de mi panel **de forma tal que** gobierne el contrato sin depender de herramientas técnicas.
 
@@ -368,7 +368,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 **Incertidumbre:** Media. Hay dudas sobre el manejo de errores de la red y la firma de transacciones del administrador.
 **SP: 5**
 
-### E10-HU02 — Pausar y despausar el contrato
+### E10-HU02 — Pausar y despausar el contrato ✅ Completada (Sprint 4)
 
 **Como** administrador (ADMIN_ROLE) **yo puedo** pausar y despausar el contrato desde mi panel registrando un motivo **de forma tal que** gestione incidentes con trazabilidad formal.
 

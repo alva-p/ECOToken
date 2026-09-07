@@ -1,0 +1,126 @@
+@startuml ECOToken - Diagrama de Componentes
+' Vista de componentes (sin entidades: las entidades van en el diagrama de clases).
+' Solo Gestores/servicios. Dependencias rotuladas con la interfaz requerida (IXxx).
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+' ===================== CAPA DE PRESENTACIÓN =====================
+package "Capa de Presentación (SPA React + Vite)" <<subsystem>> {
+  component "AuthPresWeb" as AuthPresWeb #d6f5d6
+  component "EmpresaPresWeb" as EmpresaPresWeb #d6f5d6
+  component "CooperativaPresWeb" as CooperativaPresWeb #d6f5d6
+  component "AdminPresWeb" as AdminPresWeb #d6f5d6
+  component "MunicipioPresWeb" as MunicipioPresWeb #d6f5d6
+  component "ControlAccesoWeb\n(ProtectedRoute · AuthContext · RBAC)" as ControlAcceso #e9e9e9
+  component "ClienteApiWeb\n(REST + JWT)" as ClienteApi #e9e9e9
+  component "ClienteWsWeb\n(WebSocket)" as ClienteWs #e9e9e9
+  component "ExploradorLinksWeb" as ExploradorLinks #e9e9e9
+}
+
+' ============== CAPA LÓGICA DE NEGOCIO — PERSISTENTE ==============
+package "Capa Lógica de Negocio Persistente (NestJS)" as NP <<subsystem>> {
+  package "Autenticación y Autorización" <<subsistema>> {
+    component "GestorAutenticacion" as GAuth #e9e9e9
+    component "EstrategiaJWT · GuardaRoles" as JWT #e9e9e9
+  }
+  package "Gestión de Usuarios" <<subsistema>> {
+    component "GestorUsuarios" as GUsu #e9e9e9
+  }
+  package "Gestión de Empresas" <<subsistema>> {
+    component "GestorEmpresas" as GEmp #e9e9e9
+  }
+  package "Gestión de Cooperativas" <<subsistema>> {
+    component "GestorCooperativas" as GCoop #e9e9e9
+  }
+  package "Gestión de Municipalidades" <<subsistema>> {
+    component "GestorMunicipalidades" as GMuni #e9e9e9
+  }
+  package "Gestión de Ingresos" <<subsistema>> {
+    component "GestorIngresos" as GIng #e9e9e9
+  }
+  package "Gestión de Tokens" <<subsistema>> {
+    component "GestorTokens" as GTok #e9e9e9
+  }
+  package "Gestión de Certificados" <<subsistema>> {
+    component "GestorCertificados" as GCert #e9e9e9
+  }
+  package "Gestión de Ranking" <<subsistema>> {
+    component "GestorRanking" as GRank #e9e9e9
+  }
+}
+
+' ============ CAPA LÓGICA DE NEGOCIO — NO PERSISTENTE ============
+package "Capa Lógica de Negocio No Persistente" <<subsystem>> {
+  component "GeneradorReportes\n· GeneradorEstadisticas" as GRep #e9e9e9
+  component "ServicioBlockchain\n(WebService - firma mint/burn)" as SBc #e9e9e9
+  component "EscuchaEventos\n(sync on-chain → DB)" as SEv #e9e9e9
+  component "ServicioBilletera\n(claves cifradas)" as SBil #e9e9e9
+}
+
+' ================ ADMINISTRACIÓN DE PERSISTENCIA ================
+package "Administración de Persistencia" <<subsystem>> {
+  component "Persistencia (PrismaService)" as Pers #e9e9e9
+  database "BaseDeDatos (PostgreSQL 16)" as DB #f8d0d8
+}
+
+' ========================= EXTERNOS =========================
+node "Nivel On-chain — Sepolia (testnet)" {
+  component "NodoRPC (Infura / Alchemy)" as RPC #f6c9a4
+  artifact "ContratoECOToken" as Contrato #f6c9a4
+  component "ExploradorEtherscan" as Etherscan #f6c9a4
+}
+
+' ===================== Presentación =====================
+AuthPresWeb ..> ClienteApi : IAutenticacion
+EmpresaPresWeb --> ControlAcceso
+CooperativaPresWeb --> ControlAcceso
+AdminPresWeb --> ControlAcceso
+MunicipioPresWeb --> ControlAcceso
+ControlAcceso --> ClienteApi
+EmpresaPresWeb --> ClienteWs
+MunicipioPresWeb --> ExploradorLinks
+ExploradorLinks ..> Etherscan : ILinksVerificacion
+
+' ===================== Cliente API → Gestores =====================
+ClienteApi ..> GAuth : IAutenticacion
+ClienteApi ..> GEmp : IGestionEmpresas
+ClienteApi ..> GCoop : IGestionCooperativas
+ClienteApi ..> GIng : IRegistroIngresos
+ClienteApi ..> GTok : ISaldosTokens
+ClienteApi ..> GCert : IConsultaCertificados
+ClienteApi ..> GRank : IConsultaRanking
+ClienteApi ..> GRep : IReportes
+ClienteWs ..> GRank : IRankingTiempoReal
+
+' ===================== Negocio interno =====================
+GAuth --> GUsu : IValidacionUsuarios
+GEmp --> GAuth : IValidacionUsuarios
+GIng --> GAuth : IValidacionUsuarios
+GIng --> GEmp : IDatosEmpresa
+GIng ..> SBc : IAcunarTokens (mint)
+GCert ..> SBc : IEmitirCertificado
+GCert --> GEmp : IDatosEmpresa
+GRank --> GTok : IMovimientosToken
+GRep --> GEmp : IConsolidadoEmpresas
+GRep --> GRank : IConsolidadoRanking
+SBc --> GTok : ISincronizacionOnChain
+SBc --> GRank : ISincronizacionOnChain
+SBc --> SBil : IFirmaCustodial
+
+' ===================== Persistencia (colapsada) =====================
+NP --> Pers : IMaterializar / IDesmaterializar
+Pers --> DB : SQL
+
+' ===================== On-chain =====================
+SBc --> RPC : IJsonRpc (ethers)
+RPC --> Contrato
+Contrato ..> SEv : IEventosContrato
+
+legend right
+  Verde: Presentación
+  Gris: Servicios / Gestores
+  Rosa: Base de datos
+  Naranja: Externos (on-chain)
+endlegend
+@enduml
