@@ -295,6 +295,41 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Baja. Estados y acciones definidos.
 **Prio: Media | SP: 3**
 
+### E3-HU05 — Ampliar registro y verificación de empresas *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+
+**Como** representante de empresa **yo puedo** completar un registro ampliado con validaciones adicionales y mecanismos de verificación **de forma tal que** el sistema pueda reducir errores, mejorar la calidad de los datos y aumentar la confiabilidad del alta de empresas adheridas.
+
+**Criterios de aceptación:**
+- Debe ampliarse el formulario de registro de empresa con los campos definidos por el equipo.
+- Debe validar formato de CUIT, correo electrónico y campos obligatorios.
+- Debe verificar que el correo electrónico no se encuentre previamente registrado.
+- Debe permitir dejar la empresa en estado pendiente hasta su validación administrativa.
+- Debe mostrar mensajes claros ante errores de validación.
+- Debe persistir correctamente los datos ampliados del registro.
+
+**Complejidad:** Media. La ampliación del registro requiere coordinar validaciones de formulario, reglas de backend y persistencia de datos.
+**Esfuerzo:** Medio. Implica ajustes en frontend, backend y modelo de datos.
+**Incertidumbre:** Baja. El flujo ya existe y se amplía sobre una base previamente implementada.
+**Prio: Alta | SP: 5**
+
+### E3-HU06 — Rework del registro y login *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+
+**Como** usuario del sistema **yo puedo** utilizar un flujo de registro e inicio de sesión corregido y unificado **de forma tal que** la experiencia de acceso sea más clara, consistente y segura para los distintos roles de EcoToken.
+
+**Criterios de aceptación:**
+- Debe revisarse y corregirse el flujo actual de registro.
+- Debe revisarse y corregirse el flujo actual de inicio de sesión.
+- Debe unificarse la experiencia visual entre registro y login.
+- Debe validar correctamente credenciales y estados del usuario.
+- Debe redirigir al panel correspondiente según el rol autenticado.
+- Debe mostrar mensajes claros ante errores de acceso o validación.
+- Debe impedir el acceso a paneles privados sin autenticación.
+
+**Complejidad:** Media. Afecta navegación, autenticación, redirección por rol y experiencia de usuario.
+**Esfuerzo:** Medio. Requiere ajustes coordinados entre frontend y backend.
+**Incertidumbre:** Media. Puede requerir corregir inconsistencias existentes del flujo actual.
+**Prio: Alta | SP: 5**
+
 ---
 
 ## E4 — Registro y operación de cooperativa
@@ -654,6 +689,57 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Baja. Los pasos ya se ejecutaron durante el desarrollo.
 **Prio: Media | SP: 3**
 
+### E11-HU05 — Panel por rol Empresa *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+
+**Como** empresa **yo puedo** acceder a un panel específico para mi rol **de forma tal que** pueda visualizar de manera centralizada mi saldo ECO, historial de aportes, comprobantes y funcionalidades disponibles como organización adherida.
+
+**Criterios de aceptación:**
+- Debe existir un panel específico para usuarios con rol Empresa.
+- Debe mostrar únicamente funcionalidades correspondientes al rol Empresa.
+- Debe incluir accesos a saldo ECO, historial de aportes y comprobantes.
+- Debe impedir el acceso a funcionalidades de cooperativa, administrador o municipalidad.
+- Debe redirigir al login si el usuario no está autenticado.
+
+**Complejidad:** Baja. Se trata de ordenar y restringir la experiencia visual del rol empresa sobre funcionalidades ya existentes o en evolución.
+**Esfuerzo:** Bajo. Implica ajustes de frontend, navegación y control de rutas.
+**Incertidumbre:** Baja. El comportamiento esperado del rol empresa está definido.
+**Prio: Alta | SP: 3**
+
+### E11-HU06 — Panel por rol Cooperativa *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+
+**Como** cooperativa **yo puedo** acceder a un panel específico para mi rol **de forma tal que** pueda gestionar las operaciones propias de carga y consulta de ingresos de material reciclable asociados a empresas aprobadas.
+
+**Criterios de aceptación:**
+- Debe existir un panel específico para usuarios con rol Cooperativa.
+- Debe mostrar únicamente funcionalidades correspondientes al rol Cooperativa.
+- Debe permitir acceder al registro de ingresos de material.
+- Debe permitir buscar o seleccionar empresas aprobadas.
+- Debe impedir el acceso a funcionalidades de empresa, administrador o municipalidad.
+- Debe redirigir al login si el usuario no está autenticado.
+
+**Complejidad:** Baja. Se centra en navegación, rutas protegidas y presentación de funcionalidades propias del rol.
+**Esfuerzo:** Bajo. Reutiliza componentes y flujos ya desarrollados para cooperativas.
+**Incertidumbre:** Baja. El alcance del panel de cooperativa está alineado al flujo de ingresos.
+**Prio: Alta | SP: 3**
+
+### E11-HU07 — Panel por rol Administrador y Municipalidad *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+
+**Como** usuario administrador o autoridad municipal **yo puedo** acceder a un panel diferenciado según mi rol **de forma tal que** pueda utilizar únicamente las funcionalidades administrativas o de consulta institucional que correspondan a mis permisos.
+
+**Criterios de aceptación:**
+- Debe existir navegación diferenciada para usuarios con rol Administrador y Municipalidad.
+- El usuario Administrador debe acceder a funcionalidades de gestión y administración del sistema.
+- El usuario Municipalidad debe acceder únicamente a funcionalidades de consulta y reportes.
+- Debe impedirse el acceso cruzado entre funcionalidades administrativas y municipales.
+- Debe mostrarse una interfaz clara según el rol autenticado.
+- Debe redirigir al login si el usuario no está autenticado.
+
+**Complejidad:** Media. Debe diferenciar correctamente permisos, navegación y funcionalidades entre roles con necesidades distintas.
+**Esfuerzo:** Medio. Requiere ajustes de frontend, rutas, layout y validación de permisos.
+**Incertidumbre:** Baja. Los roles están definidos, aunque las funcionalidades finales de municipalidad pueden seguir evolucionando.
+**Prio: Alta | SP: 5**
+
 ---
 
 *Criterios de aceptación redactados en formato "Debe...", manteniendo el contenido del backlog original sin agregados. SP = puntos originales.*
+*E3-HU05, E3-HU06, E11-HU05, E11-HU06 y E11-HU07 fueron incorporadas al Product Backlog en el refinamiento posterior al cierre del Sprint 4, para su desarrollo en Sprint 5. No formaban parte del backlog original del Sprint 0.*
