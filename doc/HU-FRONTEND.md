@@ -73,7 +73,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 **Incertidumbre:** Baja. El alcance del panel está alineado al flujo de ingresos ya implementado.
 **SP: 3**
 
-### E11-HU07 — Panel por rol Administrador y Municipalidad *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+### E11-HU07 — Panel por rol Administrador y Municipalidad ✅ Completada (Sprint 5) *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
 
 **Como** usuario administrador o autoridad municipal **yo puedo** acceder a un panel diferenciado según mi rol **de forma tal que** utilice únicamente las funcionalidades administrativas o de consulta institucional que correspondan a mis permisos.
 

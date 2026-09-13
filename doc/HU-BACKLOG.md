@@ -722,7 +722,7 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Baja. El alcance del panel de cooperativa está alineado al flujo de ingresos.
 **Prio: Alta | SP: 3**
 
-### E11-HU07 — Panel por rol Administrador y Municipalidad *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+### E11-HU07 — Panel por rol Administrador y Municipalidad ✅ Completada (Sprint 5) *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
 
 **Como** usuario administrador o autoridad municipal **yo puedo** acceder a un panel diferenciado según mi rol **de forma tal que** pueda utilizar únicamente las funcionalidades administrativas o de consulta institucional que correspondan a mis permisos.
 
