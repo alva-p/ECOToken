@@ -241,4 +241,11 @@ model Ranking {
 
   empresa   Empresa? @relation(fields: [empresaId], references: [id])
   empresaId String?
+
+  // Evita duplicar la fila de una empresa al cerrar el mismo período dos veces
+  // (E7-HU02). El caso de un mes sin ninguna empresa (fila "sentinela" con
+  // empresaId null) no queda cubierto por esta constraint —Postgres no
+  // deduplica NULLs—, pero lo cubre el chequeo de `estado` en el service
+  // antes de cerrar.
+  @@unique([empresaId, mes, anio])
 }

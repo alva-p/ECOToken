@@ -13,6 +13,7 @@ const mockPause = jest.fn();
 const mockUnpause = jest.fn();
 const mockPaused = jest.fn();
 const mockWait = jest.fn();
+const mockGetBlockNumber = jest.fn();
 
 jest.mock('ethers', () => {
   const actual = jest.requireActual('ethers');
@@ -27,6 +28,7 @@ jest.mock('ethers', () => {
       pause: mockPause,
       unpause: mockUnpause,
       paused: mockPaused,
+      runner: { provider: { getBlockNumber: mockGetBlockNumber } },
     })),
   };
 });
@@ -188,6 +190,29 @@ describe('BlockchainService', () => {
       await expect(service.pausarContrato()).rejects.toBeInstanceOf(
         ServiceUnavailableException,
       );
+    });
+  });
+
+  describe('E7-HU02: bloque de referencia', () => {
+    it('devuelve el número de bloque actual de la red', async () => {
+      mockGetBlockNumber.mockResolvedValue(123456);
+      const service = await buildService();
+
+      await expect(service.bloqueActual()).resolves.toBe(123456);
+    });
+
+    it('devuelve null (no lanza) si la integración no está configurada', async () => {
+      const service = await buildService({ 'blockchain.adminPrivateKey': '' });
+
+      await expect(service.bloqueActual()).resolves.toBeNull();
+      expect(mockGetBlockNumber).not.toHaveBeenCalled();
+    });
+
+    it('devuelve null (no lanza) si falla la consulta al nodo', async () => {
+      mockGetBlockNumber.mockRejectedValue(new Error('RPC caído'));
+      const service = await buildService();
+
+      await expect(service.bloqueActual()).resolves.toBeNull();
     });
   });
 });

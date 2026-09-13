@@ -5,7 +5,8 @@ import type { Empresa } from '../../empresas/entities/empresa.entity';
  *
  * Métodos de negocio (implementados en ranking.service.ts):
  * - consultarPuntaje(): number
- * - armarGrilla(): void
+ * - armarGrilla(mes, anio): FilaGrilla[] (E7-HU01)
+ * - cerrarRankingDelMes(mes, anio): CierreRanking (E7-HU02)
  * - generarCertificado(): void
  */
 export class Ranking {

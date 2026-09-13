@@ -242,6 +242,28 @@ export class BlockchainService {
     return id(rol);
   }
 
+  /**
+   * Bloque actual de la red, usado como referencia de anclaje temporal al
+   * cerrar un snapshot (E7-HU02). No es una transacción: es una lectura,
+   * así que no requiere la cuenta MINTER ni gasta gas. Devuelve `null` si la
+   * integración no está configurada o la consulta falla — el cierre del
+   * ranking no debe bloquearse por esto (el bloque de referencia es
+   * complementario al hash, no la única prueba de integridad).
+   */
+  async bloqueActual(): Promise<number | null> {
+    const provider = this.contract?.runner?.provider;
+    if (!provider) return null;
+
+    try {
+      return await provider.getBlockNumber();
+    } catch (err) {
+      this.logger.warn(
+        `No se pudo obtener el bloque de referencia: ${(err as Error).message}`,
+      );
+      return null;
+    }
+  }
+
   /** Estado actual de pausa del contrato (E10-HU02). */
   async estaPausado(): Promise<boolean> {
     if (!this.contract) {
