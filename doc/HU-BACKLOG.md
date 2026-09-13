@@ -515,7 +515,7 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Baja. La fuente de datos (eventos Minted) ya está sincronizada.
 **Prio: Alta | SP: 5**
 
-### E7-HU02 — Cerrar ranking mensual
+### E7-HU02 — Cerrar ranking mensual ✅ Completada (Sprint 5)
 
 **Como** sistema **yo puedo** cerrar el ranking al final de cada mes y registrar un snapshot auditable **de forma tal que** el resultado quede inmutable y verificable.
 
