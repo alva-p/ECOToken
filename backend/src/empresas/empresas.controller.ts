@@ -8,8 +8,14 @@ import {
   Body,
   Query,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
   ParseEnumPipe,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CategoriaEmpresa, TipoRol } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -18,6 +24,13 @@ import { EmpresasService } from './empresas.service';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 import { RegistrarEmpresaDto } from './dto/registrar-empresa.dto';
 import { AltaCooperativaDto } from './dto/alta-cooperativa.dto';
+import { AgregarDocumentoVerificacionDto } from './dto/agregar-documento-verificacion.dto';
+import {
+  ArchivoSubido,
+  DIRECTORIO_VERIFICACION,
+  MIME_DOCUMENTO_VERIFICACION,
+  TAMANIO_MAXIMO_DOCUMENTO,
+} from './subida-verificacion';
 
 /** Rutas HTTP de Empresa: solo delegan en el service. */
 @Controller('empresas')
@@ -28,6 +41,40 @@ export class EmpresasController {
   @Post('registro')
   registrar(@Body() dto: RegistrarEmpresaDto) {
     return this.service.registrar(dto);
+  }
+
+  // ─── E3-HU05: verificación (KYB) — carga de documentos ───
+  // Público como el registro: la empresa recién registrada (aún PENDIENTE, sin
+  // usuario) puede adjuntar su documentación. Sube el archivo (multipart, campo
+  // `archivo`), valida tipo/tamaño y deja la empresa EN_REVISION.
+  @Post(':id/documentos-verificacion')
+  @UseInterceptors(
+    FileInterceptor('archivo', {
+      dest: DIRECTORIO_VERIFICACION,
+      limits: { fileSize: TAMANIO_MAXIMO_DOCUMENTO },
+    }),
+  )
+  agregarDocumentoVerificacion(
+    @Param('id') id: string,
+    @Body() dto: AgregarDocumentoVerificacionDto,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: TAMANIO_MAXIMO_DOCUMENTO }),
+          new FileTypeValidator({ fileType: MIME_DOCUMENTO_VERIFICACION }),
+        ],
+      }),
+    )
+    archivo: ArchivoSubido,
+  ) {
+    return this.service.agregarDocumentoVerificacion(id, dto, archivo);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.ADMIN)
+  @Get(':id/documentos-verificacion')
+  listarDocumentosVerificacion(@Param('id') id: string) {
+    return this.service.listarDocumentosVerificacion(id);
   }
 
   // ─── E4-HU01: alta administrativa de cooperativa ───
