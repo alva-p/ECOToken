@@ -61,7 +61,12 @@ export class EmpresasController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: TAMANIO_MAXIMO_DOCUMENTO }),
-          new FileTypeValidator({ fileType: MIME_DOCUMENTO_VERIFICACION }),
+          // Se guarda en disco (dest), así que no hay `buffer` para validar los
+          // magic numbers: se valida por mimetype declarado (skip magic numbers).
+          new FileTypeValidator({
+            fileType: MIME_DOCUMENTO_VERIFICACION,
+            skipMagicNumbersValidation: true,
+          }),
         ],
       }),
     )
