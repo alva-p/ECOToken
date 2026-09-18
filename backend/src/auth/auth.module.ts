@@ -31,6 +31,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, JwtAuthGuard, RolesGuard],
-  exports: [JwtAuthGuard, RolesGuard],
+  // JwtModule se reexporta para que otros módulos puedan firmar tokens propios
+  // (p. ej. la credencial verificable de un certificado, E8-HU01) sin duplicar
+  // el registro del secreto.
+  exports: [JwtModule, JwtAuthGuard, RolesGuard],
 })
 export class AuthModule {}

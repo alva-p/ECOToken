@@ -52,6 +52,9 @@ contract ECOToken is
     // la calcula el backend (RN-06/RN-07), aqui solo queda registrada la trazabilidad.
     event Minted(address indexed empresa, uint256 amount, string material, uint256 peso);
     event Burned(address indexed titular, uint256 amount);
+    // E8-HU01: deja trazabilidad on-chain de la emision del certificado mensual;
+    // no acuna ni transfiere nada, solo ancla el hash de verificacion al bloque.
+    event CertificadoEmitido(address indexed empresa, uint256 mes, uint256 anio, bytes32 hash);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -117,6 +120,16 @@ contract ECOToken is
     /// @notice Nonce actual del titular, necesario para armar la proxima firma EIP-712.
     function nonces(address titular) external view returns (uint256) {
         return _nonces[titular];
+    }
+
+    // E8-HU01: registra el cierre mensual de certificados. Gate con ADMIN_ROLE
+    // (misma cuenta que ya administra el contrato) en vez de sumar un rol nuevo
+    // solo para esto.
+    function emitirCertificado(address empresa, uint256 mes, uint256 anio, bytes32 hash)
+        external
+        onlyRole(ADMIN_ROLE)
+    {
+        emit CertificadoEmitido(empresa, mes, anio, hash);
     }
 
     // El backend acuna 1 unidad = 1 ECO (RN-06/RN-07 convierten kg a un entero de

@@ -201,15 +201,31 @@ model MovimientoToken {
 }
 
 /// Certificado digital verificable emitido a una Empresa (con anclaje on-chain).
+/// Snapshot del cierre del mes (E8-HU01): kgReciclados/co2Evitado/posicion quedan
+/// fijos al emitir, no se recalculan si después cambian los ingresos del período
+/// (mismo criterio que el snapshot de Ranking, E7-HU02).
 model CertificadoDigital {
-  id               String   @id @default(uuid())
-  fechaEmision     DateTime @default(now())
-  hashVerificacion String
-  urlPDF           String?
-  txHashOnChain    String?
+  id                String   @id @default(uuid())
+  fechaEmision      DateTime @default(now())
+  mes               Int
+  anio              Int
+  posicion          Int
+  /// Cantidad de empresas del cierre de ese mes (para "posición X de N", PDF).
+  totalEmpresas     Int      @default(1)
+  kgReciclados      Float
+  co2Evitado        Float
+  /// Desglose por tipo de material al momento de emitir, ej. [{"material":"PLASTICO","kg":120}] (E8-HU02, PDF).
+  desglosePorMaterial Json @default("[]")
+  hashVerificacion  String
+  credencialFirmada String
+  urlPDF            String?
+  txHashOnChain     String?
 
   empresa   Empresa @relation(fields: [empresaId], references: [id])
   empresaId String
+
+  // Un solo certificado por empresa y mes (idempotencia del cierre mensual).
+  @@unique([empresaId, mes, anio])
 }
 
 /// Acción de pausa/despausa (RN-19) sobre PausaContrato.
