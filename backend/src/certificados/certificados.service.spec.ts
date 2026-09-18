@@ -10,6 +10,7 @@ import { BlockchainService } from '../blockchain/blockchain.service';
 describe('CertificadosService', () => {
   let service: CertificadosService;
   let repository: {
+    findByHash: jest.Mock;
     findIngresosDelPeriodo: jest.Mock;
     emitir: jest.Mock;
     findByEmpresaId: jest.Mock;
@@ -22,6 +23,7 @@ describe('CertificadosService', () => {
 
   beforeEach(async () => {
     repository = {
+      findByHash: jest.fn(),
       findIngresosDelPeriodo: jest.fn().mockResolvedValue([]),
       emitir: jest.fn().mockResolvedValue({ id: 'cert1' }),
       findByEmpresaId: jest.fn(),
@@ -61,6 +63,24 @@ describe('CertificadosService', () => {
 
   it('debería estar definido', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('verificar (E8-HU03)', () => {
+    it('hash existente devuelve valido true con el certificado', async () => {
+      const certificado = { id: '1', hashVerificacion: 'abc' };
+      repository.findByHash.mockResolvedValue(certificado);
+
+      expect(await service.verificar('abc')).toEqual({
+        valido: true,
+        certificado,
+      });
+    });
+
+    it('hash inexistente devuelve valido false', async () => {
+      repository.findByHash.mockResolvedValue(null);
+
+      expect(await service.verificar('no-existe')).toEqual({ valido: false });
+    });
   });
 
   describe('emitirCertificadosDelMes (E8-HU01)', () => {

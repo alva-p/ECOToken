@@ -61,6 +61,26 @@ export class CertificadoDigitalRepository {
     return this.prisma.certificadoDigital.findUnique({ where: { id } });
   }
 
+  /** Solo campos públicos: sin CUIT/email/domicilio de la empresa (E8-HU03). */
+  findByHash(hash: string) {
+    return this.prisma.certificadoDigital.findFirst({
+      where: { hashVerificacion: hash },
+      select: {
+        id: true,
+        fechaEmision: true,
+        mes: true,
+        anio: true,
+        posicion: true,
+        kgReciclados: true,
+        co2Evitado: true,
+        hashVerificacion: true,
+        urlPDF: true,
+        txHashOnChain: true,
+        empresa: { select: { razonSocial: true } },
+      },
+    });
+  }
+
   update(id: string, dto: UpdateCertificadoDigitalDto) {
     return this.prisma.certificadoDigital.update({ where: { id }, data: dto });
   }
