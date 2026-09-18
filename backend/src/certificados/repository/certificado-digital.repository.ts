@@ -41,6 +41,22 @@ export class CertificadoDigitalRepository {
     return this.prisma.certificadoDigital.findMany();
   }
 
+  /** Certificados de una empresa, más nuevos primero (E8-HU02). */
+  findByEmpresaId(empresaId: string) {
+    return this.prisma.certificadoDigital.findMany({
+      where: { empresaId },
+      orderBy: [{ anio: 'desc' }, { mes: 'desc' }],
+    });
+  }
+
+  /** Certificado con razón social de la empresa, para armar el PDF (E8-HU02). */
+  findByIdConEmpresa(id: string) {
+    return this.prisma.certificadoDigital.findUnique({
+      where: { id },
+      include: { empresa: { select: { razonSocial: true } } },
+    });
+  }
+
   findById(id: string) {
     return this.prisma.certificadoDigital.findUnique({ where: { id } });
   }

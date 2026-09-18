@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { ForbiddenException } from '@nestjs/common';
 import { CertificadosService } from './certificados.service';
 import { CertificadoDigitalRepository } from './repository/certificado-digital.repository';
 import { EmpresasService } from '../empresas/empresas.service';
@@ -11,6 +12,8 @@ describe('CertificadosService', () => {
   let repository: {
     findIngresosDelPeriodo: jest.Mock;
     emitir: jest.Mock;
+    findByEmpresaId: jest.Mock;
+    findByIdConEmpresa: jest.Mock;
   };
   let empresas: { findOne: jest.Mock };
   let blockchain: { emitirCertificado: jest.Mock };
@@ -21,6 +24,8 @@ describe('CertificadosService', () => {
     repository = {
       findIngresosDelPeriodo: jest.fn().mockResolvedValue([]),
       emitir: jest.fn().mockResolvedValue({ id: 'cert1' }),
+      findByEmpresaId: jest.fn(),
+      findByIdConEmpresa: jest.fn(),
     };
     empresas = {
       findOne: jest
@@ -130,6 +135,24 @@ describe('CertificadosService', () => {
 
       const dto = repository.emitir.mock.calls[0][0];
       expect(dto.txHashOnChain).toBeUndefined();
+    });
+  });
+
+  describe('misCertificados / obtenerPdf (E8-HU02)', () => {
+    it('misCertificados rechaza si el usuario no tiene empresa asociada', () => {
+      expect(() => service.misCertificados(null)).toThrow(ForbiddenException);
+    });
+
+    it('obtenerPdf rechaza si el certificado no pertenece a la empresa', async () => {
+      repository.findByIdConEmpresa.mockResolvedValue({
+        id: 'cert1',
+        empresaId: 'emp1',
+        empresa: { razonSocial: 'Eco SRL' },
+      });
+
+      await expect(
+        service.obtenerPdf('cert1', 'otra-empresa'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
     });
   });
 });

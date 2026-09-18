@@ -9,6 +9,7 @@ import { EmpresaLayout } from '@/layouts/EmpresaLayout';
 import { EmpresaDashboardPage } from '@/features/empresa/pages/DashboardPage';
 import { HistorialAportesPage } from '@/features/empresa/pages/HistorialAportesPage';
 import { ComprobanteAportePage } from '@/features/empresa/pages/ComprobanteAportePage';
+import { CertificadosPage } from '@/features/empresa/pages/CertificadosPage';
 import { CooperativaLayout } from '@/layouts/CooperativaLayout';
 import { CooperativaDashboardPage } from '@/features/cooperativa/pages/DashboardPage';
 import { AdminLayout } from '@/layouts/AdminLayout';
@@ -41,6 +42,7 @@ export const router = createBrowserRouter([
       { index: true, element: <EmpresaDashboardPage /> },
       { path: 'aportes', element: <HistorialAportesPage /> },
       { path: 'aportes/:id', element: <ComprobanteAportePage /> },
+      { path: 'certificados', element: <CertificadosPage /> },
     ],
   },
   {
