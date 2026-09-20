@@ -528,7 +528,7 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Media. La persistencia on-chain opcional está abierta a definición.
 **Prio: Alta | SP: 8**
 
-### E7-HU03 — Visualizar ranking público *(User Story canónica)*
+### E7-HU03 — Visualizar ranking público ✅ Completada (Sprint 5) *(User Story canónica)*
 
 **Como** usuario público **yo puedo** ver el ranking mensual cerrado de los últimos meses **de forma tal que** conozca las empresas reconocidas.
 
