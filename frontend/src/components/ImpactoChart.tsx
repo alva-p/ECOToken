@@ -15,11 +15,9 @@ const PAD_X = 4;
 const PAD_TOP = 14;
 const PAD_BOTTOM = 20;
 
-// Gráfico de línea del material recuperado (landing pública): antes era un
-// degradé CSS decorativo sin datos reales detrás — "no se entiende". Esta es
-// una serie única (sin leyenda necesaria, per dataviz skill) con hover +
-// crosshair; los valores siguen siendo de ejemplo (E11-HU04), E7-HU03 los
-// reemplaza por datos reales del backend.
+// Gráfico de línea del material recuperado (landing pública): una serie única
+// (sin leyenda necesaria, per dataviz skill) con hover + crosshair. Recibe los
+// kg de cada mes cerrado (histórico del ranking real, E7-HU03).
 export function ImpactoChart({ data }: ImpactoChartProps) {
   const gradientId = useId();
   const [hover, setHover] = useState<number | null>(null);
@@ -68,7 +66,7 @@ export function ImpactoChart({ data }: ImpactoChartProps) {
         onPointerMove={actualizarHover}
         onPointerLeave={() => setHover(null)}
         role="img"
-        aria-label={`Kg reciclados por período, de ${data[0].label} a ${data[data.length - 1].label}: sube de ${min.toLocaleString('es-AR')} a ${max.toLocaleString('es-AR')} kg`}
+        aria-label={`Kg reciclados por período, de ${data[0].label} a ${data[data.length - 1].label}: va de ${data[0].kg.toLocaleString('es-AR')} a ${data[data.length - 1].kg.toLocaleString('es-AR')} kg`}
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">

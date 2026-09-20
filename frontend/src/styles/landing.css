@@ -1267,3 +1267,12 @@
     animation: none;
   }
 }
+
+/* Estados sin datos del ranking real (E7-HU03): ranking todavía sin cerrar. */
+.leaderboard-empty,
+.chart-empty {
+  padding: 28px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
