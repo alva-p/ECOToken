@@ -502,7 +502,7 @@ Backlog completo reformulado según el formato de User Story:
 
 ## E7 — Ranking mensual
 
-### E7-HU01 — Calcular ranking del mes
+### E7-HU01 — Calcular ranking del mes ✅ Completada (Sprint 5)
 
 **Como** sistema **yo puedo** calcular el ranking del mes en curso ordenando empresas por tokens acuñados durante el mes **de forma tal que** el desempeño esté disponible para consulta.
 
