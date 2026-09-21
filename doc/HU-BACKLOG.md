@@ -689,7 +689,7 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Baja. Los pasos ya se ejecutaron durante el desarrollo.
 **Prio: Media | SP: 3**
 
-### E11-HU05 — Panel por rol Empresa *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+### E11-HU05 — Panel por rol Empresa ✅ Completada (Sprint 5) *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
 
 **Como** empresa **yo puedo** acceder a un panel específico para mi rol **de forma tal que** pueda visualizar de manera centralizada mi saldo ECO, historial de aportes, comprobantes y funcionalidades disponibles como organización adherida.
 

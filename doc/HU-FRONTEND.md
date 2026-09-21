@@ -43,7 +43,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 **Incertidumbre:** Media. Falta definir el diseño visual y el copy final con el equipo.
 **SP: 3**
 
-### E11-HU05 — Panel por rol Empresa *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+### E11-HU05 — Panel por rol Empresa ✅ Completada (Sprint 5) *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
 
 **Como** empresa **yo puedo** acceder a un panel específico para mi rol **de forma tal que** visualice de forma centralizada mi saldo ECO, historial de aportes, comprobantes y el resto de las funcionalidades disponibles para mi organización.
 
