@@ -19,6 +19,6 @@ import { RankingPublicoRepository } from './repository/ranking-publico.repositor
     RankingPublicoService,
     RankingPublicoRepository,
   ],
-  exports: [RankingService],
+  exports: [RankingService, RankingScheduler],
 })
 export class RankingModule {}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { mailtoAltaCooperativa } from '@/lib/contacto';
 import GradientWaves from '@/components/GradientWaves';
 import { Navbar } from '@/components/Navbar';
 import { ImpactoChart } from '@/components/ImpactoChart';
@@ -417,16 +418,21 @@ function App() {
               Sumala al ranking y hacé visible el impacto que generan juntos.
             </p>
           </div>
-          <div className="cta-actions">
-            <Link className="button button-primary" to="/login">
-              Iniciar sesión <ArrowUpRight size={17} />
-            </Link>
-            <a
-              className="button button-light"
-              href="mailto:somosecotoken@gmail.com"
-            >
-              Quiero sumarme <ArrowUpRight size={17} />
-            </a>
+          <div className="cta-side">
+            <div className="cta-actions">
+              <Link className="button button-primary" to="/registro">
+                Registrar mi empresa <ArrowUpRight size={17} />
+              </Link>
+              <Link className="button button-light" to="/login">
+                Iniciar sesión <ArrowUpRight size={17} />
+              </Link>
+            </div>
+            {/* E3-HU06: las cooperativas no se registran solas; solicitan el
+                alta por mail y el administrador las da de alta (E4-HU01). */}
+            <p className="cta-coop">
+              ¿Sos una cooperativa de reciclaje?{' '}
+              <a href={mailtoAltaCooperativa()}>Solicitá el alta por mail</a>
+            </p>
           </div>
         </div>
       </section>
