@@ -58,7 +58,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 **Incertidumbre:** Baja. El alcance del rol empresa está definido.
 **SP: 3**
 
-### E11-HU06 — Panel por rol Cooperativa *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+### E11-HU06 — Panel por rol Cooperativa ✅ Completada (Sprint 5) *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
 
 **Como** cooperativa **yo puedo** acceder a un panel específico para mi rol **de forma tal que** gestione desde un mismo lugar la carga y consulta de ingresos de material reciclable asociados a empresas aprobadas.
 

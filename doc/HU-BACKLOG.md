@@ -705,7 +705,7 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Baja. El comportamiento esperado del rol empresa está definido.
 **Prio: Alta | SP: 3**
 
-### E11-HU06 — Panel por rol Cooperativa *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+### E11-HU06 — Panel por rol Cooperativa ✅ Completada (Sprint 5) *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
 
 **Como** cooperativa **yo puedo** acceder a un panel específico para mi rol **de forma tal que** pueda gestionar las operaciones propias de carga y consulta de ingresos de material reciclable asociados a empresas aprobadas.
 
