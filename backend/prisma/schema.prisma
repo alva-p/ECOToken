@@ -40,6 +40,25 @@ enum EstadoEmpresa {
   RECHAZADA
 }
 
+/// Estado de verificación (KYB) de una Empresa (E3-HU05). Es independiente del
+/// estado de aprobación (EstadoEmpresa): una empresa puede estar APROBADA para
+/// operar y a la vez SIN_VERIFICAR. El flujo de aprobación de los documentos por
+/// la autoridad queda para una historia posterior.
+enum EstadoVerificacion {
+  SIN_VERIFICAR
+  EN_REVISION
+  VERIFICADA
+  RECHAZADA
+}
+
+/// Tipo de documento adjuntado para la verificación de una Empresa (E3-HU05).
+enum TipoDocumento {
+  ACTA_CONSTITUCION
+  LICENCIA_COMERCIAL
+  DOCUMENTO_IMPOSITIVO
+  FACTURA_SERVICIOS
+}
+
 /// Usuario del sistema. Pertenece a una Empresa o a una Municipalidad según su rol.
 model Usuario {
   id           String  @id @default(uuid())
@@ -88,13 +107,24 @@ model Empresa {
   terminosVersion     String?
   terminosAceptadosEn DateTime?
 
-  usuarios           Usuario[]
-  ingresos           IngresoMaterial[]        @relation("IngresosDeEmpresa")
-  aportesValidados   IngresoMaterial[]        @relation("IngresosValidadosPorCooperativa")
-  billeteraCustodial BilleteraCustodial?
-  certificados       CertificadoDigital[]
-  reportes           Reporte[]
-  rankings           Ranking[]
+  // E3-HU05: registro ampliado (datos formales) + verificación (KYB).
+  // "Dirección legal" se cubre con el campo `domicilio` y el "identificador
+  // fiscal" con `cuit` (ambos ya existentes); no se duplican.
+  pais               String?
+  codigoPostal       String?
+  telefono           String?
+  sitioWeb           String?
+  descripcion        String?
+  estadoVerificacion EstadoVerificacion @default(SIN_VERIFICAR)
+
+  usuarios               Usuario[]
+  ingresos               IngresoMaterial[]       @relation("IngresosDeEmpresa")
+  aportesValidados       IngresoMaterial[]       @relation("IngresosValidadosPorCooperativa")
+  billeteraCustodial     BilleteraCustodial?
+  certificados           CertificadoDigital[]
+  reportes               Reporte[]
+  rankings               Ranking[]
+  documentosVerificacion DocumentoVerificacion[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -102,6 +132,24 @@ model Empresa {
   // Búsqueda por razón social (E4-HU03): sin esto, el `contains` de
   // EmpresaRepository.buscar() hace table scan en cada tecla del autocompletado.
   @@index([razonSocial])
+}
+
+/// Documento adjuntado por una Empresa para su verificación (E3-HU05).
+/// Una empresa puede presentar varios (incluso del mismo tipo). El archivo se
+/// almacena en el servidor y acá se guarda su metadata + la ruta relativa.
+model DocumentoVerificacion {
+  id            String        @id @default(uuid())
+  tipo          TipoDocumento
+  archivoUrl    String // ruta/URL del archivo almacenado
+  nombreArchivo String? // nombre original del archivo subido
+  mimeType      String?
+  tamanioBytes  Int?
+  fechaCarga    DateTime      @default(now())
+
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  empresaId String
+
+  @@index([empresaId])
 }
 
 /// Billetera custodial (dirección EVM) administrada por el backend para una Empresa.

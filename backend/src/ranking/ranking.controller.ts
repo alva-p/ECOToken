@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { TipoRol } from '@prisma/client';
@@ -15,13 +16,27 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { RankingService } from './ranking.service';
 import { CreateRankingDto } from './dto/create-ranking.dto';
 import { UpdateRankingDto } from './dto/update-ranking.dto';
+import { ConsultarRankingDto } from './dto/consultar-ranking.dto';
 import { CerrarRankingDto } from './dto/cerrar-ranking.dto';
-import { mesAnterior } from './ranking.scheduler';
+import { RankingMesResponse } from './interfaces/ranking-resultado.interface';
+import { mesAnterior } from './mes-anterior.util';
 
 /** Rutas HTTP de Ranking: solo delegan en el service. */
 @Controller('ranking')
 export class RankingController {
   constructor(private readonly service: RankingService) {}
+
+  /**
+   * Obtiene el ranking de empresas del mes en curso ordenadas por tokens acuñados (E7-HU01).
+   * Disponible vía API para consulta institucional, empresas o público general.
+   * Permite consultar opcionalmente por query params ?mes=X&anio=Y.
+   */
+  @Get('actual')
+  obtenerRankingActual(
+    @Query() query: ConsultarRankingDto,
+  ): Promise<RankingMesResponse> {
+    return this.service.obtenerRankingMesActual(query.mes, query.anio);
+  }
 
   /**
    * Cierre manual del ranking (E7-HU02): mismo camino que corre el job

@@ -28,13 +28,33 @@ export class RankingRepository {
     return this.prisma.ranking.delete({ where: { id } });
   }
 
-  /** Ingresos del mes/año indicados, con la empresa que los generó (E7-HU02). */
+  /**
+   * Consulta los ingresos de material con tokens acuñados del período (mes y año).
+   * `mes` es 1-indexado (1 = enero, 12 = diciembre). (E7-HU01)
+   */
   findIngresosDelMes(mes: number, anio: number) {
-    const desde = new Date(Date.UTC(anio, mes - 1, 1));
-    const hasta = new Date(Date.UTC(anio, mes, 1));
+    const desde = new Date(Date.UTC(anio, mes - 1, 1, 0, 0, 0, 0));
+    const hasta = new Date(Date.UTC(anio, mes, 1, 0, 0, 0, 0));
+
     return this.prisma.ingresoMaterial.findMany({
-      where: { fechaIngreso: { gte: desde, lt: hasta } },
-      include: { empresa: { select: { id: true, razonSocial: true } } },
+      where: {
+        fechaIngreso: {
+          gte: desde,
+          lt: hasta,
+        },
+        tokensAcumulados: {
+          gt: 0,
+        },
+      },
+      include: {
+        empresa: {
+          select: {
+            id: true,
+            razonSocial: true,
+            cuit: true,
+          },
+        },
+      },
     });
   }
 

@@ -9,6 +9,6 @@ import { RankingRepository } from './repository/ranking.repository';
   imports: [BlockchainModule],
   controllers: [RankingController],
   providers: [RankingService, RankingRepository, RankingScheduler],
-  exports: [RankingService],
+  exports: [RankingService, RankingScheduler],
 })
 export class RankingModule {}
