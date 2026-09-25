@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { CategoriaEmpresa, EstadoEmpresa } from '@prisma/client';
+import {
+  CategoriaEmpresa,
+  EstadoEmpresa,
+  EstadoVerificacion,
+  TipoDocumento,
+} from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateEmpresaDto } from '../dto/create-empresa.dto';
 import { UpdateEmpresaDto } from '../dto/update-empresa.dto';
@@ -162,6 +167,43 @@ export class EmpresaRepository {
   /** Transición del estado de aprobación (E3-HU04). */
   updateEstado(id: string, estado: EstadoEmpresa) {
     return this.prisma.empresa.update({ where: { id }, data: { estado } });
+  }
+
+  // ─── E3-HU05: documentos de verificación (KYB) ───
+
+  /**
+   * Registra un documento de verificación de la empresa y, en la misma
+   * transacción, deja la empresa EN_REVISION (equivale a presionar "Verificar").
+   * El estado de verificación es independiente del estado de aprobación.
+   */
+  agregarDocumentoVerificacion(
+    empresaId: string,
+    datos: {
+      tipo: TipoDocumento;
+      archivoUrl: string;
+      nombreArchivo?: string;
+      mimeType?: string;
+      tamanioBytes?: number;
+    },
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      const documento = await tx.documentoVerificacion.create({
+        data: { ...datos, empresaId },
+      });
+      await tx.empresa.update({
+        where: { id: empresaId },
+        data: { estadoVerificacion: EstadoVerificacion.EN_REVISION },
+      });
+      return documento;
+    });
+  }
+
+  /** Documentos de verificación presentados por una empresa (más recientes primero). */
+  findDocumentosVerificacion(empresaId: string) {
+    return this.prisma.documentoVerificacion.findMany({
+      where: { empresaId },
+      orderBy: { fechaCarga: 'desc' },
+    });
   }
 
   remove(id: string) {

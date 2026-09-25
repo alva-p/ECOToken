@@ -3,15 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { Field } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
-import { cx } from '@/lib/cx';
+import { mailtoAltaCooperativa } from '@/lib/contacto';
 import { useAuth } from '@/providers/AuthContext';
 import type { UserRole } from '@/types';
-
-const ROLE_TABS: { key: UserRole; label: string }[] = [
-  { key: 'EMPRESA', label: 'Empresa' },
-  { key: 'COOPERATIVA', label: 'Cooperativa' },
-  { key: 'MUNICIPALIDAD', label: 'Municipalidad' },
-];
 
 const ROLE_HOME: Record<UserRole, string> = {
   EMPRESA: '/empresa',
@@ -20,10 +14,10 @@ const ROLE_HOME: Record<UserRole, string> = {
   ADMIN: '/admin',
 };
 
+// E3-HU06: se quitó el selector de rol del login. La cuenta ingresa con el rol
+// que ya tiene asignado; el backend lo determina a partir de las credenciales y
+// acá solo se usa para redirigir al portal correcto (ROLE_HOME).
 export function LoginPage() {
-  // El selector de rol es solo una guía visual (a qué portal accede); el rol real
-  // que decide la redirección lo determina el backend a partir de las credenciales.
-  const [selectedRole, setSelectedRole] = useState<UserRole>('EMPRESA');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -58,24 +52,6 @@ export function LoginPage() {
         </div>
 
         <Card className="p-7">
-          <div className="mb-5 flex gap-1 rounded-lg border border-eco-border bg-eco-bg p-1">
-            {ROLE_TABS.map((r) => (
-              <button
-                key={r.key}
-                type="button"
-                onClick={() => setSelectedRole(r.key)}
-                className={cx(
-                  'flex-1 rounded-md px-2 py-2 text-xs font-semibold transition-colors',
-                  selectedRole === r.key
-                    ? 'bg-white text-eco-ink shadow-sm'
-                    : 'text-eco-ink2',
-                )}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
-
           <form
             onSubmit={handleSubmit}
             className="flex flex-col gap-4"
@@ -109,6 +85,18 @@ export function LoginPage() {
           <Link to="/registro" className="font-semibold text-eco-org">
             Registrala acá
           </Link>
+        </div>
+
+        {/* E3-HU06: las cooperativas no se registran solas; solicitan el alta
+            por mail y el administrador las da de alta (E4-HU01). */}
+        <div className="mt-3 text-center text-xs text-eco-ink2">
+          ¿Sos una cooperativa de reciclaje?{' '}
+          <a
+            href={mailtoAltaCooperativa()}
+            className="font-semibold text-eco-org"
+          >
+            Solicitá el alta por mail
+          </a>
         </div>
       </div>
     </div>

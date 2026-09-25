@@ -1,10 +1,15 @@
-import type { CategoriaEmpresa, EstadoEmpresa } from '@prisma/client';
+import type {
+  CategoriaEmpresa,
+  EstadoEmpresa,
+  EstadoVerificacion,
+} from '@prisma/client';
 import type { Usuario } from '../../usuarios/entities/usuario.entity';
 import type { IngresoMaterial } from '../../ingresos/entities/ingreso-material.entity';
 import type { BilleteraCustodial } from '../../billeteras/entities/billetera-custodial.entity';
 import type { CertificadoDigital } from '../../certificados/entities/certificado-digital.entity';
 import type { Reporte } from '../../reportes/entities/reporte.entity';
 import type { Ranking } from '../../ranking/entities/ranking.entity';
+import type { DocumentoVerificacion } from './documento-verificacion.entity';
 
 /**
  * Empresa adherida (o cooperativa validadora si categoria = COOPERATIVA).
@@ -37,6 +42,14 @@ export class Empresa {
   terminosVersion: string | null;
   terminosAceptadosEn: Date | null;
 
+  // E3-HU05: registro ampliado + verificación (KYB).
+  pais: string | null;
+  codigoPostal: string | null;
+  telefono: string | null;
+  sitioWeb: string | null;
+  descripcion: string | null;
+  estadoVerificacion: EstadoVerificacion;
+
   // Relaciones
   usuarios?: Usuario[];
   ingresos?: IngresoMaterial[];
@@ -44,6 +57,7 @@ export class Empresa {
   certificados?: CertificadoDigital[];
   reportes?: Reporte[];
   rankings?: Ranking[];
+  documentosVerificacion?: DocumentoVerificacion[];
 
   createdAt: Date;
   updatedAt: Date;
