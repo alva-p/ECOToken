@@ -134,7 +134,9 @@ describe('EmpresasService', () => {
 
     it('valida que la empresa exista y registra el documento con su metadata', async () => {
       repository.findById.mockResolvedValue(empresaBase);
-      repository.agregarDocumentoVerificacion.mockResolvedValue({ id: 'doc-1' });
+      repository.agregarDocumentoVerificacion.mockResolvedValue({
+        id: 'doc-1',
+      });
 
       const resultado = await service.agregarDocumentoVerificacion(
         'e1',
