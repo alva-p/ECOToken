@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { BlockchainService } from '../blockchain/blockchain.service';
+import { CertificadosService } from '../certificados/certificados.service';
 import { RankingRepository } from './repository/ranking.repository';
 import { CreateRankingDto } from './dto/create-ranking.dto';
 import { UpdateRankingDto } from './dto/update-ranking.dto';
@@ -27,6 +28,7 @@ export class RankingService {
   constructor(
     private readonly repository: RankingRepository,
     private readonly blockchain: BlockchainService,
+    private readonly certificados: CertificadosService,
   ) {}
 
   create(dto: CreateRankingDto) {
@@ -179,6 +181,9 @@ export class RankingService {
       bloqueReferencia,
     });
 
+    // E8-HU01: certificado mensual a cada empresa de la grilla ya cerrada.
+    await this.certificados.emitirCertificadosDelMes(mes, anio, grilla);
+
     return {
       mes,
       anio,
@@ -186,6 +191,24 @@ export class RankingService {
       bloqueReferencia,
       empresas: grilla.length,
     };
+  }
+
+  /**
+   * Reintento de la emisión de certificados de un mes YA cerrado (E8-HU01),
+   * sin tocar el estado del Ranking (por eso no pasa por `existeCierre`).
+   * Cubre el caso en que `cerrarRankingDelMes` cerró el ranking pero la
+   * emisión de certificados quedó incompleta (ver `emitidos`/`fallidos` en
+   * el resultado) — es idempotente, así que reemitir una empresa que ya
+   * tenía certificado no la duplica, solo la actualiza.
+   */
+  async reemitirCertificados(mes: number, anio: number) {
+    const grilla = await this.armarGrilla(mes, anio);
+    const resultado = await this.certificados.emitirCertificadosDelMes(
+      mes,
+      anio,
+      grilla,
+    );
+    return { mes, anio, ...resultado };
   }
 
   /** Hash determinístico del contenido cerrado: cualquier alteración posterior lo cambia. */
@@ -204,11 +227,5 @@ export class RankingService {
       })),
     });
     return createHash('sha256').update(payload).digest('hex');
-  }
-
-  /** Emite el certificado digital a la empresa de esa posición. */
-  async generarCertificado(id: string): Promise<void> {
-    await this.findOne(id);
-    // TODO: emitir certificado a la empresa de esa posición (E8-HU01).
   }
 }

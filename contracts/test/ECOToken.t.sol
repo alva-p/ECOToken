@@ -533,4 +533,25 @@ contract ECOTokenTest is Test {
         vm.prank(burner);
         ecoToken.burn(titular, 10 ether, deadline, signature);
     }
+
+    event CertificadoEmitido(address indexed empresa, uint256 mes, uint256 anio, bytes32 hash);
+
+    function testAdminCanEmitirCertificado() public {
+        vm.expectEmit(true, false, false, true);
+        emit CertificadoEmitido(titular, 9, 2026, bytes32(uint256(0xABCD)));
+        vm.prank(admin);
+        ecoToken.emitirCertificado(titular, 9, 2026, bytes32(uint256(0xABCD)));
+    }
+
+    function testNonAdminCannotEmitirCertificado() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                attacker,
+                ecoToken.ADMIN_ROLE()
+            )
+        );
+        vm.prank(attacker);
+        ecoToken.emitirCertificado(titular, 9, 2026, bytes32(uint256(0xABCD)));
+    }
 }

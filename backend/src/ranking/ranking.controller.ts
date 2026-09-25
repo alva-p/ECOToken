@@ -54,6 +54,23 @@ export class RankingController {
     return this.service.cerrarRankingDelMes(mes, anio);
   }
 
+  /**
+   * Reintento de la emisión de certificados de un mes ya cerrado (E8-HU01):
+   * para cuando el cierre corrió bien pero algún certificado quedó sin
+   * emitir. No vuelve a cerrar el ranking (por eso no da 409 si ya está
+   * cerrado) y es seguro repetirlo — devuelve cuántos se emitieron/fallaron.
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.ADMIN)
+  @Post('reemitir-certificados')
+  reemitirCertificados(@Body() dto: CerrarRankingDto) {
+    const { mes, anio } =
+      dto.mes && dto.anio
+        ? { mes: dto.mes, anio: dto.anio }
+        : mesAnterior(new Date());
+    return this.service.reemitirCertificados(mes, anio);
+  }
+
   @Post()
   create(@Body() dto: CreateRankingDto) {
     return this.service.create(dto);

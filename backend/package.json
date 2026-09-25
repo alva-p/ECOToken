@@ -17,6 +17,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
+    "ranking:cerrar": "ts-node scripts/cerrar-ranking.ts",
     "prisma:seed": "prisma db seed",
     "prisma:seed:demo": "ts-node prisma/seed-demo.ts"
   },

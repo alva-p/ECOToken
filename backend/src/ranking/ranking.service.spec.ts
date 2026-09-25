@@ -3,11 +3,13 @@ import { ConflictException } from '@nestjs/common';
 import { RankingService } from './ranking.service';
 import { RankingRepository } from './repository/ranking.repository';
 import { BlockchainService } from '../blockchain/blockchain.service';
+import { CertificadosService } from '../certificados/certificados.service';
 
 describe('RankingService', () => {
   let service: RankingService;
   let repository: jest.Mocked<Partial<RankingRepository>>;
   let blockchain: { bloqueActual: jest.Mock };
+  let certificados: { emitirCertificadosDelMes: jest.Mock };
 
   const mockIngresos = [
     {
@@ -69,12 +71,16 @@ describe('RankingService', () => {
       remove: jest.fn(),
     };
     blockchain = { bloqueActual: jest.fn().mockResolvedValue(999) };
+    certificados = {
+      emitirCertificadosDelMes: jest.fn().mockResolvedValue(undefined),
+    };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
         RankingService,
         { provide: RankingRepository, useValue: repository },
         { provide: BlockchainService, useValue: blockchain },
+        { provide: CertificadosService, useValue: certificados },
       ],
     }).compile();
 
@@ -232,6 +238,34 @@ describe('RankingService', () => {
       });
     });
 
+    it('emite los certificados mensuales de la grilla cerrada (E8-HU01)', async () => {
+      repository.findIngresosDelMes = jest.fn().mockResolvedValueOnce([
+        {
+          empresaId: 'emp1',
+          peso: 25,
+          empresa: { razonSocial: 'Eco SRL' },
+          tokensAcumulados: 50,
+        },
+      ]);
+
+      await service.cerrarRankingDelMes(3, 2026);
+
+      expect(certificados.emitirCertificadosDelMes).toHaveBeenCalledWith(
+        3,
+        2026,
+        [
+          {
+            empresaId: 'emp1',
+            razonSocial: 'Eco SRL',
+            tokens: 50,
+            totalKg: 25,
+            cantidadAportes: 1,
+            posicion: 1,
+          },
+        ],
+      );
+    });
+
     it('cierra igual (fila sentinela) cuando el mes no tuvo aportes', async () => {
       repository.findIngresosDelMes = jest.fn().mockResolvedValueOnce([]);
 
@@ -278,6 +312,49 @@ describe('RankingService', () => {
       const segundo = await service.cerrarRankingDelMes(4, 2026);
 
       expect(primero.hashSnapshot).not.toBe(segundo.hashSnapshot);
+    });
+  });
+
+  describe('reemitirCertificados (E8-HU01: reintento sin re-cerrar)', () => {
+    it('rearma la grilla del período y reemite, sin pasar por existeCierre', async () => {
+      repository.findIngresosDelMes = jest.fn().mockResolvedValueOnce([
+        {
+          empresaId: 'emp1',
+          peso: 25,
+          empresa: { razonSocial: 'Eco SRL' },
+          tokensAcumulados: 50,
+        },
+      ]);
+      certificados.emitirCertificadosDelMes.mockResolvedValueOnce({
+        intentados: 1,
+        emitidos: 1,
+        fallidos: 0,
+      });
+
+      const resultado = await service.reemitirCertificados(3, 2026);
+
+      expect(repository.existeCierre).not.toHaveBeenCalled();
+      expect(certificados.emitirCertificadosDelMes).toHaveBeenCalledWith(
+        3,
+        2026,
+        [
+          {
+            empresaId: 'emp1',
+            razonSocial: 'Eco SRL',
+            tokens: 50,
+            totalKg: 25,
+            cantidadAportes: 1,
+            posicion: 1,
+          },
+        ],
+      );
+      expect(resultado).toEqual({
+        mes: 3,
+        anio: 2026,
+        intentados: 1,
+        emitidos: 1,
+        fallidos: 0,
+      });
     });
   });
 });
