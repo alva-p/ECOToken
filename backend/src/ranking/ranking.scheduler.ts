@@ -2,11 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { RankingService } from './ranking.service';
 import { RankingMesResponse } from './interfaces/ranking-resultado.interface';
+import { mesAnterior } from './mes-anterior.util';
 
 /**
- * Job del sistema para el cálculo del ranking del mes en curso (E7-HU01).
- * Consulta periódicamente los eventos/ingresos con tokens acuñados del mes
- * y consolida el desempeño por empresa para que esté siempre disponible vía API.
+ * Jobs del sistema de Ranking:
+ * - cálculo periódico del mes en curso, siempre disponible vía API (E7-HU01).
+ * - cierre mensual con snapshot auditable del mes recién terminado (E7-HU02).
  */
 @Injectable()
 export class RankingScheduler {
@@ -43,5 +44,19 @@ export class RankingScheduler {
    */
   async ejecutarJobManual(): Promise<RankingMesResponse | null> {
     return this.calcularRankingMesActual();
+  }
+
+  /** Job mensual que cierra el ranking del mes recién terminado (E7-HU02). */
+  @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT)
+  async cerrarMesAnterior(): Promise<void> {
+    const { mes, anio } = mesAnterior(new Date());
+    try {
+      await this.rankingService.cerrarRankingDelMes(mes, anio);
+      this.logger.log(`Ranking de ${mes}/${anio} cerrado.`);
+    } catch (err) {
+      this.logger.error(
+        `No se pudo cerrar el ranking de ${mes}/${anio}: ${(err as Error).message}`,
+      );
+    }
   }
 }

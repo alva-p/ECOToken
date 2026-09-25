@@ -7,12 +7,19 @@ import {
   Param,
   Body,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { TipoRol } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { RankingService } from './ranking.service';
 import { CreateRankingDto } from './dto/create-ranking.dto';
 import { UpdateRankingDto } from './dto/update-ranking.dto';
 import { ConsultarRankingDto } from './dto/consultar-ranking.dto';
+import { CerrarRankingDto } from './dto/cerrar-ranking.dto';
 import { RankingMesResponse } from './interfaces/ranking-resultado.interface';
+import { mesAnterior } from './mes-anterior.util';
 
 /** Rutas HTTP de Ranking: solo delegan en el service. */
 @Controller('ranking')
@@ -29,6 +36,22 @@ export class RankingController {
     @Query() query: ConsultarRankingDto,
   ): Promise<RankingMesResponse> {
     return this.service.obtenerRankingMesActual(query.mes, query.anio);
+  }
+
+  /**
+   * Cierre manual del ranking (E7-HU02): mismo camino que corre el job
+   * mensual, expuesto para poder cerrar un período puntual sin esperar al
+   * cron (backfill, demo o reintento tras un cierre fallido).
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.ADMIN)
+  @Post('cerrar')
+  cerrar(@Body() dto: CerrarRankingDto) {
+    const { mes, anio } =
+      dto.mes && dto.anio
+        ? { mes: dto.mes, anio: dto.anio }
+        : mesAnterior(new Date());
+    return this.service.cerrarRankingDelMes(mes, anio);
   }
 
   @Post()

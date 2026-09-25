@@ -1,10 +1,13 @@
 import { Test } from '@nestjs/testing';
+import { ConflictException } from '@nestjs/common';
 import { RankingService } from './ranking.service';
 import { RankingRepository } from './repository/ranking.repository';
+import { BlockchainService } from '../blockchain/blockchain.service';
 
 describe('RankingService', () => {
   let service: RankingService;
   let repository: jest.Mocked<Partial<RankingRepository>>;
+  let blockchain: { bloqueActual: jest.Mock };
 
   const mockIngresos = [
     {
@@ -57,17 +60,21 @@ describe('RankingService', () => {
   beforeEach(async () => {
     repository = {
       findIngresosDelMes: jest.fn().mockResolvedValue(mockIngresos),
+      existeCierre: jest.fn().mockResolvedValue(false),
+      cerrarConSnapshot: jest.fn().mockResolvedValue({ count: 0 }),
       findById: jest.fn(),
       findAll: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       remove: jest.fn(),
     };
+    blockchain = { bloqueActual: jest.fn().mockResolvedValue(999) };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
         RankingService,
         { provide: RankingRepository, useValue: repository },
+        { provide: BlockchainService, useValue: blockchain },
       ],
     }).compile();
 
@@ -176,6 +183,101 @@ describe('RankingService', () => {
       expect(resultado.totalKg).toBe(450); // 250 + 200
       expect(resultado.ranking).toHaveLength(2);
       expect(resultado.actualizadoEn).toBeDefined();
+    });
+  });
+
+  describe('cerrarRankingDelMes (E7-HU02)', () => {
+    it('rechaza cerrar un período ya cerrado', async () => {
+      repository.existeCierre = jest.fn().mockResolvedValueOnce(true);
+
+      await expect(service.cerrarRankingDelMes(3, 2026)).rejects.toBeInstanceOf(
+        ConflictException,
+      );
+      expect(repository.cerrarConSnapshot).not.toHaveBeenCalled();
+    });
+
+    it('persiste una fila por empresa con hash y bloque de referencia', async () => {
+      repository.findIngresosDelMes = jest.fn().mockResolvedValueOnce([
+        {
+          empresaId: 'emp1',
+          peso: 25,
+          empresa: { razonSocial: 'Eco SRL' },
+          tokensAcumulados: 50,
+        },
+      ]);
+
+      const resultado = await service.cerrarRankingDelMes(3, 2026);
+
+      expect(repository.cerrarConSnapshot).toHaveBeenCalledWith(
+        3,
+        2026,
+        [
+          {
+            empresaId: 'emp1',
+            razonSocial: 'Eco SRL',
+            tokens: 50,
+            totalKg: 25,
+            cantidadAportes: 1,
+            posicion: 1,
+          },
+        ],
+        { hashSnapshot: expect.any(String), bloqueReferencia: 999 },
+      );
+      expect(resultado).toEqual({
+        mes: 3,
+        anio: 2026,
+        hashSnapshot: expect.any(String),
+        bloqueReferencia: 999,
+        empresas: 1,
+      });
+    });
+
+    it('cierra igual (fila sentinela) cuando el mes no tuvo aportes', async () => {
+      repository.findIngresosDelMes = jest.fn().mockResolvedValueOnce([]);
+
+      const resultado = await service.cerrarRankingDelMes(3, 2026);
+
+      expect(repository.cerrarConSnapshot).toHaveBeenCalledWith(
+        3,
+        2026,
+        [],
+        expect.any(Object),
+      );
+      expect(resultado.empresas).toBe(0);
+    });
+
+    it('no falla si no se pudo obtener el bloque de referencia', async () => {
+      repository.findIngresosDelMes = jest.fn().mockResolvedValueOnce([]);
+      blockchain.bloqueActual.mockResolvedValueOnce(null);
+
+      const resultado = await service.cerrarRankingDelMes(3, 2026);
+
+      expect(resultado.bloqueReferencia).toBeNull();
+    });
+
+    it('el hash cambia si cambia el contenido de la grilla', async () => {
+      repository.findIngresosDelMes = jest.fn().mockResolvedValueOnce([
+        {
+          empresaId: 'emp1',
+          peso: 25,
+          empresa: { razonSocial: 'Eco SRL' },
+          tokensAcumulados: 50,
+        },
+      ]);
+      const primero = await service.cerrarRankingDelMes(3, 2026);
+
+      repository.existeCierre = jest.fn().mockResolvedValueOnce(false);
+      repository.findIngresosDelMes = jest.fn().mockResolvedValueOnce([
+        {
+          empresaId: 'emp1',
+          peso: 25,
+          empresa: { razonSocial: 'Eco SRL' },
+          tokensAcumulados: 999,
+        },
+      ]);
+      const segundo = await service.cerrarRankingDelMes(4, 2026);
+
+      expect(primero.hashSnapshot).not.toBe(segundo.hashSnapshot);
     });
   });
 });

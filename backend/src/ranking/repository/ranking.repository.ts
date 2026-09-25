@@ -57,4 +57,29 @@ export class RankingRepository {
       },
     });
   }
+
+  /** True si ya existe un cierre para ese período (idempotencia del job). */
+  async existeCierre(mes: number, anio: number): Promise<boolean> {
+    const cierre = await this.prisma.ranking.findFirst({
+      where: { mes, anio, estado: 'CERRADO' },
+      select: { id: true },
+    });
+    return cierre !== null;
+  }
+
+  /** Persiste el snapshot cerrado: una fila por empresa (o una sentinela si el mes no tuvo aportes). */
+  cerrarConSnapshot(
+    mes: number,
+    anio: number,
+    empresas: { empresaId: string }[],
+    snapshot: { hashSnapshot: string; bloqueReferencia: number | null },
+  ) {
+    const fechaCierre = new Date();
+    const base = { mes, anio, fechaCierre, estado: 'CERRADO', ...snapshot };
+    const filas =
+      empresas.length > 0
+        ? empresas.map((e) => ({ ...base, empresaId: e.empresaId }))
+        : [{ ...base, empresaId: null }];
+    return this.prisma.ranking.createMany({ data: filas });
+  }
 }

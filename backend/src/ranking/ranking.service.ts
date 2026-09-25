@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { createHash } from 'node:crypto';
+import { BlockchainService } from '../blockchain/blockchain.service';
 import { RankingRepository } from './repository/ranking.repository';
 import { CreateRankingDto } from './dto/create-ranking.dto';
 import { UpdateRankingDto } from './dto/update-ranking.dto';
@@ -7,10 +13,21 @@ import {
   RankingMesResponse,
 } from './interfaces/ranking-resultado.interface';
 
+export interface CierreRanking {
+  mes: number;
+  anio: number;
+  hashSnapshot: string;
+  bloqueReferencia: number | null;
+  empresas: number;
+}
+
 /** Lógica de negocio de Ranking. */
 @Injectable()
 export class RankingService {
-  constructor(private readonly repository: RankingRepository) {}
+  constructor(
+    private readonly repository: RankingRepository,
+    private readonly blockchain: BlockchainService,
+  ) {}
 
   create(dto: CreateRankingDto) {
     return this.repository.create(dto);
@@ -137,6 +154,56 @@ export class RankingService {
    */
   async calcularRankingMesEnCurso(): Promise<RankingMesResponse> {
     return this.obtenerRankingMesActual();
+  }
+
+  /**
+   * Cierra el ranking del mes indicado y registra un snapshot auditable
+   * (E7-HU02): hash de la grilla + bloque de referencia de la red, ambos
+   * persistidos en BD. El anclaje on-chain del hash (escribirlo en el
+   * contrato) queda fuera de este alcance —la HU lo marca opcional— y se
+   * puede sumar después sin tocar este snapshot ya cerrado.
+   */
+  async cerrarRankingDelMes(mes: number, anio: number): Promise<CierreRanking> {
+    if (await this.repository.existeCierre(mes, anio)) {
+      throw new ConflictException(
+        `El ranking de ${mes}/${anio} ya fue cerrado.`,
+      );
+    }
+
+    const grilla = await this.armarGrilla(mes, anio);
+    const hashSnapshot = this.hashDeGrilla(mes, anio, grilla);
+    const bloqueReferencia = await this.blockchain.bloqueActual();
+
+    await this.repository.cerrarConSnapshot(mes, anio, grilla, {
+      hashSnapshot,
+      bloqueReferencia,
+    });
+
+    return {
+      mes,
+      anio,
+      hashSnapshot,
+      bloqueReferencia,
+      empresas: grilla.length,
+    };
+  }
+
+  /** Hash determinístico del contenido cerrado: cualquier alteración posterior lo cambia. */
+  private hashDeGrilla(
+    mes: number,
+    anio: number,
+    grilla: FilaRankingMes[],
+  ): string {
+    const payload = JSON.stringify({
+      mes,
+      anio,
+      ranking: grilla.map(({ empresaId, tokens, posicion }) => ({
+        empresaId,
+        tokens,
+        posicion,
+      })),
+    });
+    return createHash('sha256').update(payload).digest('hex');
   }
 
   /** Emite el certificado digital a la empresa de esa posición. */
