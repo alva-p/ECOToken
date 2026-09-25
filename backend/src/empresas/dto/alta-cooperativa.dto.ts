@@ -1,4 +1,10 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUrl,
+} from 'class-validator';
 import { IsCuit } from '../../common/decorators/is-cuit.decorator';
 
 /**
@@ -28,4 +34,25 @@ export class AltaCooperativaDto {
   @IsOptional()
   @IsString()
   representanteLegal?: string;
+
+  // E3-HU05: datos formales ampliados (aplican también a la cooperativa).
+  @IsOptional()
+  @IsString()
+  telefono?: string;
+
+  @IsOptional()
+  @IsUrl({}, { message: 'El sitio web debe ser una URL válida' })
+  sitioWeb?: string;
+
+  @IsOptional()
+  @IsString()
+  codigoPostal?: string;
+
+  @IsOptional()
+  @IsString()
+  pais?: string;
+
+  @IsOptional()
+  @IsString()
+  descripcion?: string;
 }

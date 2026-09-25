@@ -17,6 +17,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
+    "ranking:cerrar": "ts-node scripts/cerrar-ranking.ts",
     "prisma:seed": "prisma db seed",
     "prisma:seed:demo": "ts-node prisma/seed-demo.ts"
   },
@@ -24,13 +25,19 @@
     "seed": "ts-node prisma/seed.ts"
   },
   "jest": {
-    "moduleFileExtensions": ["js", "json", "ts"],
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
-    "collectCoverageFrom": ["**/*.(t|j)s"],
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   },
@@ -42,6 +49,7 @@
     "@nestjs/mapped-types": "^2.0.5",
     "@nestjs/passport": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/schedule": "^12.0.2",
     "@prisma/client": "^5.20.0",
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
@@ -49,6 +57,8 @@
     "ethers": "^6.13.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "pdfkit": "^0.20.2",
+    "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
@@ -60,6 +70,8 @@
     "@types/jest": "^29.5.12",
     "@types/node": "^22.0.0",
     "@types/passport-jwt": "^4.0.1",
+    "@types/pdfkit": "^0.17.6",
+    "@types/qrcode": "^1.5.6",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.9.0",
     "eslint-config-prettier": "^9.1.0",

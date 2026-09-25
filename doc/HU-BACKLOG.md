@@ -502,7 +502,7 @@ Backlog completo reformulado según el formato de User Story:
 
 ## E7 — Ranking mensual
 
-### E7-HU01 — Calcular ranking del mes
+### E7-HU01 — Calcular ranking del mes ✅ Completada (Sprint 5)
 
 **Como** sistema **yo puedo** calcular el ranking del mes en curso ordenando empresas por tokens acuñados durante el mes **de forma tal que** el desempeño esté disponible para consulta.
 
@@ -515,7 +515,7 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Baja. La fuente de datos (eventos Minted) ya está sincronizada.
 **Prio: Alta | SP: 5**
 
-### E7-HU02 — Cerrar ranking mensual
+### E7-HU02 — Cerrar ranking mensual ✅ Completada (Sprint 5)
 
 **Como** sistema **yo puedo** cerrar el ranking al final de cada mes y registrar un snapshot auditable **de forma tal que** el resultado quede inmutable y verificable.
 
@@ -528,7 +528,7 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Media. La persistencia on-chain opcional está abierta a definición.
 **Prio: Alta | SP: 8**
 
-### E7-HU03 — Visualizar ranking público *(User Story canónica)*
+### E7-HU03 — Visualizar ranking público ✅ Completada (Sprint 5) *(User Story canónica)*
 
 **Como** usuario público **yo puedo** ver el ranking mensual cerrado de los últimos meses **de forma tal que** conozca las empresas reconocidas.
 
@@ -689,7 +689,7 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Baja. Los pasos ya se ejecutaron durante el desarrollo.
 **Prio: Media | SP: 3**
 
-### E11-HU05 — Panel por rol Empresa *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+### E11-HU05 — Panel por rol Empresa ✅ Completada (Sprint 5) *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
 
 **Como** empresa **yo puedo** acceder a un panel específico para mi rol **de forma tal que** pueda visualizar de manera centralizada mi saldo ECO, historial de aportes, comprobantes y funcionalidades disponibles como organización adherida.
 
@@ -705,7 +705,7 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Baja. El comportamiento esperado del rol empresa está definido.
 **Prio: Alta | SP: 3**
 
-### E11-HU06 — Panel por rol Cooperativa *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+### E11-HU06 — Panel por rol Cooperativa ✅ Completada (Sprint 5) *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
 
 **Como** cooperativa **yo puedo** acceder a un panel específico para mi rol **de forma tal que** pueda gestionar las operaciones propias de carga y consulta de ingresos de material reciclable asociados a empresas aprobadas.
 
@@ -722,7 +722,7 @@ Backlog completo reformulado según el formato de User Story:
 **Incertidumbre:** Baja. El alcance del panel de cooperativa está alineado al flujo de ingresos.
 **Prio: Alta | SP: 3**
 
-### E11-HU07 — Panel por rol Administrador y Municipalidad *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+### E11-HU07 — Panel por rol Administrador y Municipalidad ✅ Completada (Sprint 5) *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
 
 **Como** usuario administrador o autoridad municipal **yo puedo** acceder a un panel diferenciado según mi rol **de forma tal que** pueda utilizar únicamente las funcionalidades administrativas o de consulta institucional que correspondan a mis permisos.
 

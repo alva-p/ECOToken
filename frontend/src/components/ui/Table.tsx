@@ -30,7 +30,11 @@ export function Table({
           <div
             key={c.label}
             style={{ width: c.width }}
-            className={cx('flex-1 pr-3', c.align === 'right' && 'text-right')}
+            className={cx(
+              c.width ? 'flex-none' : 'flex-1',
+              'pr-3',
+              c.align === 'right' && 'text-right',
+            )}
           >
             {c.label}
           </div>
@@ -49,7 +53,8 @@ export function Table({
                 key={j}
                 style={{ width: columns[j]?.width }}
                 className={cx(
-                  'flex-1 pr-3',
+                  columns[j]?.width ? 'flex-none' : 'flex-1',
+                  'pr-3',
                   columns[j]?.align === 'right' && 'text-right',
                 )}
               >

@@ -16,6 +16,8 @@ import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 import { RegistrarEmpresaDto } from './dto/registrar-empresa.dto';
 import { AltaCooperativaDto } from './dto/alta-cooperativa.dto';
+import { AgregarDocumentoVerificacionDto } from './dto/agregar-documento-verificacion.dto';
+import { ArchivoSubido } from './subida-verificacion';
 
 const BCRYPT_ROUNDS = 10;
 const BUSQUEDA_LARGO_MINIMO = 2;
@@ -247,6 +249,35 @@ export class EmpresasService {
       );
     }
     return empresa;
+  }
+
+  // ─── E3-HU05: verificación (KYB) — carga de documentos ───
+
+  /**
+   * Registra un documento de verificación subido para la empresa y la deja
+   * EN_REVISION. Valida que la empresa exista (findOne lanza NotFound si no).
+   * El estado de verificación es independiente del de aprobación (E3-HU04): no
+   * habilita ni bloquea la operación, solo refleja el avance del KYB.
+   */
+  async agregarDocumentoVerificacion(
+    id: string,
+    dto: AgregarDocumentoVerificacionDto,
+    archivo: ArchivoSubido,
+  ) {
+    await this.findOne(id);
+    return this.repository.agregarDocumentoVerificacion(id, {
+      tipo: dto.tipo,
+      archivoUrl: archivo.path,
+      nombreArchivo: archivo.originalname,
+      mimeType: archivo.mimetype,
+      tamanioBytes: archivo.size,
+    });
+  }
+
+  /** Lista los documentos de verificación presentados por una empresa. */
+  async listarDocumentosVerificacion(id: string) {
+    await this.findOne(id);
+    return this.repository.findDocumentosVerificacion(id);
   }
 
   // ─── E4-HU03: buscador de empresas (cooperativa, con autocompletado) ───

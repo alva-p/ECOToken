@@ -22,6 +22,9 @@ const ECOTOKEN_ABI = [
   'function pause() external',
   'function unpause() external',
   'function paused() external view returns (bool)',
+  // E8-HU01. Ausente en el deploy de Sepolia documentado (predata esta HU) —
+  // ver emitirCertificado() más abajo, degrada con txHashOnChain null hasta el redeploy.
+  'function emitirCertificado(address empresa, uint256 mes, uint256 anio, bytes32 hash) external',
 ];
 
 /**
@@ -240,6 +243,63 @@ export class BlockchainService {
       throw new BadRequestException(`Rol desconocido: ${rol}`);
     }
     return id(rol);
+  }
+
+  /**
+   * Bloque actual de la red, usado como referencia de anclaje temporal al
+   * cerrar un snapshot (E7-HU02). No es una transacción: es una lectura,
+   * así que no requiere la cuenta MINTER ni gasta gas. Devuelve `null` si la
+   * integración no está configurada o la consulta falla — el cierre del
+   * ranking no debe bloquearse por esto (el bloque de referencia es
+   * complementario al hash, no la única prueba de integridad).
+   */
+  async bloqueActual(): Promise<number | null> {
+    const provider = this.contract?.runner?.provider;
+    if (!provider) return null;
+
+    try {
+      return await provider.getBlockNumber();
+    } catch (err) {
+      this.logger.warn(
+        `No se pudo obtener el bloque de referencia: ${(err as Error).message}`,
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Ancla on-chain la emisión de un certificado mensual (E8-HU01), vía la
+   * cuenta ADMIN. Nunca lanza: si la integración no está configurada, o el
+   * contrato deployado todavía no tiene `emitirCertificado` (el de Sepolia
+   * documentado predata esta HU y necesita un redeploy — ver memoria del
+   * proyecto), devuelve `null` y el certificado se guarda igual sin tx.
+   */
+  async emitirCertificado(
+    empresa: string,
+    mes: number,
+    anio: number,
+    hash: string,
+  ): Promise<{ txHash: string; bloque: number } | null> {
+    if (!this.contract) return null;
+
+    try {
+      const tx = await this.contract.emitirCertificado(
+        empresa,
+        BigInt(mes),
+        BigInt(anio),
+        `0x${hash}`,
+      );
+      const receipt = await tx.wait();
+      return {
+        txHash: receipt.hash as string,
+        bloque: Number(receipt.blockNumber),
+      };
+    } catch (err) {
+      this.logger.warn(
+        `No se pudo anclar on-chain el certificado de ${empresa} (${mes}/${anio}): ${(err as Error).message}`,
+      );
+      return null;
+    }
   }
 
   /** Estado actual de pausa del contrato (E10-HU02). */

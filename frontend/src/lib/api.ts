@@ -17,3 +17,20 @@ export async function api<T>(
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
   return res.json() as Promise<T>;
 }
+
+/** Igual que `api`, para respuestas binarias (ej. el PDF de un certificado). */
+export async function apiBlob(
+  path: string,
+  options: RequestInit = {},
+): Promise<Blob> {
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  });
+  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+  return res.blob();
+}

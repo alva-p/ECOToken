@@ -40,6 +40,25 @@ enum EstadoEmpresa {
   RECHAZADA
 }
 
+/// Estado de verificación (KYB) de una Empresa (E3-HU05). Es independiente del
+/// estado de aprobación (EstadoEmpresa): una empresa puede estar APROBADA para
+/// operar y a la vez SIN_VERIFICAR. El flujo de aprobación de los documentos por
+/// la autoridad queda para una historia posterior.
+enum EstadoVerificacion {
+  SIN_VERIFICAR
+  EN_REVISION
+  VERIFICADA
+  RECHAZADA
+}
+
+/// Tipo de documento adjuntado para la verificación de una Empresa (E3-HU05).
+enum TipoDocumento {
+  ACTA_CONSTITUCION
+  LICENCIA_COMERCIAL
+  DOCUMENTO_IMPOSITIVO
+  FACTURA_SERVICIOS
+}
+
 /// Usuario del sistema. Pertenece a una Empresa o a una Municipalidad según su rol.
 model Usuario {
   id           String  @id @default(uuid())
@@ -88,13 +107,24 @@ model Empresa {
   terminosVersion     String?
   terminosAceptadosEn DateTime?
 
-  usuarios           Usuario[]
-  ingresos           IngresoMaterial[]        @relation("IngresosDeEmpresa")
-  aportesValidados   IngresoMaterial[]        @relation("IngresosValidadosPorCooperativa")
-  billeteraCustodial BilleteraCustodial?
-  certificados       CertificadoDigital[]
-  reportes           Reporte[]
-  rankings           Ranking[]
+  // E3-HU05: registro ampliado (datos formales) + verificación (KYB).
+  // "Dirección legal" se cubre con el campo `domicilio` y el "identificador
+  // fiscal" con `cuit` (ambos ya existentes); no se duplican.
+  pais               String?
+  codigoPostal       String?
+  telefono           String?
+  sitioWeb           String?
+  descripcion        String?
+  estadoVerificacion EstadoVerificacion @default(SIN_VERIFICAR)
+
+  usuarios               Usuario[]
+  ingresos               IngresoMaterial[]       @relation("IngresosDeEmpresa")
+  aportesValidados       IngresoMaterial[]       @relation("IngresosValidadosPorCooperativa")
+  billeteraCustodial     BilleteraCustodial?
+  certificados           CertificadoDigital[]
+  reportes               Reporte[]
+  rankings               Ranking[]
+  documentosVerificacion DocumentoVerificacion[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -102,6 +132,24 @@ model Empresa {
   // Búsqueda por razón social (E4-HU03): sin esto, el `contains` de
   // EmpresaRepository.buscar() hace table scan en cada tecla del autocompletado.
   @@index([razonSocial])
+}
+
+/// Documento adjuntado por una Empresa para su verificación (E3-HU05).
+/// Una empresa puede presentar varios (incluso del mismo tipo). El archivo se
+/// almacena en el servidor y acá se guarda su metadata + la ruta relativa.
+model DocumentoVerificacion {
+  id            String        @id @default(uuid())
+  tipo          TipoDocumento
+  archivoUrl    String // ruta/URL del archivo almacenado
+  nombreArchivo String? // nombre original del archivo subido
+  mimeType      String?
+  tamanioBytes  Int?
+  fechaCarga    DateTime      @default(now())
+
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  empresaId String
+
+  @@index([empresaId])
 }
 
 /// Billetera custodial (dirección EVM) administrada por el backend para una Empresa.
@@ -201,15 +249,31 @@ model MovimientoToken {
 }
 
 /// Certificado digital verificable emitido a una Empresa (con anclaje on-chain).
+/// Snapshot del cierre del mes (E8-HU01): kgReciclados/co2Evitado/posicion quedan
+/// fijos al emitir, no se recalculan si después cambian los ingresos del período
+/// (mismo criterio que el snapshot de Ranking, E7-HU02).
 model CertificadoDigital {
-  id               String   @id @default(uuid())
-  fechaEmision     DateTime @default(now())
-  hashVerificacion String
-  urlPDF           String?
-  txHashOnChain    String?
+  id                String   @id @default(uuid())
+  fechaEmision      DateTime @default(now())
+  mes               Int
+  anio              Int
+  posicion          Int
+  /// Cantidad de empresas del cierre de ese mes (para "posición X de N", PDF).
+  totalEmpresas     Int      @default(1)
+  kgReciclados      Float
+  co2Evitado        Float
+  /// Desglose por tipo de material al momento de emitir, ej. [{"material":"PLASTICO","kg":120}] (E8-HU02, PDF).
+  desglosePorMaterial Json @default("[]")
+  hashVerificacion  String
+  credencialFirmada String
+  urlPDF            String?
+  txHashOnChain     String?
 
   empresa   Empresa @relation(fields: [empresaId], references: [id])
   empresaId String
+
+  // Un solo certificado por empresa y mes (idempotencia del cierre mensual).
+  @@unique([empresaId, mes, anio])
 }
 
 /// Acción de pausa/despausa (RN-19) sobre PausaContrato.
@@ -241,4 +305,11 @@ model Ranking {
 
   empresa   Empresa? @relation(fields: [empresaId], references: [id])
   empresaId String?
+
+  // Evita duplicar la fila de una empresa al cerrar el mismo período dos veces
+  // (E7-HU02). El caso de un mes sin ninguna empresa (fila "sentinela" con
+  // empresaId null) no queda cubierto por esta constraint —Postgres no
+  // deduplica NULLs—, pero lo cubre el chequeo de `estado` en el service
+  // antes de cerrar.
+  @@unique([empresaId, mes, anio])
 }

@@ -23,4 +23,19 @@ export default () => ({
   // Cifra datos sensibles que deben poder recuperarse (p. ej. la clave privada
   // de una billetera custodial) — ver common/helpers/crypto.helper.ts.
   walletEncryptionKey: process.env.WALLET_ENCRYPTION_KEY ?? '',
+  certificados: {
+    // Empresas que reciben certificado al cierre del mes (E8-HU01). 0 = todas
+    // las empresas con aportes ese mes (default), sin recorte de Top X.
+    topX: parseInt(process.env.CERTIFICADOS_TOP_X ?? '0', 10),
+    // kg de CO2 evitado por kg reciclado, según el material (nombre de
+    // TipoMaterial en mayúsculas). Un material sin factor en este mapa no
+    // suma CO2 evitado (ver factoresCo2PorMaterial en certificados.service).
+    factoresCo2: {
+      PLASTICO: parseFloat(
+        process.env.CERTIFICADOS_FACTOR_CO2_PLASTICO ?? '1.8',
+      ),
+      CARTON: parseFloat(process.env.CERTIFICADOS_FACTOR_CO2_CARTON ?? '1.5'),
+      VIDRIO: parseFloat(process.env.CERTIFICADOS_FACTOR_CO2_VIDRIO ?? '0.3'),
+    } as Record<string, number>,
+  },
 });
