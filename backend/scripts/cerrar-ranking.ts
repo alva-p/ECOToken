@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module';
 import { RankingService } from '../src/ranking/ranking.service';
-import { mesAnterior } from '../src/ranking/ranking.scheduler';
+import { mesAnterior } from '../src/ranking/mes-anterior.util';
 
 /**
  * Cierre manual del ranking mensual desde la terminal (E7-HU02/E8-HU01) — no

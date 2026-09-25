@@ -9,6 +9,8 @@ import {
   CategoriaEmpresa,
   Empresa,
   EstadoEmpresa,
+  EstadoVerificacion,
+  TipoDocumento,
   TipoRol,
 } from '@prisma/client';
 import { EmpresasService } from './empresas.service';
@@ -35,6 +37,12 @@ const empresaBase: Empresa = {
   walletAddress: '0xEmpresaWallet',
   terminosVersion: null,
   terminosAceptadosEn: null,
+  pais: null,
+  codigoPostal: null,
+  telefono: null,
+  sitioWeb: null,
+  descripcion: null,
+  estadoVerificacion: EstadoVerificacion.SIN_VERIFICAR,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -55,6 +63,8 @@ describe('EmpresasService', () => {
     update: jest.Mock;
     deactivate: jest.Mock;
     buscar: jest.Mock;
+    agregarDocumentoVerificacion: jest.Mock;
+    findDocumentosVerificacion: jest.Mock;
   };
   let billeterasService: { generarBilleteraCustodial: jest.Mock };
   let blockchainService: {
@@ -82,6 +92,8 @@ describe('EmpresasService', () => {
       update: jest.fn(),
       deactivate: jest.fn(),
       buscar: jest.fn(),
+      agregarDocumentoVerificacion: jest.fn(),
+      findDocumentosVerificacion: jest.fn(),
     };
     billeterasService = { generarBilleteraCustodial: jest.fn() };
     blockchainService = {
@@ -109,6 +121,54 @@ describe('EmpresasService', () => {
 
   it('debería estar definido', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('agregarDocumentoVerificacion (E3-HU05)', () => {
+    const archivo = {
+      originalname: 'acta.pdf',
+      mimetype: 'application/pdf',
+      size: 1024,
+      filename: 'abc123',
+      path: 'uploads/verificacion/abc123',
+    };
+
+    it('valida que la empresa exista y registra el documento con su metadata', async () => {
+      repository.findById.mockResolvedValue(empresaBase);
+      repository.agregarDocumentoVerificacion.mockResolvedValue({
+        id: 'doc-1',
+      });
+
+      const resultado = await service.agregarDocumentoVerificacion(
+        'e1',
+        { tipo: TipoDocumento.ACTA_CONSTITUCION },
+        archivo,
+      );
+
+      expect(repository.agregarDocumentoVerificacion).toHaveBeenCalledWith(
+        'e1',
+        {
+          tipo: TipoDocumento.ACTA_CONSTITUCION,
+          archivoUrl: 'uploads/verificacion/abc123',
+          nombreArchivo: 'acta.pdf',
+          mimeType: 'application/pdf',
+          tamanioBytes: 1024,
+        },
+      );
+      expect(resultado).toEqual({ id: 'doc-1' });
+    });
+
+    it('lanza NotFound si la empresa no existe (no registra el documento)', async () => {
+      repository.findById.mockResolvedValue(null);
+
+      await expect(
+        service.agregarDocumentoVerificacion(
+          'inexistente',
+          { tipo: TipoDocumento.ACTA_CONSTITUCION },
+          archivo,
+        ),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(repository.agregarDocumentoVerificacion).not.toHaveBeenCalled();
+    });
   });
 
   describe('crearConBilletera (E3-HU02)', () => {

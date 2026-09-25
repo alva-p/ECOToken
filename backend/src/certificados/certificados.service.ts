@@ -8,7 +8,7 @@ import { CreateCertificadoDigitalDto } from './dto/create-certificado-digital.dt
 import { UpdateCertificadoDigitalDto } from './dto/update-certificado-digital.dto';
 import { EmpresasService } from '../empresas/empresas.service';
 import { BlockchainService } from '../blockchain/blockchain.service';
-import type { FilaGrilla } from '../ranking/ranking.service';
+import type { FilaRankingMes } from '../ranking/interfaces/ranking-resultado.interface';
 import type { DesgloseMaterial } from './desglose-material';
 
 /** Agrupa kg por nombre de material (E8-HU02, desglose del PDF). */
@@ -81,7 +81,7 @@ export class CertificadosService {
   async emitirCertificadosDelMes(
     mes: number,
     anio: number,
-    grilla: FilaGrilla[],
+    grilla: FilaRankingMes[],
   ): Promise<{ intentados: number; emitidos: number; fallidos: number }> {
     const topX = this.config.get<number>('certificados.topX') ?? 0;
     const destinatarios = topX > 0 ? grilla.slice(0, topX) : grilla;
@@ -103,7 +103,7 @@ export class CertificadosService {
   }
 
   private async emitirCertificado(
-    fila: FilaGrilla,
+    fila: FilaRankingMes,
     mes: number,
     anio: number,
     totalEmpresas: number,
@@ -117,8 +117,7 @@ export class CertificadosService {
     const kgReciclados = ingresos.reduce((sum, i) => sum + i.peso, 0);
     const desglosePorMaterial = sumarPorMaterial(ingresos);
     const factoresCo2 =
-      this.config.get<Record<string, number>>('certificados.factoresCo2') ??
-      {};
+      this.config.get<Record<string, number>>('certificados.factoresCo2') ?? {};
     // Un material sin factor conocido no suma CO2 evitado (no hay dato para
     // asumir uno).
     const co2Evitado = desglosePorMaterial.reduce(
@@ -169,7 +168,8 @@ export class CertificadosService {
       totalEmpresas,
       kgReciclados,
       co2Evitado,
-      desglosePorMaterial: desglosePorMaterial as unknown as Prisma.InputJsonValue,
+      desglosePorMaterial:
+        desglosePorMaterial as unknown as Prisma.InputJsonValue,
       hashVerificacion,
       credencialFirmada,
       ...(onchain ? { txHashOnChain: onchain.txHash } : {}),

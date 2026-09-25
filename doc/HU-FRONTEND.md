@@ -43,7 +43,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 **Incertidumbre:** Media. Falta definir el diseño visual y el copy final con el equipo.
 **SP: 3**
 
-### E11-HU05 — Panel por rol Empresa *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+### E11-HU05 — Panel por rol Empresa ✅ Completada (Sprint 5) *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
 
 **Como** empresa **yo puedo** acceder a un panel específico para mi rol **de forma tal que** visualice de forma centralizada mi saldo ECO, historial de aportes, comprobantes y el resto de las funcionalidades disponibles para mi organización.
 
@@ -58,7 +58,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 **Incertidumbre:** Baja. El alcance del rol empresa está definido.
 **SP: 3**
 
-### E11-HU06 — Panel por rol Cooperativa *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+### E11-HU06 — Panel por rol Cooperativa ✅ Completada (Sprint 5) *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
 
 **Como** cooperativa **yo puedo** acceder a un panel específico para mi rol **de forma tal que** gestione desde un mismo lugar la carga y consulta de ingresos de material reciclable asociados a empresas aprobadas.
 
@@ -73,7 +73,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 **Incertidumbre:** Baja. El alcance del panel está alineado al flujo de ingresos ya implementado.
 **SP: 3**
 
-### E11-HU07 — Panel por rol Administrador y Municipalidad *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
+### E11-HU07 — Panel por rol Administrador y Municipalidad ✅ Completada (Sprint 5) *(incorporada en el refinamiento del Product Backlog posterior al Sprint 4, para Sprint 5)*
 
 **Como** usuario administrador o autoridad municipal **yo puedo** acceder a un panel diferenciado según mi rol **de forma tal que** utilice únicamente las funcionalidades administrativas o de consulta institucional que correspondan a mis permisos.
 
@@ -337,7 +337,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 
 ## E7 — Ranking mensual
 
-### E7-HU03 — Visualizar ranking público *(User Story canónica)*
+### E7-HU03 — Visualizar ranking público ✅ Completada (Sprint 5) *(User Story canónica)*
 
 **Como** usuario público **yo puedo** ver el ranking mensual cerrado de los últimos meses sin necesidad de login **de forma tal que** conozca las empresas reconocidas por su aporte ambiental.
 

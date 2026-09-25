@@ -10,4 +10,7 @@ dist/
 *.log
 coverage/
 
+# Archivos subidos por usuarios (E3-HU05: documentos de verificación)
+uploads/
+
 # Prisma: prisma/migrations/ SÍ se versiona (no ignorar)

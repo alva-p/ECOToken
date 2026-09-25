@@ -31,7 +31,9 @@ export default () => ({
     // TipoMaterial en mayúsculas). Un material sin factor en este mapa no
     // suma CO2 evitado (ver factoresCo2PorMaterial en certificados.service).
     factoresCo2: {
-      PLASTICO: parseFloat(process.env.CERTIFICADOS_FACTOR_CO2_PLASTICO ?? '1.8'),
+      PLASTICO: parseFloat(
+        process.env.CERTIFICADOS_FACTOR_CO2_PLASTICO ?? '1.8',
+      ),
       CARTON: parseFloat(process.env.CERTIFICADOS_FACTOR_CO2_CARTON ?? '1.5'),
       VIDRIO: parseFloat(process.env.CERTIFICADOS_FACTOR_CO2_VIDRIO ?? '0.3'),
     } as Record<string, number>,
