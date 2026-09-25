@@ -104,7 +104,11 @@ export function VerificarPage() {
             </Dato>
             <Dato label="Período">
               {new Date(
-                Date.UTC(resultado.certificado.anio, resultado.certificado.mes - 1, 1),
+                Date.UTC(
+                  resultado.certificado.anio,
+                  resultado.certificado.mes - 1,
+                  1,
+                ),
               ).toLocaleDateString('es-AR', {
                 month: 'long',
                 year: 'numeric',
