@@ -926,6 +926,12 @@
   color: #07110f;
 }
 
+.cta-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
 .cta-actions {
   display: flex;
   gap: 10px;
@@ -938,6 +944,18 @@
   border-color: #07110f;
   background: #07110f;
   color: #baff3c;
+}
+/* E3-HU06: CTA para que las cooperativas soliciten el alta por mail. */
+.cta-coop {
+  margin: 0;
+  font-size: 13px;
+  color: #07110f;
+}
+.cta-coop a {
+  font-weight: 700;
+  color: #356348;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .footer {
@@ -1266,4 +1284,13 @@
   .partners-ticker-track {
     animation: none;
   }
+}
+
+/* Estados sin datos del ranking real (E7-HU03): ranking todavía sin cerrar. */
+.leaderboard-empty,
+.chart-empty {
+  padding: 28px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted-foreground);
 }

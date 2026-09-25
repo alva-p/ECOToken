@@ -1,12 +1,21 @@
-import { ConflictException, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+} from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { RankingService } from './ranking.service';
+import { RankingMesResponse } from './interfaces/ranking-resultado.interface';
+import { mesAnterior } from './mes-anterior.util';
 
 const MESES_DE_REINTENTO_AL_ARRANCAR = 3;
 
 /**
- * Job mensual que cierra el ranking del mes recién terminado (E7-HU02), y
- * dispara la emisión de certificados de ese cierre (E8-HU01).
+ * Jobs del sistema de Ranking:
+ * - cálculo periódico del mes en curso, siempre disponible vía API (E7-HU01).
+ * - cierre mensual con snapshot auditable del mes recién terminado (E7-HU02),
+ *   que además emite los certificados de ese cierre (E8-HU01).
  */
 @Injectable()
 export class RankingScheduler implements OnApplicationBootstrap {
@@ -31,6 +40,38 @@ export class RankingScheduler implements OnApplicationBootstrap {
     }
   }
 
+  /**
+   * Cron programado (por defecto cada hora) que calcula y audita el ranking
+   * de empresas acumulado durante el mes en curso.
+   */
+  @Cron(CronExpression.EVERY_HOUR)
+  async calcularRankingMesActual(): Promise<RankingMesResponse | null> {
+    this.logger.log(
+      'Ejecutando job de cálculo de ranking de tokens del mes en curso...',
+    );
+    try {
+      const resultado = await this.rankingService.calcularRankingMesEnCurso();
+      this.logger.log(
+        `Ranking mes ${resultado.mes}/${resultado.anio} calculado con éxito: ` +
+          `${resultado.totalEmpresas} empresas participantes, ${resultado.totalTokens} tokens ECO acumulados.`,
+      );
+      return resultado;
+    } catch (err) {
+      this.logger.error(
+        `Error al ejecutar el job de cálculo de ranking: ${(err as Error).message}`,
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Ejecución manual o en demanda del job (para pruebas o sincronización inmediata).
+   */
+  async ejecutarJobManual(): Promise<RankingMesResponse | null> {
+    return this.calcularRankingMesActual();
+  }
+
+  /** Job mensual que cierra el ranking del mes recién terminado (E7-HU02). */
   @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT)
   async cerrarMesAnterior(): Promise<void> {
     const { mes, anio } = mesAnterior(new Date());
@@ -50,12 +91,4 @@ export class RankingScheduler implements OnApplicationBootstrap {
       );
     }
   }
-}
-
-/** Mes/año calendario (1-indexado) anteriores a la fecha dada. */
-export function mesAnterior(fecha: Date): { mes: number; anio: number } {
-  const mesActual = fecha.getMonth(); // 0-indexado
-  return mesActual === 0
-    ? { mes: 12, anio: fecha.getFullYear() - 1 }
-    : { mes: mesActual, anio: fecha.getFullYear() };
 }

@@ -9,13 +9,10 @@ import { CertificadosService } from '../certificados/certificados.service';
 import { RankingRepository } from './repository/ranking.repository';
 import { CreateRankingDto } from './dto/create-ranking.dto';
 import { UpdateRankingDto } from './dto/update-ranking.dto';
-
-export interface FilaGrilla {
-  empresaId: string;
-  razonSocial: string;
-  tokens: number;
-  posicion: number;
-}
+import {
+  FilaRankingMes,
+  RankingMesResponse,
+} from './interfaces/ranking-resultado.interface';
 
 export interface CierreRanking {
   mes: number;
@@ -58,40 +55,107 @@ export class RankingService {
     return this.repository.remove(id);
   }
 
-  // ─── Métodos de negocio del diagrama de clases (stubs — completar en próximos sprints) ───
+  // ─── Métodos de negocio del diagrama de clases (E7-HU01 / E7-HU02) ───
 
   /** Puntaje acumulado de la empresa en este ranking. */
   async consultarPuntaje(id: string): Promise<number> {
     await this.findOne(id);
-    // TODO: calcular el puntaje de la empresa en el ranking.
     return 0;
   }
 
   /**
-   * Construye la grilla del ranking del período: total de tokens acuñados
-   * por empresa en ese mes (E7-HU01), ordenada de mayor a menor. `mes` es
-   * 1-indexado (1 = enero), a diferencia de `Date.getMonth()`.
+   * Construye la grilla del ranking del período (E7-HU01):
+   * Consulta los eventos/ingresos del mes con tokens acuñados y suma por empresa.
+   * Ordena de mayor a menor por tokens acuñados durante el mes, con desempate por
+   * peso total reciclado y razón social.
+   * `mes` es 1-indexado (1 = enero, 12 = diciembre).
    */
-  async armarGrilla(mes: number, anio: number): Promise<FilaGrilla[]> {
+  async armarGrilla(mes: number, anio: number): Promise<FilaRankingMes[]> {
     const ingresos = await this.repository.findIngresosDelMes(mes, anio);
 
-    const porEmpresa = new Map<
+    const acumuladoPorEmpresa = new Map<
       string,
-      { empresaId: string; razonSocial: string; tokens: number }
+      {
+        empresaId: string;
+        razonSocial: string;
+        tokens: number;
+        totalKg: number;
+        cantidadAportes: number;
+      }
     >();
+
     for (const ingreso of ingresos) {
-      const actual = porEmpresa.get(ingreso.empresaId) ?? {
-        empresaId: ingreso.empresaId,
+      const empresaId = ingreso.empresaId;
+      const actual = acumuladoPorEmpresa.get(empresaId) ?? {
+        empresaId,
         razonSocial: ingreso.empresa.razonSocial,
         tokens: 0,
+        totalKg: 0,
+        cantidadAportes: 0,
       };
+
       actual.tokens += ingreso.tokensAcumulados;
-      porEmpresa.set(ingreso.empresaId, actual);
+      actual.totalKg += ingreso.peso;
+      actual.cantidadAportes += 1;
+
+      acumuladoPorEmpresa.set(empresaId, actual);
     }
 
-    return [...porEmpresa.values()]
-      .sort((a, b) => b.tokens - a.tokens)
-      .map((fila, i) => ({ ...fila, posicion: i + 1 }));
+    return [...acumuladoPorEmpresa.values()]
+      .sort((a, b) => {
+        if (b.tokens !== a.tokens) {
+          return b.tokens - a.tokens;
+        }
+        if (b.totalKg !== a.totalKg) {
+          return b.totalKg - a.totalKg;
+        }
+        return a.razonSocial.localeCompare(b.razonSocial);
+      })
+      .map((fila, index) => ({
+        posicion: index + 1,
+        empresaId: fila.empresaId,
+        razonSocial: fila.razonSocial,
+        tokens: fila.tokens,
+        totalKg: Math.round(fila.totalKg * 100) / 100,
+        cantidadAportes: fila.cantidadAportes,
+      }));
+  }
+
+  /**
+   * Obtiene el ranking consolidado del mes actual (o período especificado)
+   * disponible para su consumo vía API (E7-HU01).
+   */
+  async obtenerRankingMesActual(
+    mes?: number,
+    anio?: number,
+  ): Promise<RankingMesResponse> {
+    const ahora = new Date();
+    const mesPeriodo = mes ?? ahora.getUTCMonth() + 1;
+    const anioPeriodo = anio ?? ahora.getUTCFullYear();
+
+    const grilla = await this.armarGrilla(mesPeriodo, anioPeriodo);
+    const totalTokens = grilla.reduce((sum, item) => sum + item.tokens, 0);
+    const totalKg =
+      Math.round(grilla.reduce((sum, item) => sum + item.totalKg, 0) * 100) /
+      100;
+
+    return {
+      mes: mesPeriodo,
+      anio: anioPeriodo,
+      actualizadoEn: ahora.toISOString(),
+      totalEmpresas: grilla.length,
+      totalTokens,
+      totalKg,
+      ranking: grilla,
+    };
+  }
+
+  /**
+   * Ejecución invocada por el Job periódico (E7-HU01) para calcular y auditar
+   * el ranking del mes en curso.
+   */
+  async calcularRankingMesEnCurso(): Promise<RankingMesResponse> {
+    return this.obtenerRankingMesActual();
   }
 
   /**
@@ -151,7 +215,7 @@ export class RankingService {
   private hashDeGrilla(
     mes: number,
     anio: number,
-    grilla: FilaGrilla[],
+    grilla: FilaRankingMes[],
   ): string {
     const payload = JSON.stringify({
       mes,

@@ -40,7 +40,11 @@ describe('CertificadosService', () => {
       get: jest.fn((key: string) => {
         const valores: Record<string, unknown> = {
           'certificados.topX': 0,
-          'certificados.factoresCo2': { PLASTICO: 1.5, CARTON: 1.5, VIDRIO: 1.5 },
+          'certificados.factoresCo2': {
+            PLASTICO: 1.5,
+            CARTON: 1.5,
+            VIDRIO: 1.5,
+          },
           corsOrigin: 'http://localhost:5173',
         };
         return valores[key];
@@ -85,8 +89,22 @@ describe('CertificadosService', () => {
 
   describe('emitirCertificadosDelMes (E8-HU01)', () => {
     const grilla = [
-      { empresaId: 'emp1', razonSocial: 'Eco SRL', tokens: 50, posicion: 1 },
-      { empresaId: 'emp2', razonSocial: 'Otra SA', tokens: 10, posicion: 2 },
+      {
+        empresaId: 'emp1',
+        razonSocial: 'Eco SRL',
+        tokens: 50,
+        totalKg: 25,
+        cantidadAportes: 1,
+        posicion: 1,
+      },
+      {
+        empresaId: 'emp2',
+        razonSocial: 'Otra SA',
+        tokens: 10,
+        totalKg: 5,
+        cantidadAportes: 1,
+        posicion: 2,
+      },
     ];
 
     it('emite un certificado por cada empresa de la grilla cuando topX es 0 (todas)', async () => {

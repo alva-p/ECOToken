@@ -31,8 +31,18 @@ const MUNICIPALIDAD = 'Municipalidad de Villa María';
 const COOPERATIVA = 'Cooperativa 7 de Febrero';
 
 const MESES = [
-  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
 ];
 
 const MATERIAL_ICONOS: Record<
@@ -51,7 +61,11 @@ const MATERIAL_ICONOS: Record<
   CARTON: {
     label: 'Cartón',
     viewBox: [40, 40],
-    paths: ['M5 12 l15 -7 l15 7 v22 l-15 7 l-15 -7 z', 'M5 12 l15 7 l15 -7', 'M20 19 v22'],
+    paths: [
+      'M5 12 l15 -7 l15 7 v22 l-15 7 l-15 -7 z',
+      'M5 12 l15 7 l15 -7',
+      'M20 19 v22',
+    ],
     dash: 'M12 8.5 l15 7',
   },
   VIDRIO: {
@@ -240,8 +254,14 @@ export async function generarCertificadoPdf(
   doc.rect(0, 0, W, H).fill('#FFFFFF');
 
   // ─── Borde decorativo + esquinas ───
-  doc.rect(18, 18, W - 36, H - 36).lineWidth(1.5).stroke(GREEN);
-  doc.rect(24, 24, W - 48, H - 48).lineWidth(0.5).stroke(GREEN);
+  doc
+    .rect(18, 18, W - 36, H - 36)
+    .lineWidth(1.5)
+    .stroke(GREEN);
+  doc
+    .rect(24, 24, W - 48, H - 48)
+    .lineWidth(0.5)
+    .stroke(GREEN);
   for (const [cx, cy] of [
     [24, 24],
     [W - 24, 24],
@@ -364,11 +384,17 @@ export async function generarCertificadoPdf(
     color: AMBER,
     characterSpacing: 1.5,
   });
-  textoCentrado(doc, `${fmt(datos.co2Evitado)} kg`, bigMetricCx, metricsY + 24, {
-    font: 'Helvetica-Bold',
-    size: 44,
-    color: GREEN,
-  });
+  textoCentrado(
+    doc,
+    `${fmt(datos.co2Evitado)} kg`,
+    bigMetricCx,
+    metricsY + 24,
+    {
+      font: 'Helvetica-Bold',
+      size: 44,
+      color: GREEN,
+    },
+  );
   textoCentrado(doc, 'equivalente atmosférico', bigMetricCx, metricsY + 74, {
     font: 'Helvetica',
     size: 11,
@@ -441,13 +467,12 @@ export async function generarCertificadoPdf(
     size: 11,
     color: INK,
   });
-  textoCentrado(
-    doc,
-    'INTENDENTE DE LA CIUDAD',
-    sigLeftCx,
-    footerBottom - 12,
-    { font: 'Helvetica', size: 9, color: INK2, characterSpacing: 0.5 },
-  );
+  textoCentrado(doc, 'INTENDENTE DE LA CIUDAD', sigLeftCx, footerBottom - 12, {
+    font: 'Helvetica',
+    size: 9,
+    color: INK2,
+    characterSpacing: 0.5,
+  });
 
   const sigRightCx = W - 50 - sigWidth / 2;
   doc

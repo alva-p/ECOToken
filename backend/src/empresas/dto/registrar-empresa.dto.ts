@@ -4,6 +4,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUrl,
 } from 'class-validator';
 import { IsCuit } from '../../common/decorators/is-cuit.decorator';
 
@@ -39,6 +40,29 @@ export class RegistrarEmpresaDto {
   @IsOptional()
   @IsString()
   datosContacto?: string;
+
+  // E3-HU05: datos formales ampliados del registro (todos opcionales; el
+  // registro básico se completa sin ellos). La "dirección legal" se cubre con
+  // `domicilio` y el "identificador fiscal" con `cuit`.
+  @IsOptional()
+  @IsString()
+  telefono?: string;
+
+  @IsOptional()
+  @IsUrl({}, { message: 'El sitio web debe ser una URL válida' })
+  sitioWeb?: string;
+
+  @IsOptional()
+  @IsString()
+  codigoPostal?: string;
+
+  @IsOptional()
+  @IsString()
+  pais?: string;
+
+  @IsOptional()
+  @IsString()
+  descripcion?: string;
 
   // E3-HU03: aceptación obligatoria de términos y condiciones.
   @IsBoolean()
