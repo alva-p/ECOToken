@@ -337,7 +337,7 @@ Reformulación de las HUs con trabajo de frontend según el formato de User Stor
 
 ## E7 — Ranking mensual
 
-### E7-HU03 — Visualizar ranking público *(User Story canónica)*
+### E7-HU03 — Visualizar ranking público ✅ Completada (Sprint 5) *(User Story canónica)*
 
 **Como** usuario público **yo puedo** ver el ranking mensual cerrado de los últimos meses sin necesidad de login **de forma tal que** conozca las empresas reconocidas por su aporte ambiental.
 

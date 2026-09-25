@@ -11,26 +11,35 @@ export interface RankingSummaryItem {
 export interface RankingPodiumItem {
   rank: 1 | 2 | 3;
   name: string;
-  categoria: string;
+  /** Rubro de la empresa; se muestra solo si viene. */
+  categoria?: string;
   kg: number;
   eco: number;
 }
 
 interface RankingPreviewProps {
   periodo: string;
+  /** Encabezado de la sección; por defecto el de la landing. */
+  titulo?: string;
   summary: RankingSummaryItem[];
   podium: RankingPodiumItem[];
+  /** Enlace a la página del ranking completo; se oculta en esa misma página. */
+  mostrarEnlace?: boolean;
 }
 
-// Componente reutilizable (E11-HU04): recibe los datos por props, acá se lo llama
-// con datos de ejemplo. E7-HU03 lo conecta al ranking real del backend sin
-// reconstruirlo. Diseño de referencia: doc/assets/ECOToken/screens/ranking-landing.jsx.
+// Componente reutilizable (E11-HU04): recibe los datos por props. En E7-HU03 lo
+// alimenta la página pública /ranking con el ranking cerrado del backend.
+// Diseño de referencia: doc/assets/ECOToken/screens/ranking-landing.jsx.
 export function RankingPreview({
   periodo,
+  titulo = 'Así recicla Villa María este mes',
   summary,
   podium,
+  mostrarEnlace = true,
 }: RankingPreviewProps) {
-  const ordered = [podium[1], podium[0], podium[2]];
+  // En mobile se apilan 1º, 2º, 3º; desde sm el primero queda al centro (ver
+  // PODIUM_ORDER). Con menos de 3 empresas simplemente faltan lugares.
+  const ordered = podium.slice(0, 3);
 
   return (
     <div>
@@ -38,7 +47,7 @@ export function RankingPreview({
         {periodo}
       </div>
       <h2 className="mt-1 text-2xl font-bold tracking-tight text-eco-ink sm:text-3xl">
-        Así recicla Villa María este mes
+        {titulo}
       </h2>
 
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -55,20 +64,39 @@ export function RankingPreview({
         ))}
       </div>
 
-      <div className="mt-8 grid grid-cols-1 items-end gap-5 sm:grid-cols-3">
-        {ordered.map((item) => (
-          <PodiumCard key={item.rank} item={item} />
-        ))}
-      </div>
+      {ordered.length > 0 && (
+        <div
+          className={cx(
+            'mt-10 grid grid-cols-1 items-end gap-8 sm:mt-8 sm:gap-5',
+            ordered.length === 1
+              ? 'sm:mx-auto sm:max-w-xs'
+              : ordered.length === 2
+                ? 'sm:grid-cols-2'
+                : 'sm:grid-cols-3',
+          )}
+        >
+          {ordered.map((item) => (
+            <PodiumCard key={item.rank} item={item} />
+          ))}
+        </div>
+      )}
 
-      <div className="mt-6 text-center">
-        <Link to="/ranking" className="text-sm font-semibold text-eco-org">
-          Ver ranking completo →
-        </Link>
-      </div>
+      {mostrarEnlace && (
+        <div className="mt-6 text-center">
+          <Link to="/ranking" className="text-sm font-semibold text-eco-org">
+            Ver ranking completo →
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
+
+const PODIUM_ORDER: Record<1 | 2 | 3, string> = {
+  1: 'sm:order-2',
+  2: 'sm:order-1',
+  3: 'sm:order-3',
+};
 
 const MEDAL_BG: Record<1 | 2 | 3, string> = {
   1: 'bg-[#C9A227]',
@@ -82,6 +110,7 @@ function PodiumCard({ item }: { item: RankingPodiumItem }) {
     <div
       className={cx(
         'relative rounded-2xl border bg-white p-6 pt-8 text-center',
+        PODIUM_ORDER[item.rank],
         isFirst ? 'border-eco-org sm:scale-105' : 'border-eco-border',
       )}
     >
@@ -93,13 +122,19 @@ function PodiumCard({ item }: { item: RankingPodiumItem }) {
       >
         {item.rank}
       </div>
-      <div className="text-xs font-medium text-eco-ink2">{item.categoria}</div>
-      <div className="mt-1 text-lg font-bold tracking-tight text-eco-ink">
+      {item.categoria && (
+        <div className="text-xs font-medium text-eco-ink2">
+          {item.categoria}
+        </div>
+      )}
+      <div className="mt-1 break-words text-lg font-bold tracking-tight text-eco-ink">
         {item.name}
       </div>
       <div className="mt-4 flex justify-around border-t border-eco-border pt-4">
         <div>
-          <div className="text-xl font-bold text-eco-org">{item.kg} kg</div>
+          <div className="text-xl font-bold text-eco-org">
+            {item.kg.toLocaleString('es-AR')} kg
+          </div>
           <div className="text-[10px] font-medium uppercase tracking-wide text-eco-ink2">
             Reciclado
           </div>

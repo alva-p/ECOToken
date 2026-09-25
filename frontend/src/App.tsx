@@ -4,6 +4,12 @@ import { mailtoAltaCooperativa } from '@/lib/contacto';
 import GradientWaves from '@/components/GradientWaves';
 import { Navbar } from '@/components/Navbar';
 import { ImpactoChart } from '@/components/ImpactoChart';
+import { useRankingActual } from '@/features/ranking/hooks/useRankingActual';
+import {
+  cantidadEmpresas,
+  etiquetaPeriodo,
+  variacionVsMesAnterior,
+} from '@/features/ranking/periodo';
 import {
   ArrowUpRight,
   ChevronRight,
@@ -37,32 +43,6 @@ const steps = [
     'Subís en el ranking',
     'Acumulás reconocimiento público y un certificado verificable cada mes.',
   ],
-];
-
-const leaders = [
-  ['01', 'Hospital Pasteur', 'Salud pública', '1.250', '489 kg'],
-  ['02', 'Supermercado Top', 'Comercio', '1.050', '412 kg'],
-  ['03', 'Coop. Puente Verde', 'Cooperativa', '980', '376 kg'],
-  ['04', 'GreenPack', 'Industria', '845', '318 kg'],
-  ['05', 'Textil Andina', 'Industria', '790', '295 kg'],
-  ['06', 'Panadería El Trigal', 'Comercio', '640', '241 kg'],
-  ['07', 'Hotel Villa María', 'Turismo', '605', '227 kg'],
-  ['08', 'Cerámica del Sur', 'Industria', '512', '192 kg'],
-  ['09', 'Escuela Técnica N°1', 'Educación', '430', '162 kg'],
-  ['10', 'Farmacia Central', 'Comercio', '388', '146 kg'],
-];
-
-// Kg reciclados por semana (landing pública, ejemplo — E7-HU03 reemplaza
-// esto por datos reales del ranking mensual).
-const impactoSemanal = [
-  { label: 'Sem 1', kg: 5200 },
-  { label: 'Sem 2', kg: 5850 },
-  { label: 'Sem 3', kg: 6100 },
-  { label: 'Sem 4', kg: 6700 },
-  { label: 'Sem 5', kg: 7050 },
-  { label: 'Sem 6', kg: 7480 },
-  { label: 'Sem 7', kg: 7900 },
-  { label: 'Sem 8', kg: 8412 },
 ];
 
 // Logos para la franja animada continua
@@ -102,6 +82,19 @@ function App() {
     localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark',
   );
   const isDark = theme === 'dark';
+
+  // Ranking real del último mes cerrado (E7-HU03); sin datos, la landing
+  // muestra guiones y estados vacíos en lugar de cifras de ejemplo.
+  const { cargando, periodos, ranking } = useRankingActual();
+  const variacion = ranking ? variacionVsMesAnterior(ranking, periodos) : null;
+  const historico = [...periodos].reverse().map((p) => ({
+    label: etiquetaPeriodo(p),
+    kg: p.totalKg,
+  }));
+  const kgDelMes = ranking ? ranking.totalKg.toLocaleString('es-AR') : '—';
+  const linkRanking = ranking
+    ? `/ranking?mes=${ranking.mes}&anio=${ranking.anio}`
+    : '/ranking';
 
   useEffect(() => {
     localStorage.setItem(THEME_KEY, theme);
@@ -171,14 +164,18 @@ function App() {
 
         <div className="hero-metrics container">
           <div>
-            <span>47</span>
-            <small>organizaciones activas</small>
+            <span>{ranking ? ranking.empresas : '—'}</span>
+            <small>empresas en el último ranking</small>
           </div>
           <div>
             <span>
-              8.412<span className="metric-unit"> kg</span>
+              {kgDelMes}
+              <span className="metric-unit"> kg</span>
             </span>
-            <small>reciclados este mes</small>
+            <small>
+              reciclados en{' '}
+              {ranking ? etiquetaPeriodo(ranking) : 'el último mes'}
+            </small>
           </div>
           <div>
             <span>
@@ -244,7 +241,8 @@ function App() {
           <div className="impact-head">
             <div>
               <p className="kicker">
-                <span className="kicker-bar" /> Impacto local / Abril 2026
+                <span className="kicker-bar" /> Impacto local /{' '}
+                {ranking ? etiquetaPeriodo(ranking) : 'Ranking mensual'}
               </p>
               <h2>
                 Así recicla
@@ -252,60 +250,93 @@ function App() {
                 <span>Villa María.</span>
               </h2>
             </div>
-            <div className="impact-total">
-              <span>+12%</span>
-              <small>vs. mes anterior</small>
-            </div>
+            {variacion !== null && (
+              <div className="impact-total">
+                <span>
+                  {variacion > 0 ? '+' : ''}
+                  {variacion}%
+                </span>
+                <small>vs. mes anterior</small>
+              </div>
+            )}
           </div>
           <div className="impact-layout">
             <div className="impact-card">
               <div className="card-top">
                 <span>Material recuperado</span>
                 <span className="live-pill">
-                  <i /> en vivo
+                  <i /> mes cerrado
                 </span>
               </div>
               <div className="big-number">
-                8.412 <b>kg</b>
+                {kgDelMes} <b>kg</b>
               </div>
               <div className="chart">
-                <ImpactoChart data={impactoSemanal} />
+                {historico.length >= 2 ? (
+                  <ImpactoChart data={historico} />
+                ) : (
+                  <p className="chart-empty">
+                    {cargando
+                      ? 'Cargando ranking…'
+                      : 'El histórico aparece a partir del segundo mes cerrado.'}
+                  </p>
+                )}
               </div>
               <div className="impact-footer">
                 <span>
-                  <Leaf size={15} /> 47 participantes activas
+                  <Leaf size={15} />{' '}
+                  {ranking
+                    ? `${cantidadEmpresas(ranking.empresas)} en el ranking`
+                    : 'Sin ranking cerrado todavía'}
                 </span>
                 <span>
-                  Meta mensual <b>78%</b>
+                  Puntos ECO{' '}
+                  <b>
+                    {ranking
+                      ? ranking.totalTokens.toLocaleString('es-AR')
+                      : '—'}
+                  </b>
                 </span>
               </div>
             </div>
             <div className="leaderboard">
               <div className="leaderboard-title">
                 <span>Ranking del mes</span>
-                <Link to="/ranking">
+                <Link to={linkRanking}>
                   Ver ranking completo <ArrowUpRight size={14} />
                 </Link>
               </div>
               <div className="leaderboard-list">
-                {leaders.map(([rank, name, type, points, weight]) => (
-                  <div className="leader" key={rank}>
-                    <span className={`rank rank-${rank}`}>{rank}</span>
-                    <div className="leader-info">
-                      <strong>{name}</strong>
-                      <small>{type}</small>
-                    </div>
-                    <div className="leader-weight">
-                      <strong>{weight}</strong>
-                      <small>reciclado</small>
-                    </div>
-                    <div className="leader-points">
-                      <strong>{points}</strong>
-                      <small>puntos ECO</small>
-                    </div>
-                    <ChevronRight className="leader-chevron" size={17} />
-                  </div>
-                ))}
+                {ranking && ranking.data.length > 0 ? (
+                  ranking.data.slice(0, 10).map((fila) => {
+                    const rank = String(fila.posicion).padStart(2, '0');
+                    return (
+                      <div className="leader" key={fila.posicion}>
+                        <span className={`rank rank-${rank}`}>{rank}</span>
+                        <div className="leader-info">
+                          <strong>{fila.razonSocial}</strong>
+                        </div>
+                        <div className="leader-weight">
+                          <strong>
+                            {fila.kgReciclados.toLocaleString('es-AR')} kg
+                          </strong>
+                          <small>reciclado</small>
+                        </div>
+                        <div className="leader-points">
+                          <strong>{fila.tokens.toLocaleString('es-AR')}</strong>
+                          <small>puntos ECO</small>
+                        </div>
+                        <ChevronRight className="leader-chevron" size={17} />
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="leaderboard-empty">
+                    {cargando
+                      ? 'Cargando ranking…'
+                      : 'Todavía no hay un ranking cerrado. El primero se publica al terminar el mes.'}
+                  </p>
+                )}
               </div>
             </div>
           </div>
