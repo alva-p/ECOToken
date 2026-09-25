@@ -70,6 +70,12 @@ export class CertificadosService {
     return this.repository.remove(id);
   }
 
+  // ─── E8-HU03: validación pública por hash/QR ───
+  async verificar(hash: string) {
+    const certificado = await this.repository.findByHash(hash);
+    return certificado ? { valido: true, certificado } : { valido: false };
+  }
+
   // ─── E8-HU01: emisión al cierre del ranking mensual ───
 
   /**

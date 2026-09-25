@@ -34,6 +34,12 @@ export class CertificadosController {
     return this.service.findAll();
   }
 
+  // ─── E8-HU03: validación pública por hash/QR ───
+  @Get('verificar/:hash')
+  verificar(@Param('hash') hash: string) {
+    return this.service.verificar(hash);
+  }
+
   // ─── E8-HU02: certificados propios de la empresa logueada ───
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(TipoRol.EMPRESA)
