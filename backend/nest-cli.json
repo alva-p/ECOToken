@@ -3,6 +3,10 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "assets": [
+      { "include": "certificados/pdf/assets/**/*", "outDir": "dist/src" }
+    ],
+    "watchAssets": true
   }
 }

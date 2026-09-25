@@ -6,7 +6,7 @@ const NAV: PanelNavItem[] = [
   { label: 'Resumen', to: '/empresa' },
   { label: 'Aportes', to: '/empresa/aportes' },
   { label: 'Ranking' },
-  { label: 'Certificados' },
+  { label: 'Certificados', to: '/empresa/certificados' },
 ];
 
 export function EmpresaLayout() {

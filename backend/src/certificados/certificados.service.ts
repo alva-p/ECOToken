@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { Prisma } from '@prisma/client';
@@ -10,6 +15,7 @@ import { EmpresasService } from '../empresas/empresas.service';
 import { BlockchainService } from '../blockchain/blockchain.service';
 import type { FilaRankingMes } from '../ranking/interfaces/ranking-resultado.interface';
 import type { DesgloseMaterial } from './desglose-material';
+import { generarCertificadoPdf } from './pdf/certificado-pdf';
 
 /** Agrupa kg por nombre de material (E8-HU02, desglose del PDF). */
 function sumarPorMaterial(
@@ -173,6 +179,51 @@ export class CertificadosService {
       hashVerificacion,
       credencialFirmada,
       ...(onchain ? { txHashOnChain: onchain.txHash } : {}),
+    });
+  }
+
+  // ─── E8-HU02: visualizar y descargar el certificado propio ───
+
+  /** Certificados de la empresa logueada, más reciente primero. */
+  misCertificados(empresaId: string | null) {
+    if (!empresaId) {
+      throw new ForbiddenException(
+        'El usuario no está asociado a ninguna empresa',
+      );
+    }
+    return this.repository.findByEmpresaId(empresaId);
+  }
+
+  /** PDF del certificado, solo para la empresa dueña. */
+  async obtenerPdf(id: string, empresaId: string | null): Promise<Buffer> {
+    if (!empresaId) {
+      throw new ForbiddenException(
+        'El usuario no está asociado a ninguna empresa',
+      );
+    }
+    const certificado = await this.repository.findByIdConEmpresa(id);
+    if (!certificado) {
+      throw new NotFoundException(`CertificadoDigital ${id} no encontrado`);
+    }
+    if (certificado.empresaId !== empresaId) {
+      throw new ForbiddenException(
+        'Este certificado no pertenece a tu empresa',
+      );
+    }
+
+    const frontendUrl = this.config.get<string>('corsOrigin') ?? '';
+    return generarCertificadoPdf({
+      razonSocial: certificado.empresa.razonSocial,
+      mes: certificado.mes,
+      anio: certificado.anio,
+      posicion: certificado.posicion,
+      totalEmpresas: certificado.totalEmpresas,
+      kgReciclados: certificado.kgReciclados,
+      co2Evitado: certificado.co2Evitado,
+      desglosePorMaterial:
+        certificado.desglosePorMaterial as unknown as DesgloseMaterial[],
+      hashVerificacion: certificado.hashVerificacion,
+      urlVerificacion: `${frontendUrl}/verificar/${certificado.hashVerificacion}`,
     });
   }
 }
