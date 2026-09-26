@@ -16,8 +16,8 @@ function hace7Dias(): string {
 }
 
 // Panel centralizado para el rol Empresa (E11-HU05). Integra de manera centralizada
-// el saldo de tokens ECO (E6-HU01), accesos al historial de aportes (E6-HU02) y
-// acceso a los comprobantes de entrega (E5-HU03).
+// el saldo de tokens ECO (E6-HU01), accesos al historial de aportes (E6-HU02),
+// comprobantes de entrega (E5-HU03) y certificados mensuales (E8-HU02).
 export function EmpresaDashboardPage() {
   const [saldo, setSaldo] = useState<number | null>(null);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -104,18 +104,21 @@ export function EmpresaDashboardPage() {
           )}
         </Card>
 
-        {/* Card Historial de Aportes */}
+        {/* Card Historial de Aportes: la trazabilidad y el comprobante digital
+            de cada entrega (E5-HU03) viven en la misma lista, no son
+            pantallas separadas — una sola tarjeta evita mandar a dos CTAs
+            distintos al mismo lugar. */}
         <Card className="flex flex-col justify-between">
           <div>
             <span className="text-xs font-semibold uppercase tracking-wide text-eco-ink2">
               Historial de aportes
             </span>
             <div className="mt-2 text-sm font-semibold text-eco-ink">
-              Trazabilidad de reciclaje
+              Trazabilidad y comprobantes
             </div>
             <p className="mt-1 text-xs text-eco-ink2">
-              Consultá todos los aportes de material recibidos por cooperativas
-              y descargá el reporte en CSV.
+              Consultá tus aportes, descargá el reporte en CSV y accedé al
+              comprobante con la transacción de acuñación de cada entrega.
             </p>
           </div>
           <div className="mt-4 border-t border-eco-border pt-3">
@@ -128,26 +131,26 @@ export function EmpresaDashboardPage() {
           </div>
         </Card>
 
-        {/* Card Comprobantes Digitales */}
+        {/* Card Certificados */}
         <Card className="flex flex-col justify-between">
           <div>
             <span className="text-xs font-semibold uppercase tracking-wide text-eco-ink2">
-              Comprobantes digitales
+              Certificados
             </span>
             <div className="mt-2 text-sm font-semibold text-eco-ink">
-              Respaldo auditable
+              Reconocimiento mensual
             </div>
             <p className="mt-1 text-xs text-eco-ink2">
-              Accedé al comprobante y a la transacción de acuñación en la
-              blockchain por cada entrega realizada.
+              Descargá el certificado del mes por tu posición en el ranking, con
+              hash verificable.
             </p>
           </div>
           <div className="mt-4 border-t border-eco-border pt-3">
             <Link
-              to="/empresa/aportes"
+              to="/empresa/certificados"
               className="inline-flex items-center text-xs font-semibold text-eco-org hover:underline"
             >
-              Consultar comprobantes →
+              Ver mis certificados →
             </Link>
           </div>
         </Card>
