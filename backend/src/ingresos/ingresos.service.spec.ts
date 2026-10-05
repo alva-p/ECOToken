@@ -314,7 +314,7 @@ describe('IngresosService (E5-HU01)', () => {
       const r = await service.misEntregas('coop-1', 7);
       const desde: Date = repository.findEntregasCooperativa.mock.calls[0][1];
       expect(desde.getHours()).toBe(0);
-      expect(Math.round((Date.now() - desde.getTime()) / 864e5)).toBe(7);
+      expect(Math.floor((Date.now() - desde.getTime()) / 864e5)).toBe(7);
       expect(r[0]).toMatchObject({
         empresa: 'ACME',
         material: 'PET',
