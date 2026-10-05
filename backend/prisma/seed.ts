@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { Wallet } from 'ethers';
 
 const prisma = new PrismaClient();
 const BCRYPT_ROUNDS = 10;
@@ -90,7 +91,7 @@ async function main() {
         categoria: 'EMPRESA',
         estado: 'APROBADA',
         activa: true,
-        walletAddress: '0x1111111111111111111111111111111111111e',
+        walletAddress: Wallet.createRandom().address, // ponytail: sin fila BilleteraCustodial (la clave no se guarda); solo evita una dirección inválida
       },
     });
 
