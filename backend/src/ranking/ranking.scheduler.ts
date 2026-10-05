@@ -72,7 +72,9 @@ export class RankingScheduler implements OnApplicationBootstrap {
   }
 
   /** Job mensual que cierra el ranking del mes recién terminado (E7-HU02). */
-  @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT)
+  @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT, {
+    timeZone: 'America/Argentina/Buenos_Aires',
+  })
   async cerrarMesAnterior(): Promise<void> {
     const { mes, anio } = mesAnterior(new Date());
     await this.intentarCerrar(mes, anio);
