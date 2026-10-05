@@ -132,6 +132,18 @@ export class IngresoMaterialRepository {
     return { data, total };
   }
 
+  /** Ingresos validados por una cooperativa desde una fecha, del más reciente al más antiguo. */
+  findEntregasCooperativa(cooperativaId: string, desde: Date) {
+    return this.prisma.ingresoMaterial.findMany({
+      where: { cooperativaId, fechaIngreso: { gte: desde } },
+      include: {
+        empresa: { select: { razonSocial: true } },
+        tipoMaterial: { select: { nombre: true } },
+      },
+      orderBy: { fechaIngreso: 'desc' },
+    });
+  }
+
   /**
    * Registra el movimiento on-chain y mueve el ingreso al estado ACUÑADO, en una
    * sola transacción para no dejar el movimiento sin su cambio de estado.

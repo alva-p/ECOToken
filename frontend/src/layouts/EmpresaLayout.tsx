@@ -5,7 +5,7 @@ import { PanelLayout, type PanelNavItem } from './PanelLayout';
 const NAV: PanelNavItem[] = [
   { label: 'Resumen', to: '/empresa' },
   { label: 'Aportes', to: '/empresa/aportes' },
-  { label: 'Ranking' },
+  { label: 'Ranking', to: '/ranking' }, // ponytail: ranking público; E6-HU03 (posición propia) pendiente
   { label: 'Certificados', to: '/empresa/certificados' },
 ];
 
