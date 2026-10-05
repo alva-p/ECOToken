@@ -240,6 +240,36 @@ export class IngresosService {
     };
   }
 
+  // ─── Historial de entregas de la cooperativa ───
+
+  /**
+   * Entregas registradas por la cooperativa logueada en los últimos `dias` días
+   * (0 = solo hoy). Sin paginar: el máximo que ofrece la UI es 12 meses.
+   */
+  async misEntregas(cooperativaId: string | null, dias: number) {
+    if (!cooperativaId) {
+      throw new ForbiddenException(
+        'El usuario no está asociado a ninguna cooperativa',
+      );
+    }
+    const desde = new Date();
+    desde.setHours(0, 0, 0, 0);
+    desde.setDate(desde.getDate() - dias);
+
+    const ingresos = await this.repository.findEntregasCooperativa(
+      cooperativaId,
+      desde,
+    );
+    return ingresos.map((i) => ({
+      id: i.id,
+      fecha: i.fechaIngreso,
+      empresa: i.empresa.razonSocial,
+      material: i.tipoMaterial.nombre,
+      peso: i.peso,
+      tokens: i.tokensAcumulados,
+    }));
+  }
+
   // ─── E5-HU03: comprobante digital de un aporte ───
 
   /**

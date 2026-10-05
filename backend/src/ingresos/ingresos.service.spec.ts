@@ -89,6 +89,16 @@ describe('IngresosService (E5-HU01)', () => {
       acunar: jest
         .fn()
         .mockResolvedValue({ id: 'ing1', movimientoToken: { txHash: '0xtx' } }),
+      findEntregasCooperativa: jest.fn().mockResolvedValue([
+        {
+          id: 'i1',
+          fechaIngreso: new Date(),
+          empresa: { razonSocial: 'ACME' },
+          tipoMaterial: { nombre: 'PET' },
+          peso: 5,
+          tokensAcumulados: 10,
+        },
+      ]),
       findAportesEmpresa: jest.fn().mockResolvedValue({
         data: [
           {
@@ -296,6 +306,24 @@ describe('IngresosService (E5-HU01)', () => {
         ForbiddenException,
       );
       expect(repository.findAportesEmpresa).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('misEntregas', () => {
+    it('filtra desde el inicio del día `dias` atrás y mapea la fila', async () => {
+      const r = await service.misEntregas('coop-1', 7);
+      const desde: Date = repository.findEntregasCooperativa.mock.calls[0][1];
+      expect(desde.getHours()).toBe(0);
+      expect(Math.round((Date.now() - desde.getTime()) / 864e5)).toBe(7);
+      expect(r[0]).toMatchObject({
+        empresa: 'ACME',
+        material: 'PET',
+        tokens: 10,
+      });
+    });
+
+    it('rechaza usuario sin cooperativa', async () => {
+      await expect(service.misEntregas(null, 0)).rejects.toThrow();
     });
   });
 
