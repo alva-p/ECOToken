@@ -22,6 +22,7 @@ const ECOTOKEN_ABI = [
   'function pause() external',
   'function unpause() external',
   'function paused() external view returns (bool)',
+  'function balanceOf(address account) external view returns (uint256)',
   // E8-HU01. Ausente en el deploy de Sepolia documentado (predata esta HU) —
   // ver emitirCertificado() más abajo, degrada con txHashOnChain null hasta el redeploy.
   'function emitirCertificado(address empresa, uint256 mes, uint256 anio, bytes32 hash) external',
@@ -243,6 +244,25 @@ export class BlockchainService {
       throw new BadRequestException(`Rol desconocido: ${rol}`);
     }
     return id(rol);
+  }
+
+  /**
+   * Saldo ECO real de una dirección según la blockchain (decimals = 0, así que
+   * el entero es la cantidad de tokens). Es una lectura, sin gas. Devuelve
+   * `null` si la integración no está configurada o la consulta falla, para que
+   * quien llama pueda degradar al saldo de la base.
+   */
+  async saldoOnChain(direccion: string): Promise<number | null> {
+    if (!this.contract) return null;
+
+    try {
+      return Number(await this.contract.balanceOf(direccion));
+    } catch (err) {
+      this.logger.warn(
+        `No se pudo leer el saldo on-chain de ${direccion}: ${(err as Error).message}`,
+      );
+      return null;
+    }
   }
 
   /**
