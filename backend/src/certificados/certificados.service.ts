@@ -72,7 +72,10 @@ export class CertificadosService {
 
   // ─── E8-HU03: validación pública por hash/QR ───
   async verificar(hash: string) {
-    const certificado = await this.repository.findByHash(hash);
+    // Se guarda en minúsculas sin prefijo; el explorador muestra el bytes32 en
+    // mayúsculas y/o con 0x, así que se normaliza antes de buscar.
+    const normalizado = hash.trim().replace(/^0x/i, '').toLowerCase();
+    const certificado = await this.repository.findByHash(normalizado);
     return certificado ? { valido: true, certificado } : { valido: false };
   }
 
