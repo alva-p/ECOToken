@@ -5,14 +5,7 @@ import { Field } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
 import { mailtoAltaCooperativa } from '@/lib/contacto';
 import { useAuth } from '@/providers/AuthContext';
-import type { UserRole } from '@/types';
-
-const ROLE_HOME: Record<UserRole, string> = {
-  EMPRESA: '/empresa',
-  COOPERATIVA: '/cooperativa',
-  MUNICIPALIDAD: '/municipio',
-  ADMIN: '/admin',
-};
+import { ROLE_HOME } from '@/lib/auth';
 
 // E3-HU06: se quitó el selector de rol del login. La cuenta ingresa con el rol
 // que ya tiene asignado; el backend lo determina a partir de las credenciales y

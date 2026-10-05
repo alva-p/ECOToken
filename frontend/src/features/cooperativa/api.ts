@@ -47,3 +47,17 @@ export function registrarIngreso(
 export function reintentarAcunacion(id: string): Promise<IngresoRegistrado> {
   return api<IngresoRegistrado>(`/ingresos/${id}/acunar`, { method: 'POST' });
 }
+
+export interface EntregaHistorial {
+  id: string;
+  fecha: string;
+  empresa: string;
+  material: string;
+  peso: number;
+  tokens: number;
+}
+
+/** Entregas registradas por la cooperativa en los últimos `dias` días (0 = hoy). */
+export function misEntregas(dias: number): Promise<EntregaHistorial[]> {
+  return api<EntregaHistorial[]>(`/ingresos/mis-entregas?dias=${dias}`);
+}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/Card';
-import { Table } from '@/components/ui/Table';
 import { BuscadorEmpresas } from '../components/BuscadorEmpresas';
+import { HistorialEntregas } from '../components/HistorialEntregas';
 import { RegistrarEntregaForm } from '../components/RegistrarEntregaForm';
 import type { Empresa } from '@/types';
 
@@ -32,20 +32,7 @@ export function CooperativaDashboardPage() {
         )}
       </div>
 
-      <div>
-        <h2 className="mb-3 text-sm font-semibold text-eco-ink">
-          Registros de hoy
-        </h2>
-        <Table
-          columns={[
-            { label: 'Empresa' },
-            { label: 'Material' },
-            { label: 'Peso' },
-          ]}
-          rows={[]}
-          emptyLabel="Todavía no registraste entregas hoy."
-        />
-      </div>
+      <HistorialEntregas />
     </div>
   );
 }

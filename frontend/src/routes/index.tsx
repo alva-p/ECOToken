@@ -12,6 +12,7 @@ import { ComprobanteAportePage } from '@/features/empresa/pages/ComprobanteAport
 import { CertificadosPage } from '@/features/empresa/pages/CertificadosPage';
 import { CooperativaLayout } from '@/layouts/CooperativaLayout';
 import { CooperativaDashboardPage } from '@/features/cooperativa/pages/DashboardPage';
+import { CierreMesPage } from '@/features/cooperativa/pages/CierreMesPage';
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { AdminDashboardPage } from '@/features/admin/pages/DashboardPage';
 import { CooperativasPage } from '@/features/admin/pages/CooperativasPage';
@@ -52,7 +53,10 @@ export const router = createBrowserRouter([
         <CooperativaLayout />
       </ProtectedRoute>
     ),
-    children: [{ index: true, element: <CooperativaDashboardPage /> }],
+    children: [
+      { index: true, element: <CooperativaDashboardPage /> },
+      { path: 'cierre-de-mes', element: <CierreMesPage /> },
+    ],
   },
   {
     path: '/admin',

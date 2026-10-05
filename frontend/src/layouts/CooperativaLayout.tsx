@@ -4,8 +4,7 @@ import { PanelLayout, type PanelNavItem } from './PanelLayout';
 
 const NAV: PanelNavItem[] = [
   { label: 'Registrar entrega', to: '/cooperativa' },
-  { label: 'Historial de retiros' },
-  { label: 'Cierre de mes' },
+  { label: 'Cierre de mes', to: '/cooperativa/cierre-de-mes' },
 ];
 
 export function CooperativaLayout() {

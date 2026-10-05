@@ -70,6 +70,11 @@ describe('CertificadosService', () => {
   });
 
   describe('verificar (E8-HU03)', () => {
+    it('normaliza mayúsculas, espacios y prefijo 0x', async () => {
+      await service.verificar(' 0xAB12CD ');
+      expect(repository.findByHash).toHaveBeenCalledWith('ab12cd');
+    });
+
     it('hash existente devuelve valido true con el certificado', async () => {
       const certificado = { id: '1', hashVerificacion: 'abc' };
       repository.findByHash.mockResolvedValue(certificado);

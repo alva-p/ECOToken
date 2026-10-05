@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { BlockchainService } from '../blockchain/blockchain.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { MovimientoTokenRepository } from './repository/movimiento-token.repository';
 import { CreateMovimientoTokenDto } from './dto/create-movimiento-token.dto';
@@ -14,6 +15,7 @@ export class TokensService {
   constructor(
     private readonly repository: MovimientoTokenRepository,
     private readonly prisma: PrismaService,
+    private readonly blockchain: BlockchainService,
   ) {}
 
   create(dto: CreateMovimientoTokenDto) {
@@ -43,7 +45,7 @@ export class TokensService {
 
   // ─── E6-HU01: saldo de tokens de la empresa ───
 
-  /** Saldo actual de tokens ECO y dirección EVM de la empresa logueada. */
+  /** Saldo ECO (on-chain, con la base como respaldo) y dirección EVM de la empresa logueada. */
   async miSaldo(
     empresaId: string | null,
   ): Promise<{ saldo: number; walletAddress: string | null }> {
@@ -52,13 +54,16 @@ export class TokensService {
         'El usuario no está asociado a ninguna empresa',
       );
     }
-    const [saldo, empresa] = await Promise.all([
-      this.repository.sumarSaldoEmpresa(empresaId),
-      this.prisma.empresa.findUnique({
-        where: { id: empresaId },
-        select: { walletAddress: true },
-      }),
-    ]);
+    const empresa = await this.prisma.empresa.findUnique({
+      where: { id: empresaId },
+      select: { walletAddress: true },
+    });
+    // Fuente de verdad: la blockchain, para que coincida con lo que ve la
+    // empresa en el explorador. Sin conexión cae al saldo sumado en la base.
+    const saldo =
+      (empresa?.walletAddress
+        ? await this.blockchain.saldoOnChain(empresa.walletAddress)
+        : null) ?? (await this.repository.sumarSaldoEmpresa(empresaId));
     return { saldo, walletAddress: empresa?.walletAddress ?? null };
   }
 }

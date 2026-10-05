@@ -41,6 +41,18 @@ export class IngresosController {
     return this.service.reintentarAcunacion(id);
   }
 
+  // ─── Historial de entregas de la cooperativa logueada ───
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.COOPERATIVA)
+  @Get('mis-entregas')
+  misEntregas(@CurrentUser() user: JwtPayload, @Query('dias') dias?: string) {
+    const n = Number(dias);
+    return this.service.misEntregas(
+      user.empresaId,
+      Number.isInteger(n) && n >= 0 && n <= 366 ? n : 0,
+    );
+  }
+
   // ─── E6-HU02: historial de aportes de la empresa logueada ───
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(TipoRol.EMPRESA)

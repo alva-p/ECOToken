@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { Table } from '@/components/ui/Table';
 import { EmptyState, LoadingState } from '@/components/ui/States';
 import { cx } from '@/lib/cx';
+import { useAuth } from '@/providers/AuthContext';
+import { ROLE_HOME } from '@/lib/auth';
 import {
   listarPeriodos,
   obtenerRankingPublico,
@@ -39,6 +41,7 @@ function periodoDeUrl(params: URLSearchParams) {
 // mes e histórico. El período viaja en la URL (?mes=8&anio=2026) para poder
 // compartir un mes puntual por redes o QR.
 export function RankingPage() {
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [periodos, setPeriodos] = useState<PeriodoCerrado[] | null>(null);
   const [ranking, setRanking] = useState<RankingPublico | null>(null);
@@ -108,8 +111,11 @@ export function RankingPage() {
               className="h-9 w-auto"
             />
           </Link>
-          <Link to="/login" className="text-sm font-semibold text-eco-org">
-            Iniciar sesión
+          <Link
+            to={user ? ROLE_HOME[user.rol] : '/login'}
+            className="text-sm font-semibold text-eco-org"
+          >
+            {user ? 'Ir a mi panel' : 'Iniciar sesión'}
           </Link>
         </div>
       </header>

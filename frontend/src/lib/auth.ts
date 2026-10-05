@@ -61,3 +61,10 @@ export function usuarioFromToken(token: string): Usuario | null {
     municipalidadId: payload.municipalidadId,
   };
 }
+
+export const ROLE_HOME: Record<UserRole, string> = {
+  EMPRESA: '/empresa',
+  COOPERATIVA: '/cooperativa',
+  MUNICIPALIDAD: '/municipio',
+  ADMIN: '/admin',
+};
