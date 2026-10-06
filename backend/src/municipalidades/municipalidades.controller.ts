@@ -6,12 +6,19 @@ import {
   Delete,
   Param,
   Body,
+  UseGuards,
 } from '@nestjs/common';
+import { TipoRol } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { MunicipalidadesService } from './municipalidades.service';
 import { CreateMunicipalidadDto } from './dto/create-municipalidad.dto';
 import { UpdateMunicipalidadDto } from './dto/update-municipalidad.dto';
 
 /** Rutas HTTP de Municipalidad: solo delegan en el service. */
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(TipoRol.ADMIN)
 @Controller('municipalidades')
 export class MunicipalidadesController {
   constructor(private readonly service: MunicipalidadesService) {}
