@@ -83,10 +83,13 @@ export class CertificadosService {
     // Trazabilidad: los aportes del mes que respaldan los kg del certificado.
     // Solo datos de la entrega (sin datos internos de la empresa).
     const { empresaId, ...certificado } = encontrado;
+    // Solo lo anterior a la emisión: es lo que respalda los kg y el hash del
+    // certificado (lo cargado después no entra, igual que en el reporte).
     const entregas = await this.repository.findEntregasDelPeriodo(
       empresaId,
       certificado.mes,
       certificado.anio,
+      certificado.fechaEmision,
     );
     const aportes = entregas.map((e) => ({
       fecha: e.fechaIngreso,

@@ -87,11 +87,13 @@ describe('CertificadosService', () => {
 
     it('hash existente devuelve valido true con el certificado', async () => {
       const fecha = new Date('2026-04-03T12:00:00Z');
+      const emision = new Date('2026-05-01T03:00:00Z');
       repository.findByHash.mockResolvedValue({
         id: '1',
         empresaId: 'emp1',
         mes: 4,
         anio: 2026,
+        fechaEmision: emision,
         hashVerificacion: 'abc',
       });
       repository.findEntregasDelPeriodo.mockResolvedValue([
@@ -113,10 +115,12 @@ describe('CertificadosService', () => {
 
       const r = await service.verificar('abc');
 
+      // Solo los aportes anteriores a la emisión del certificado.
       expect(repository.findEntregasDelPeriodo).toHaveBeenCalledWith(
         'emp1',
         4,
         2026,
+        emision,
       );
       // No filtra el id interno de la empresa y lista los aportes del mes.
       expect(r).toEqual({
@@ -125,6 +129,7 @@ describe('CertificadosService', () => {
           id: '1',
           mes: 4,
           anio: 2026,
+          fechaEmision: emision,
           hashVerificacion: 'abc',
           aportes: [
             {
