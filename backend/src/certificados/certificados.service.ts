@@ -16,6 +16,7 @@ import { BlockchainService } from '../blockchain/blockchain.service';
 import type { FilaRankingMes } from '../ranking/interfaces/ranking-resultado.interface';
 import type { DesgloseMaterial } from './desglose-material';
 import { generarCertificadoPdf } from './pdf/certificado-pdf';
+import { generarReportePdf } from './pdf/reporte-pdf';
 
 /** Agrupa kg por nombre de material (E8-HU02, desglose del PDF). */
 function sumarPorMaterial(
@@ -205,20 +206,7 @@ export class CertificadosService {
 
   /** PDF del certificado, solo para la empresa dueña. */
   async obtenerPdf(id: string, empresaId: string | null): Promise<Buffer> {
-    if (!empresaId) {
-      throw new ForbiddenException(
-        'El usuario no está asociado a ninguna empresa',
-      );
-    }
-    const certificado = await this.repository.findByIdConEmpresa(id);
-    if (!certificado) {
-      throw new NotFoundException(`CertificadoDigital ${id} no encontrado`);
-    }
-    if (certificado.empresaId !== empresaId) {
-      throw new ForbiddenException(
-        'Este certificado no pertenece a tu empresa',
-      );
-    }
+    const certificado = await this.certificadoPropio(id, empresaId);
 
     const frontendUrl = this.config.get<string>('corsOrigin') ?? '';
     return generarCertificadoPdf({
@@ -234,5 +222,71 @@ export class CertificadosService {
       hashVerificacion: certificado.hashVerificacion,
       urlVerificacion: `${frontendUrl}/verificar/${certificado.hashVerificacion}`,
     });
+  }
+
+  /**
+   * Reporte mensual de actividad (PDF) del período de un certificado propio.
+   * Solo hay reporte de meses cerrados: cuelga del certificado del mes.
+   */
+  async obtenerReportePdf(
+    id: string,
+    empresaId: string | null,
+  ): Promise<Buffer> {
+    const cert = await this.certificadoPropio(id, empresaId);
+    const [entregas, saldoAnterior, co2Anio] = await Promise.all([
+      this.repository.findEntregasDelPeriodo(
+        cert.empresaId,
+        cert.mes,
+        cert.anio,
+      ),
+      this.repository.sumarTokensAntesDe(cert.empresaId, cert.mes, cert.anio),
+      this.repository.sumarCo2Anio(cert.empresaId, cert.mes, cert.anio),
+    ]);
+    const frontendUrl = this.config.get<string>('corsOrigin') ?? '';
+    return generarReportePdf({
+      numero: `REP-${cert.anio}-${String(cert.mes).padStart(2, '0')}-${cert.id.slice(0, 4).toUpperCase()}`,
+      mes: cert.mes,
+      anio: cert.anio,
+      razonSocial: cert.empresa.razonSocial,
+      cuit: cert.empresa.cuit,
+      domicilio: cert.empresa.domicilio,
+      walletAddress: cert.empresa.walletAddress,
+      entregas: entregas.map((e) => ({
+        fecha: e.fechaIngreso,
+        material: e.tipoMaterial.nombre,
+        kg: e.peso,
+        tokens: e.tokensAcumulados,
+        txHash: e.movimientoToken?.txHash ?? null,
+      })),
+      saldoAnterior,
+      // ponytail: el sistema aún no registra canjes; sale 0 hasta que exista ese flujo
+      canjes: 0,
+      co2Mes: cert.co2Evitado,
+      co2Anio,
+      posicion: cert.posicion,
+      totalEmpresas: cert.totalEmpresas,
+      hashVerificacion: cert.hashVerificacion,
+      urlVerificacion: `${frontendUrl}/verificar/${cert.hashVerificacion}`,
+      emitidoEn: new Date(),
+    });
+  }
+
+  /** Certificado con datos de empresa; exige que pertenezca a la empresa logueada. */
+  private async certificadoPropio(id: string, empresaId: string | null) {
+    if (!empresaId) {
+      throw new ForbiddenException(
+        'El usuario no está asociado a ninguna empresa',
+      );
+    }
+    const certificado = await this.repository.findByIdConEmpresa(id);
+    if (!certificado) {
+      throw new NotFoundException(`CertificadoDigital ${id} no encontrado`);
+    }
+    if (certificado.empresaId !== empresaId) {
+      throw new ForbiddenException(
+        'Este certificado no pertenece a tu empresa',
+      );
+    }
+    return certificado;
   }
 }

@@ -6,7 +6,7 @@ const NAV: PanelNavItem[] = [
   { label: 'Resumen', to: '/empresa' },
   { label: 'Aportes', to: '/empresa/aportes' },
   { label: 'Ranking', to: '/ranking' }, // ponytail: ranking público; E6-HU03 (posición propia) pendiente
-  { label: 'Certificados', to: '/empresa/certificados' },
+  { label: 'Certificados y Reportes', to: '/empresa/certificados' },
 ];
 
 export function EmpresaLayout() {
@@ -15,9 +15,11 @@ export function EmpresaLayout() {
 
   const title = location.pathname.includes('/aportes/')
     ? 'Comprobante de aporte'
-    : location.pathname.endsWith('/aportes')
-      ? 'Historial de aportes'
-      : 'Resumen';
+    : location.pathname.endsWith('/certificados')
+      ? 'Certificados y reportes'
+      : location.pathname.endsWith('/aportes')
+        ? 'Historial de aportes'
+        : 'Resumen';
 
   return (
     <PanelLayout

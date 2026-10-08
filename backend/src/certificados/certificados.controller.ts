@@ -59,6 +59,17 @@ export class CertificadosController {
     });
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.EMPRESA)
+  @Get(':id/reporte')
+  async reporte(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    const buffer = await this.service.obtenerReportePdf(id, user.empresaId);
+    return new StreamableFile(buffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="reporte-${id}.pdf"`,
+    });
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);

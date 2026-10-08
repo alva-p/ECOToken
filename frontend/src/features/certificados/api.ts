@@ -50,3 +50,8 @@ export function misCertificados(): Promise<MiCertificado[]> {
 export function descargarCertificadoPdf(id: string): Promise<Blob> {
   return apiBlob(`/certificados/${id}/pdf`);
 }
+
+/** Reporte mensual de actividad (PDF) del mes de un certificado propio. */
+export function descargarReportePdf(id: string): Promise<Blob> {
+  return apiBlob(`/certificados/${id}/reporte`);
+}

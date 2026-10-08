@@ -53,7 +53,16 @@ export class CertificadoDigitalRepository {
   findByIdConEmpresa(id: string) {
     return this.prisma.certificadoDigital.findUnique({
       where: { id },
-      include: { empresa: { select: { razonSocial: true } } },
+      include: {
+        empresa: {
+          select: {
+            razonSocial: true,
+            cuit: true,
+            domicilio: true,
+            walletAddress: true,
+          },
+        },
+      },
     });
   }
 
@@ -87,5 +96,49 @@ export class CertificadoDigitalRepository {
 
   remove(id: string) {
     return this.prisma.certificadoDigital.delete({ where: { id } });
+  }
+
+  // ─── Reporte mensual de actividad ───
+
+  /** Entregas de la empresa en el mes, con el hash de acuñación si ya existe. */
+  findEntregasDelPeriodo(empresaId: string, mes: number, anio: number) {
+    return this.prisma.ingresoMaterial.findMany({
+      where: {
+        empresaId,
+        fechaIngreso: {
+          gte: new Date(Date.UTC(anio, mes - 1, 1)),
+          lt: new Date(Date.UTC(anio, mes, 1)),
+        },
+      },
+      orderBy: { fechaIngreso: 'asc' },
+      select: {
+        fechaIngreso: true,
+        peso: true,
+        tokensAcumulados: true,
+        tipoMaterial: { select: { nombre: true } },
+        movimientoToken: { select: { txHash: true } },
+      },
+    });
+  }
+
+  /** Tokens acumulados por la empresa antes del inicio del mes (saldo anterior). */
+  async sumarTokensAntesDe(empresaId: string, mes: number, anio: number) {
+    const { _sum } = await this.prisma.ingresoMaterial.aggregate({
+      where: {
+        empresaId,
+        fechaIngreso: { lt: new Date(Date.UTC(anio, mes - 1, 1)) },
+      },
+      _sum: { tokensAcumulados: true },
+    });
+    return _sum.tokensAcumulados ?? 0;
+  }
+
+  /** CO₂ evitado por la empresa en el año, hasta el mes indicado inclusive. */
+  async sumarCo2Anio(empresaId: string, mes: number, anio: number) {
+    const { _sum } = await this.prisma.certificadoDigital.aggregate({
+      where: { empresaId, anio, mes: { lte: mes } },
+      _sum: { co2Evitado: true },
+    });
+    return _sum.co2Evitado ?? 0;
   }
 }

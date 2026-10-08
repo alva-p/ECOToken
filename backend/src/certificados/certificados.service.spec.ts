@@ -15,6 +15,9 @@ describe('CertificadosService', () => {
     emitir: jest.Mock;
     findByEmpresaId: jest.Mock;
     findByIdConEmpresa: jest.Mock;
+    findEntregasDelPeriodo: jest.Mock;
+    sumarTokensAntesDe: jest.Mock;
+    sumarCo2Anio: jest.Mock;
   };
   let empresas: { findOne: jest.Mock };
   let blockchain: { emitirCertificado: jest.Mock };
@@ -28,6 +31,9 @@ describe('CertificadosService', () => {
       emitir: jest.fn().mockResolvedValue({ id: 'cert1' }),
       findByEmpresaId: jest.fn(),
       findByIdConEmpresa: jest.fn(),
+      findEntregasDelPeriodo: jest.fn(),
+      sumarTokensAntesDe: jest.fn(),
+      sumarCo2Anio: jest.fn(),
     };
     empresas = {
       findOne: jest
@@ -196,6 +202,56 @@ describe('CertificadosService', () => {
       await expect(
         service.obtenerPdf('cert1', 'otra-empresa'),
       ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('obtenerReportePdf rechaza si el certificado no pertenece a la empresa', async () => {
+      repository.findByIdConEmpresa.mockResolvedValue({
+        id: 'cert1',
+        empresaId: 'emp1',
+      });
+
+      await expect(
+        service.obtenerReportePdf('cert1', 'otra-empresa'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('obtenerReportePdf genera un PDF con las entregas del mes', async () => {
+      repository.findByIdConEmpresa.mockResolvedValue({
+        id: 'abcd-1',
+        empresaId: 'emp1',
+        mes: 4,
+        anio: 2026,
+        posicion: 2,
+        totalEmpresas: 12,
+        co2Evitado: 398,
+        hashVerificacion: 'h'.repeat(64),
+        empresa: {
+          razonSocial: 'Eco SRL',
+          cuit: '30-71204185-3',
+          domicilio: null,
+          walletAddress: '0x' + 'a'.repeat(40),
+        },
+      });
+      repository.findEntregasDelPeriodo.mockResolvedValue([
+        {
+          fechaIngreso: new Date('2026-04-03T12:00:00Z'),
+          peso: 120,
+          tokensAcumulados: 1800,
+          tipoMaterial: { nombre: 'Plástico PET' },
+          movimientoToken: { txHash: '0x' + 'b'.repeat(64) },
+        },
+      ]);
+      repository.sumarTokensAntesDe.mockResolvedValue(45130);
+      repository.sumarCo2Anio.mockResolvedValue(1121);
+
+      const pdf = await service.obtenerReportePdf('abcd-1', 'emp1');
+
+      expect(pdf.subarray(0, 4).toString()).toBe('%PDF');
+      expect(repository.sumarTokensAntesDe).toHaveBeenCalledWith(
+        'emp1',
+        4,
+        2026,
+      );
     });
   });
 });
