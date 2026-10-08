@@ -62,7 +62,7 @@ describe('EmpresasService', () => {
     remove: jest.Mock;
     update: jest.Mock;
     deactivate: jest.Mock;
-    buscar: jest.Mock;
+    findAprobadasActivas: jest.Mock;
     agregarDocumentoVerificacion: jest.Mock;
     findDocumentosVerificacion: jest.Mock;
   };
@@ -91,7 +91,7 @@ describe('EmpresasService', () => {
       remove: jest.fn().mockResolvedValue(undefined),
       update: jest.fn(),
       deactivate: jest.fn(),
-      buscar: jest.fn(),
+      findAprobadasActivas: jest.fn(),
       agregarDocumentoVerificacion: jest.fn(),
       findDocumentosVerificacion: jest.fn(),
     };
@@ -489,21 +489,64 @@ describe('EmpresasService', () => {
   });
 
   describe('buscar (E4-HU03)', () => {
+    const empresas = [
+      {
+        ...empresaBase,
+        id: 'a',
+        razonSocial: 'Panadería El Trigal',
+        cuit: '20300000044',
+      },
+      {
+        ...empresaBase,
+        id: 'b',
+        razonSocial: 'Hospital Pasteur',
+        cuit: '20300000022',
+      },
+      {
+        ...empresaBase,
+        id: 'c',
+        razonSocial: 'Sprint3 Test SRL',
+        nombre: 'Café Roma',
+        cuit: '20-12345678-6',
+      },
+    ];
+    const ids = async (q: string) => (await service.buscar(q)).map((e) => e.id);
+
+    beforeEach(() =>
+      repository.findAprobadasActivas.mockResolvedValue(empresas),
+    );
+
     it('devuelve [] sin consultar el repository si la query tiene menos de 2 caracteres', async () => {
       await expect(service.buscar('a')).resolves.toEqual([]);
       await expect(service.buscar('')).resolves.toEqual([]);
       await expect(service.buscar('   ')).resolves.toEqual([]);
-      expect(repository.buscar).not.toHaveBeenCalled();
+      expect(repository.findAprobadasActivas).not.toHaveBeenCalled();
     });
 
-    it('delega en el repository con la query recortada', async () => {
-      const resultados = [{ ...empresaBase, razonSocial: 'ACME SA' }];
-      repository.buscar.mockResolvedValue(resultados);
+    it('busca por razón social sin importar mayúsculas ni acentos', async () => {
+      expect(await ids('panaderia')).toEqual(['a']);
+      expect(await ids('PANADERÍA el')).toEqual(['a']);
+      expect(await ids('  pasteur  ')).toEqual(['b']);
+    });
 
-      const res = await service.buscar('  acme  ');
+    it('acepta las palabras en cualquier orden', async () => {
+      expect(await ids('trigal panaderia')).toEqual(['a']);
+      expect(await ids('pasteur hospital')).toEqual(['b']);
+    });
 
-      expect(repository.buscar).toHaveBeenCalledWith('acme');
-      expect(res).toBe(resultados);
+    it('busca por nombre además de la razón social', async () => {
+      expect(await ids('cafe roma')).toEqual(['c']);
+    });
+
+    it('busca por CUIT con o sin guiones, aunque esté guardado de otra forma', async () => {
+      expect(await ids('20300000044')).toEqual(['a']);
+      expect(await ids('20-30000004')).toEqual(['a']);
+      expect(await ids('20-12345678-6')).toEqual(['c']);
+      expect(await ids('201234567')).toEqual(['c']);
+    });
+
+    it('sin coincidencias devuelve []', async () => {
+      expect(await ids('inexistente')).toEqual([]);
     });
   });
 });

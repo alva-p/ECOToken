@@ -94,7 +94,7 @@ export function BuscadorEmpresas({ onSelect }: BuscadorEmpresasProps) {
         // antes de que el blur cierre el dropdown.
         onBlur={() => setTimeout(() => setAbierto(false), 150)}
         onKeyDown={handleKeyDown}
-        placeholder="Buscar por razón social o CUIT…"
+        placeholder="Buscar por nombre, razón social o CUIT…"
         aria-label="Buscar empresa"
         className="w-full rounded-lg border border-eco-border-strong bg-eco-surface px-3.5 py-2.5 text-sm text-eco-ink placeholder:text-eco-ink3 focus:outline-none focus:ring-2 focus:ring-eco-coop/30"
       />
