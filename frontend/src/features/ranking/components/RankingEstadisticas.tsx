@@ -72,7 +72,7 @@ export function Distribucion({
       <div className="flex flex-col items-center gap-5 sm:flex-row">
         <svg
           viewBox="0 0 100 100"
-          className="h-36 w-36 shrink-0 -rotate-90"
+          className="h-44 w-44 shrink-0 -rotate-90"
           role="img"
           aria-label="Distribución del material reciclado"
         >
@@ -164,15 +164,15 @@ export function Evolucion({
   const [ux, uy] = puntos[puntos.length - 1];
 
   return (
-    <Card className="flex flex-col p-5">
+    <Card className="p-5">
       <Titulo sub={`kg reciclados · últimos ${serie.length} meses`}>
         {titulo}
       </Titulo>
-      {/* Se estira al alto de la tarjeta vecina; trazos y punto no se deforman. */}
+      {/* Alto fijo: el gráfico no agranda la tarjeta; trazo y punto no se deforman. */}
       <svg
         viewBox={`0 0 ${W} ${H}`}
         preserveAspectRatio="none"
-        className="min-h-[7rem] w-full flex-1 overflow-visible"
+        className="h-40 w-full overflow-visible"
         role="img"
         aria-label="Evolución mensual de kg reciclados"
       >
