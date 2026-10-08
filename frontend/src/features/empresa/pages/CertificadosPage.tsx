@@ -79,63 +79,65 @@ export function CertificadosPage() {
     <div className="flex flex-col gap-4">
       {error && <p className="text-sm text-eco-danger">{error}</p>}
 
-      <section>
-        <h2 className="text-sm font-semibold text-eco-ink">Certificados</h2>
-        <p className="mb-3 mt-0.5 text-xs text-eco-ink2">
-          Reconocimiento mensual verificable on-chain, con tu posición en el
-          ranking.
-        </p>
-        <Card className="p-4">
-          <Table
-            columns={[
-              { label: 'Período' },
-              { label: 'Posición', align: 'right' },
-              { label: 'Kg reciclados', align: 'right' },
-              { label: 'CO₂ evitado', align: 'right' },
-              { label: '' },
-            ]}
-            rows={data.map((c) => ({
-              cells: [
-                nombrePeriodo(c.mes, c.anio),
-                `#${c.posicion}`,
-                `${c.kgReciclados.toLocaleString('es-AR')} kg`,
-                `${c.co2Evitado.toLocaleString('es-AR')} kg`,
-                boton('certificado', c),
-              ],
-            }))}
-            emptyLabel="Todavía no tenés certificados emitidos."
-          />
-        </Card>
-      </section>
+      <div className="grid items-start gap-4 lg:grid-cols-2">
+        <section>
+          <h2 className="text-sm font-semibold text-eco-ink">Certificados</h2>
+          <p className="mb-3 mt-0.5 text-xs text-eco-ink2">
+            Reconocimiento mensual verificable on-chain, con tu posición en el
+            ranking.
+          </p>
+          <Card className="p-4">
+            <Table
+              columns={[
+                { label: 'Período' },
+                { label: 'Posición', align: 'right' },
+                { label: 'Kg reciclados', align: 'right' },
+                { label: 'CO₂ evitado', align: 'right' },
+                { label: '' },
+              ]}
+              rows={data.map((c) => ({
+                cells: [
+                  nombrePeriodo(c.mes, c.anio),
+                  `#${c.posicion}`,
+                  `${c.kgReciclados.toLocaleString('es-AR')} kg`,
+                  `${c.co2Evitado.toLocaleString('es-AR')} kg`,
+                  boton('certificado', c),
+                ],
+              }))}
+              emptyLabel="Todavía no tenés certificados emitidos."
+            />
+          </Card>
+        </section>
 
-      <section>
-        <h2 className="text-sm font-semibold text-eco-ink">
-          Reportes mensuales
-        </h2>
-        <p className="mb-3 mt-0.5 text-xs text-eco-ink2">
-          Detalle de tus entregas, saldo de tokens e impacto de cada mes
-          cerrado.
-        </p>
-        <Card className="p-4">
-          <Table
-            columns={[
-              { label: 'Período' },
-              { label: 'Kg reciclados', align: 'right' },
-              { label: 'Emitido', align: 'right' },
-              { label: '' },
-            ]}
-            rows={data.map((c) => ({
-              cells: [
-                nombrePeriodo(c.mes, c.anio),
-                `${c.kgReciclados.toLocaleString('es-AR')} kg`,
-                new Date(c.fechaEmision).toLocaleDateString('es-AR'),
-                boton('reporte', c),
-              ],
-            }))}
-            emptyLabel="Todavía no tenés reportes disponibles. Se generan al cierre de cada mes."
-          />
-        </Card>
-      </section>
+        <section>
+          <h2 className="text-sm font-semibold text-eco-ink">
+            Reportes mensuales
+          </h2>
+          <p className="mb-3 mt-0.5 text-xs text-eco-ink2">
+            Detalle de tus entregas, saldo de tokens e impacto de cada mes
+            cerrado.
+          </p>
+          <Card className="p-4">
+            <Table
+              columns={[
+                { label: 'Período' },
+                { label: 'Kg reciclados', align: 'right' },
+                { label: 'Emitido', align: 'right' },
+                { label: '' },
+              ]}
+              rows={data.map((c) => ({
+                cells: [
+                  nombrePeriodo(c.mes, c.anio),
+                  `${c.kgReciclados.toLocaleString('es-AR')} kg`,
+                  new Date(c.fechaEmision).toLocaleDateString('es-AR'),
+                  boton('reporte', c),
+                ],
+              }))}
+              emptyLabel="Todavía no tenés reportes disponibles. Se generan al cierre de cada mes."
+            />
+          </Card>
+        </section>
+      </div>
     </div>
   );
 }
