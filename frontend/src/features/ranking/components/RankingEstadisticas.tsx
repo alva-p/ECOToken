@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import type { FilaRanking, MaterialKg, PeriodoCerrado } from '../api';
 
@@ -139,10 +140,11 @@ const MES_CORTO = [
 
 export interface PuntoSerie {
   mes: number;
+  anio?: number;
   totalKg: number;
 }
 
-/** Línea de kg por mes; `serie` va del más viejo al más nuevo. */
+/** Línea de kg por mes con detalle al pasar el mouse; `serie` va del más viejo al más nuevo. */
 export function Evolucion({
   serie,
   titulo = 'Evolución mensual',
@@ -150,18 +152,27 @@ export function Evolucion({
   serie: PuntoSerie[];
   titulo?: string;
 }) {
+  const [activo, setActivo] = useState<number | null>(null);
   if (serie.length < 2) return null;
 
   const W = 300;
   const H = 120;
   const max = Math.max(...serie.map((p) => p.totalKg), 1);
-  const punto = (p: PuntoSerie, i: number) => [
-    (i / (serie.length - 1)) * W,
-    H - (p.totalKg / max) * (H - 10) - 5,
-  ];
-  const puntos = serie.map(punto);
-  const linea = puntos.map(([x, y]) => `${x},${y}`).join(' ');
-  const [ux, uy] = puntos[puntos.length - 1];
+  const x = (i: number) => i / (serie.length - 1);
+  const y = (p: PuntoSerie) => (H - (p.totalKg / max) * (H - 10) - 5) / H;
+  const linea = serie.map((p, i) => `${x(i) * W},${y(p) * H}`).join(' ');
+
+  // Con el mouse (o el dedo) se elige el mes más cercano al cursor.
+  function mover(e: React.PointerEvent<HTMLDivElement>) {
+    const r = e.currentTarget.getBoundingClientRect();
+    const rel = Math.min(Math.max((e.clientX - r.left) / r.width, 0), 1);
+    setActivo(Math.round(rel * (serie.length - 1)));
+  }
+
+  const sel = activo === null ? null : serie[activo];
+  const previo = activo !== null && activo > 0 ? serie[activo - 1] : null;
+  const etiqueta = (p: PuntoSerie) =>
+    `${MES_CORTO[p.mes - 1]}${p.anio ? ` ${p.anio}` : ''}`;
 
   return (
     <Card className="p-5">
@@ -169,37 +180,88 @@ export function Evolucion({
         {titulo}
       </Titulo>
       {/* Alto fijo: el gráfico no agranda la tarjeta; trazo y punto no se deforman. */}
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        preserveAspectRatio="none"
-        className="h-40 w-full overflow-visible"
-        role="img"
-        aria-label="Evolución mensual de kg reciclados"
+      <div
+        className="relative h-40 touch-pan-y"
+        onPointerMove={mover}
+        onPointerDown={mover}
+        onPointerLeave={() => setActivo(null)}
       >
-        <polygon
-          points={`0,${H} ${linea} ${W},${H}`}
-          fill="#1D9E75"
-          opacity="0.1"
-        />
-        <polyline
-          points={linea}
-          fill="none"
-          stroke="#1D9E75"
-          strokeWidth="2"
-          strokeLinejoin="round"
-          vectorEffect="non-scaling-stroke"
-        />
-        <line
-          x1={ux}
-          y1={uy}
-          x2={ux}
-          y2={uy}
-          stroke="#1D9E75"
-          strokeWidth="8"
-          strokeLinecap="round"
-          vectorEffect="non-scaling-stroke"
-        />
-      </svg>
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          preserveAspectRatio="none"
+          className="h-full w-full overflow-visible"
+          role="img"
+          aria-label="Evolución mensual de kg reciclados"
+        >
+          <polygon
+            points={`0,${H} ${linea} ${W},${H}`}
+            fill="#1D9E75"
+            opacity="0.1"
+          />
+          <polyline
+            points={linea}
+            fill="none"
+            stroke="#1D9E75"
+            strokeWidth="2"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+        {/* Punto del último mes (o del mes bajo el cursor) y guía vertical. */}
+        {[sel ? activo! : serie.length - 1].map((i) => (
+          <span key={i}>
+            {sel && (
+              <span
+                aria-hidden
+                className="absolute inset-y-0 w-px bg-eco-org/30"
+                style={{ left: `${x(i) * 100}%` }}
+              />
+            )}
+            <span
+              aria-hidden
+              className="absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-eco-org"
+              style={{ left: `${x(i) * 100}%`, top: `${y(serie[i]) * 100}%` }}
+            />
+          </span>
+        ))}
+        {sel && (
+          <div
+            role="status"
+            className="pointer-events-none absolute z-10 -translate-y-full whitespace-nowrap rounded-lg bg-eco-ink px-3 py-2 text-xs text-white shadow-lg"
+            style={{
+              left: `${x(activo!) * 100}%`,
+              top: `calc(${y(sel) * 100}% - 12px)`,
+              transform: `translate(${
+                activo! < 2
+                  ? '0'
+                  : activo! > serie.length - 3
+                    ? '-100%'
+                    : '-50%'
+              }, -100%)`,
+            }}
+          >
+            <div className="text-white/60">{etiqueta(sel)}</div>
+            <div className="text-sm font-bold">{kg(sel.totalKg)}</div>
+            {previo && (
+              <div
+                className={
+                  sel.totalKg >= previo.totalKg
+                    ? 'text-[#7CE0BB]'
+                    : 'text-[#F2B382]'
+                }
+              >
+                {sel.totalKg >= previo.totalKg ? '+' : '−'}
+                {kg(
+                  Math.abs(
+                    Math.round((sel.totalKg - previo.totalKg) * 10) / 10,
+                  ),
+                )}{' '}
+                vs. mes anterior
+              </div>
+            )}
+          </div>
+        )}
+      </div>
       <div className="mt-2 flex justify-between text-[10px] text-eco-ink2">
         <span>{MES_CORTO[serie[0].mes - 1]}</span>
         <span className="font-semibold text-eco-org">

@@ -58,7 +58,11 @@ export function MiPosicion({
   }
 
   const t = datos.tendencia;
-  const serie = datos.evolucion.map((p) => ({ mes: p.mes, totalKg: p.kg }));
+  const serie = datos.evolucion.map((p) => ({
+    mes: p.mes,
+    anio: p.anio,
+    totalKg: p.kg,
+  }));
   return (
     <section>
       <SubtituloSeccion
