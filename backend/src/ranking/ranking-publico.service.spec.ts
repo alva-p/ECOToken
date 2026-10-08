@@ -10,6 +10,10 @@ describe('RankingPublicoService (E7-HU03)', () => {
     snapshotCerrado: jest.Mock;
     totalesPorEmpresa: jest.Mock;
     razonesSociales: jest.Mock;
+    kgPorMaterial: jest.Mock;
+    certificadosPorEmpresa: jest.Mock;
+    co2PorEmpresa: jest.Mock;
+    mesesCerrados: jest.Mock;
   };
 
   const cierre = new Date('2026-09-01T00:00:00Z');
@@ -26,6 +30,10 @@ describe('RankingPublicoService (E7-HU03)', () => {
       snapshotCerrado: jest.fn().mockResolvedValue(null),
       totalesPorEmpresa: jest.fn().mockResolvedValue([]),
       razonesSociales: jest.fn().mockResolvedValue([]),
+      kgPorMaterial: jest.fn().mockResolvedValue([]),
+      certificadosPorEmpresa: jest.fn().mockResolvedValue([]),
+      co2PorEmpresa: jest.fn().mockResolvedValue([]),
+      mesesCerrados: jest.fn().mockResolvedValue([]),
     };
 
     const moduleRef = await Test.createTestingModule({
@@ -104,20 +112,29 @@ describe('RankingPublicoService (E7-HU03)', () => {
       const ranking = await service.obtener();
 
       expect(repository.snapshotCerrado).toHaveBeenCalledWith(8, 2026);
+      const extra = { certificados: 0, tendencia: null, nuevo: false };
       expect(ranking.data).toEqual([
         {
           posicion: 1,
           razonSocial: 'Supermercado Top',
           kgReciclados: 300,
           tokens: 900,
+          ...extra,
         },
         {
           posicion: 2,
           razonSocial: 'GreenPack',
           kgReciclados: 120,
           tokens: 400,
+          ...extra,
         },
-        { posicion: 3, razonSocial: 'Eco SRL', kgReciclados: 50, tokens: 100 },
+        {
+          posicion: 3,
+          razonSocial: 'Eco SRL',
+          kgReciclados: 50,
+          tokens: 100,
+          ...extra,
+        },
       ]);
       expect(ranking).toMatchObject({
         mes: 8,
@@ -128,6 +145,55 @@ describe('RankingPublicoService (E7-HU03)', () => {
         hashSnapshot: 'abc123',
         bloqueReferencia: 555,
       });
+    });
+
+    it('calcula tendencia, novedad, certificados y perfil del líder', async () => {
+      repository.snapshotCerrado
+        .mockResolvedValueOnce(snapshot(['e1', 'e2']))
+        .mockResolvedValueOnce(snapshot(['e1']));
+      repository.totalesPorEmpresa
+        .mockResolvedValueOnce([
+          { empresaId: 'e1', kg: 10, tokens: 10 },
+          { empresaId: 'e2', kg: 20, tokens: 20 },
+        ])
+        .mockResolvedValueOnce([{ empresaId: 'e1', kg: 5, tokens: 5 }]);
+      repository.razonesSociales
+        .mockResolvedValueOnce([
+          { id: 'e1', razonSocial: 'Uno' },
+          { id: 'e2', razonSocial: 'Dos' },
+        ])
+        .mockResolvedValueOnce([{ id: 'e1', razonSocial: 'Uno' }]);
+      repository.certificadosPorEmpresa.mockResolvedValueOnce([
+        { empresaId: 'e2', cantidad: 3 },
+      ]);
+      repository.co2PorEmpresa.mockResolvedValueOnce([
+        { empresaId: 'e2', co2: 7.5 },
+      ]);
+      repository.mesesCerrados.mockResolvedValueOnce([
+        { mes: 8, anio: 2026 },
+        { mes: 7, anio: 2026 },
+        { mes: 5, anio: 2026 },
+      ]);
+      repository.kgPorMaterial
+        .mockResolvedValueOnce([{ material: 'Vidrio', kg: 20 }])
+        .mockResolvedValueOnce([{ material: 'Vidrio', kg: 20 }]);
+
+      const r = await service.obtener(8, 2026);
+
+      expect(r.data[0]).toMatchObject({
+        razonSocial: 'Dos',
+        nuevo: true,
+        tendencia: null,
+        certificados: 3,
+      });
+      expect(r.data[1]).toMatchObject({ razonSocial: 'Uno', tendencia: -1 });
+      expect(r.lider).toMatchObject({
+        razonSocial: 'Dos',
+        co2Evitado: 7.5,
+        mesesConsecutivos: 2,
+        materiales: [{ material: 'Vidrio', kg: 20 }],
+      });
+      expect(r.co2Evitado).toBe(7.5);
     });
 
     it('desempata por kg y luego por nombre para un orden estable', async () => {

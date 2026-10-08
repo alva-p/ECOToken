@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowDown, ArrowUp, Search } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -19,6 +20,30 @@ import {
   variacionVsMesAnterior,
 } from '../periodo';
 import { RankingPreview } from '../components/RankingPreview';
+import { RankingEstadisticas } from '../components/RankingEstadisticas';
+import { PerfilDestacado } from '../components/PerfilDestacado';
+import { Transparencia } from '../components/Transparencia';
+import { Badge } from '@/components/ui/Badge';
+
+const POR_PAGINA = 10;
+
+function Tendencia({ t, nuevo }: { t: number | null; nuevo: boolean }) {
+  if (nuevo) return <Badge color="org">Nuevo</Badge>;
+  if (!t) return <span className="text-eco-ink3">—</span>;
+  const sube = t > 0;
+  const Icono = sube ? ArrowUp : ArrowDown;
+  return (
+    <span
+      className={cx(
+        'inline-flex items-center gap-0.5 text-xs font-semibold',
+        sube ? 'text-eco-org' : 'text-eco-coop',
+      )}
+    >
+      <Icono aria-hidden size={12} />
+      {Math.abs(t)}
+    </span>
+  );
+}
 
 const inputClass =
   'w-full rounded-lg border border-eco-border-strong bg-eco-surface px-3 py-2 text-sm text-eco-ink focus:outline-none focus:ring-2 focus:ring-eco-org/30 sm:w-auto';
@@ -47,6 +72,8 @@ export function RankingPage() {
   const [ranking, setRanking] = useState<RankingPublico | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
+  const [pagina, setPagina] = useState(0);
 
   const pedido = periodoDeUrl(searchParams);
   const ultimo = periodos?.[0];
@@ -76,7 +103,17 @@ export function RankingPage() {
     };
   }, [objetivoMes, objetivoAnio]);
 
+  const filas = useMemo(() => {
+    const q = busqueda.trim().toLowerCase();
+    return (ranking?.data ?? []).filter((f) =>
+      f.razonSocial.toLowerCase().includes(q),
+    );
+  }, [ranking, busqueda]);
+  const paginas = Math.max(1, Math.ceil(filas.length / POR_PAGINA));
+  const visibles = filas.slice(pagina * POR_PAGINA, (pagina + 1) * POR_PAGINA);
+
   function elegirPeriodo(mes: number, anio: number) {
+    setPagina(0);
     setSearchParams({ mes: String(mes), anio: String(anio) });
   }
 
@@ -103,7 +140,7 @@ export function RankingPage() {
   return (
     <div className="min-h-screen bg-eco-bg text-eco-ink">
       <header className="border-b border-eco-border bg-white">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Link to="/" aria-label="ECOToken, volver al inicio">
             <img
               src="/logos/logo-ecotoken.png"
@@ -120,15 +157,22 @@ export function RankingPage() {
         </div>
       </header>
 
-      <main className="mx-auto flex max-w-4xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10">
+      <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              Ranking público
+            {ranking?.fechaCierre && (
+              <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-eco-org-soft px-3 py-1 text-xs font-semibold text-eco-org">
+                <span className="h-1.5 w-1.5 rounded-full bg-eco-org" />
+                Datos verificados · Cierre del {fechaLarga(ranking.fechaCierre)}
+              </span>
+            )}
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Ranking público de empresas que reciclan
             </h1>
-            <p className="mt-1 max-w-xl text-sm text-eco-ink2">
-              Las empresas reconocidas cada mes por su aporte ambiental. Solo se
-              muestran rankings ya cerrados.
+            <p className="mt-2 max-w-2xl text-sm text-eco-ink2 sm:text-base">
+              Conocé qué empresas están reciclando y generando impacto ambiental
+              positivo en Villa María. Solo se muestran rankings ya cerrados y
+              certificados.
             </p>
           </div>
           {periodos && periodos.length > 0 && (
@@ -228,33 +272,124 @@ export function RankingPage() {
             />
 
             <section>
-              <h2 className="mb-3 text-sm font-semibold">
-                Ranking completo · {etiquetaPeriodo(ranking)}
-              </h2>
-              <Table
-                columns={[
-                  { label: '#', width: '2.5rem' },
-                  { label: 'Empresa' },
-                  { label: 'Kg', align: 'right', width: '5rem' },
-                  { label: 'Puntos ECO', align: 'right', width: '6rem' },
-                ]}
-                rows={ranking.data.map((f) => ({
-                  cells: [
-                    <span key="p" className="font-semibold text-eco-ink2">
-                      {f.posicion}
-                    </span>,
-                    <span key="e" className="font-medium">
-                      {f.razonSocial}
-                    </span>,
-                    f.kgReciclados.toLocaleString('es-AR'),
-                    <span key="t" className="font-semibold">
-                      {f.tokens.toLocaleString('es-AR')}
-                    </span>,
-                  ],
-                }))}
-                emptyLabel="Este mes no hubo aportes registrados."
-              />
+              <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-eco-org">
+                    Ranking completo
+                  </div>
+                  <h2 className="mt-1 text-xl font-bold tracking-tight">
+                    {cantidadEmpresas(ranking.empresas)} participantes
+                  </h2>
+                </div>
+                <label className="relative block w-full sm:w-64">
+                  <span className="sr-only">Buscar empresa</span>
+                  <Search
+                    aria-hidden
+                    size={14}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-eco-ink2"
+                  />
+                  <input
+                    type="search"
+                    value={busqueda}
+                    onChange={(e) => {
+                      setBusqueda(e.target.value);
+                      setPagina(0);
+                    }}
+                    placeholder="Buscar empresa…"
+                    className={cx(inputClass, 'pl-8 sm:w-full')}
+                  />
+                </label>
+              </div>
+              <div className="overflow-x-auto">
+                <div className="min-w-[34rem]">
+                  <Table
+                    columns={[
+                      { label: 'Pos.', width: '3.5rem' },
+                      { label: 'Empresa' },
+                      { label: 'Kg', align: 'right', width: '6rem' },
+                      { label: 'Puntos ECO', align: 'right', width: '6.5rem' },
+                      { label: 'Certif.', align: 'right', width: '4.5rem' },
+                      { label: 'Tendencia', align: 'right', width: '6rem' },
+                    ]}
+                    rows={visibles.map((f) => ({
+                      cells: [
+                        <span
+                          key="p"
+                          className={cx(
+                            'inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold',
+                            f.posicion === 1 && 'bg-[#C9A227] text-white',
+                            f.posicion === 2 && 'bg-[#9AA3AA] text-white',
+                            f.posicion === 3 && 'bg-[#B8742E] text-white',
+                            f.posicion > 3 && 'text-eco-ink2',
+                          )}
+                        >
+                          {f.posicion}
+                        </span>,
+                        <span key="e" className="font-medium">
+                          {f.razonSocial}
+                        </span>,
+                        f.kgReciclados.toLocaleString('es-AR'),
+                        <span key="t" className="font-semibold">
+                          {f.tokens.toLocaleString('es-AR')}
+                        </span>,
+                        f.certificados,
+                        <Tendencia key="d" t={f.tendencia} nuevo={f.nuevo} />,
+                      ],
+                    }))}
+                    emptyLabel={
+                      busqueda
+                        ? 'Ninguna empresa coincide con la búsqueda.'
+                        : 'Este mes no hubo aportes registrados.'
+                    }
+                  />
+                </div>
+              </div>
+              {filas.length > POR_PAGINA && (
+                <div className="mt-3 flex items-center justify-between text-xs text-eco-ink2">
+                  <span>
+                    Mostrando {pagina * POR_PAGINA + 1}–
+                    {pagina * POR_PAGINA + visibles.length} de {filas.length}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      color="org"
+                      disabled={pagina === 0}
+                      onClick={() => setPagina(pagina - 1)}
+                    >
+                      Anterior
+                    </Button>
+                    <Button
+                      type="button"
+                      color="org"
+                      disabled={pagina >= paginas - 1}
+                      onClick={() => setPagina(pagina + 1)}
+                    >
+                      Siguiente
+                    </Button>
+                  </div>
+                </div>
+              )}
             </section>
+
+            {ranking.data.length > 0 && (
+              <RankingEstadisticas
+                data={ranking.data}
+                materiales={ranking.materiales}
+                totalKg={ranking.totalKg}
+                co2Evitado={ranking.co2Evitado}
+                periodos={periodos ?? []}
+                actual={ranking}
+              />
+            )}
+
+            {ranking.lider && (
+              <PerfilDestacado
+                lider={ranking.lider}
+                periodo={etiquetaPeriodo(ranking)}
+              />
+            )}
 
             {ranking.fechaCierre && (
               <p className="break-words text-xs text-eco-ink2">
@@ -317,6 +452,8 @@ export function RankingPage() {
             </Card>
           </section>
         )}
+
+        <Transparencia />
       </main>
     </div>
   );

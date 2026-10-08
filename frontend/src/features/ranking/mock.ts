@@ -1,4 +1,9 @@
-import type { FilaRanking, PeriodoCerrado, RankingPublico } from './api';
+import type {
+  FilaRanking,
+  MaterialKg,
+  PeriodoCerrado,
+  RankingPublico,
+} from './api';
 
 // Datos de ejemplo para el deploy de demo sin backend (VITE_API_URL sin definir).
 // Con backend configurado, api.ts nunca los usa: un backend caído sigue viendo
@@ -57,6 +62,9 @@ function armar([mes, anio, k]: [number, number, number]): RankingPublico {
       razonSocial,
       kgReciclados: redondear(kg * f),
       tokens: Math.round(tokens * f),
+      certificados: Math.max(1, Math.round((tokens / 120) * k)),
+      tendencia: null,
+      nuevo: false,
     };
   })
     .sort((a, b) => b.tokens - a.tokens)
@@ -70,11 +78,62 @@ function armar([mes, anio, k]: [number, number, number]): RankingPublico {
     totalTokens: data.reduce((s, f) => s + f.tokens, 0),
     hashSnapshot: null,
     bloqueReferencia: null,
+    co2Evitado: 0,
+    materiales: [],
+    lider: null,
     data,
   };
 }
 
-const RANKINGS = MESES.map(armar);
+const MATERIALES: Array<[string, number]> = [
+  ['Cartón', 0.37],
+  ['Plástico PET', 0.24],
+  ['Vidrio', 0.18],
+  ['Papel', 0.12],
+  ['Metal', 0.06],
+  ['Otros', 0.03],
+];
+const CO2_POR_KG = 1.12;
+
+const BRUTOS = MESES.map(armar);
+
+// Segunda pasada: tendencia contra el mes siguiente en la lista (el anterior
+// en el tiempo), reparto de materiales y perfil del líder.
+const RANKINGS = BRUTOS.map((r, i) => {
+  const previo = BRUTOS[i + 1];
+  const posPrevia = new Map(
+    previo?.data.map((f) => [f.razonSocial, f.posicion]),
+  );
+  const data = r.data.map((f) => {
+    const p = posPrevia.get(f.razonSocial);
+    return {
+      ...f,
+      tendencia: previo && p !== undefined ? p - f.posicion : null,
+      nuevo: !!previo && p === undefined,
+    };
+  });
+  const reparto = (kg: number): MaterialKg[] =>
+    MATERIALES.map(([material, parte]) => ({
+      material,
+      kg: redondear(kg * parte),
+    }));
+  const top = data[0];
+  return {
+    ...r,
+    data,
+    co2Evitado: redondear(r.totalKg * CO2_POR_KG),
+    materiales: reparto(r.totalKg),
+    lider: {
+      razonSocial: top.razonSocial,
+      kgReciclados: top.kgReciclados,
+      tokens: top.tokens,
+      certificados: top.certificados,
+      co2Evitado: redondear(top.kgReciclados * CO2_POR_KG),
+      mesesConsecutivos: MESES.length - i,
+      materiales: reparto(top.kgReciclados),
+    },
+  };
+});
 
 export const periodosMock = (limite?: number): PeriodoCerrado[] =>
   RANKINGS.slice(0, limite).map((r) => ({

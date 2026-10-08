@@ -19,12 +19,34 @@ export interface FilaRanking {
   razonSocial: string;
   kgReciclados: number;
   tokens: number;
+  certificados: number;
+  /** Puestos ganados (+) o perdidos (−) vs. el mes anterior; null si no hay comparación. */
+  tendencia: number | null;
+  nuevo: boolean;
+}
+
+export interface MaterialKg {
+  material: string;
+  kg: number;
+}
+
+export interface LiderPublico {
+  razonSocial: string;
+  kgReciclados: number;
+  tokens: number;
+  certificados: number;
+  co2Evitado: number;
+  mesesConsecutivos: number;
+  materiales: MaterialKg[];
 }
 
 /** Ranking cerrado de un período, con el snapshot que lo respalda. */
 export interface RankingPublico extends PeriodoCerrado {
   hashSnapshot: string | null;
   bloqueReferencia: number | null;
+  co2Evitado: number;
+  materiales: MaterialKg[];
+  lider: LiderPublico | null;
   data: FilaRanking[];
 }
 
