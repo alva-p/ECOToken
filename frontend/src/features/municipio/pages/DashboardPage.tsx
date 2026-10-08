@@ -40,7 +40,7 @@ function GraficoBarras({ data }: { data: VolumenPorEmpresa[] }) {
     <div className="flex flex-col gap-3">
       {data.map((e) => (
         <div key={e.empresaId} className="flex items-center gap-3">
-          <div className="w-36 shrink-0 truncate text-xs text-eco-ink2">
+          <div className="w-24 shrink-0 truncate sm:w-36 text-xs text-eco-ink2">
             {e.razonSocial}
           </div>
           <div className="h-5 flex-1 overflow-hidden rounded bg-eco-muni-soft">
@@ -98,7 +98,7 @@ export function MunicipioDashboardPage() {
             onChange={(e) => setHasta(e.target.value)}
           />
         </label>
-        <div className="ml-auto flex gap-2">
+        <div className="flex flex-wrap gap-2 sm:ml-auto">
           <Button
             type="button"
             variant="outline"
@@ -126,7 +126,7 @@ export function MunicipioDashboardPage() {
       ) : (
         volumen && (
           <>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <Card>
                 <div className="text-xs font-semibold uppercase tracking-wide text-eco-ink2">
                   Empresas activas

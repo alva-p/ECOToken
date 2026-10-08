@@ -3,7 +3,10 @@ import App from '@/App';
 import { ProtectedRoute } from './ProtectedRoute';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { RegistroPage } from '@/features/auth/pages/RegistroPage';
-import { RankingPage } from '@/features/ranking/pages/RankingPage';
+import {
+  RankingContenido,
+  RankingPage,
+} from '@/features/ranking/pages/RankingPage';
 import { VerificarPage } from '@/features/certificados/pages/VerificarPage';
 import { EmpresaLayout } from '@/layouts/EmpresaLayout';
 import { EmpresaDashboardPage } from '@/features/empresa/pages/DashboardPage';
@@ -43,6 +46,7 @@ export const router = createBrowserRouter([
       { index: true, element: <EmpresaDashboardPage /> },
       { path: 'aportes', element: <HistorialAportesPage /> },
       { path: 'aportes/:id', element: <ComprobanteAportePage /> },
+      { path: 'ranking', element: <RankingContenido enPanel /> },
       { path: 'certificados', element: <CertificadosPage /> },
     ],
   },
