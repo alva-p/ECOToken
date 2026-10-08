@@ -1,0 +1,10 @@
+[Unit]
+Description=Revisa cada 5 minutos si hay cambios nuevos en develop
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Unit=ecotoken-actualizar.service
+
+[Install]
+WantedBy=timers.target

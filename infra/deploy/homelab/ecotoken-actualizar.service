@@ -1,0 +1,8 @@
+[Unit]
+Description=Actualiza el backend de ECOToken (develop) en el homelab
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+User=alva
+ExecStart=/home/alva/Proyectos/ECOToken/infra/deploy/homelab/actualizar.sh
