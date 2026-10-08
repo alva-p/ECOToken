@@ -16,6 +16,8 @@ describe('CertificadosService', () => {
     findByEmpresaId: jest.Mock;
     findByIdConEmpresa: jest.Mock;
     findEntregasDelPeriodo: jest.Mock;
+    findSinReporteSnapshot: jest.Mock;
+    guardarReporteSnapshot: jest.Mock;
     sumarTokensAntesDe: jest.Mock;
     sumarCo2AnioPrevio: jest.Mock;
   };
@@ -32,6 +34,8 @@ describe('CertificadosService', () => {
       findByEmpresaId: jest.fn(),
       findByIdConEmpresa: jest.fn(),
       findEntregasDelPeriodo: jest.fn().mockResolvedValue([]),
+      findSinReporteSnapshot: jest.fn().mockResolvedValue([]),
+      guardarReporteSnapshot: jest.fn().mockResolvedValue({}),
       sumarTokensAntesDe: jest.fn().mockResolvedValue(0),
       sumarCo2AnioPrevio: jest.fn().mockResolvedValue(0),
     };
@@ -364,6 +368,29 @@ describe('CertificadosService', () => {
         4,
         2026,
       );
+    });
+  });
+
+  describe('congelarReportesPendientes', () => {
+    it('completa solo el reporte de los certificados que no lo tienen', async () => {
+      repository.findSinReporteSnapshot.mockResolvedValue([
+        { id: 'c1', empresaId: 'emp1', mes: 9, anio: 2026, co2Evitado: 7 },
+      ]);
+      repository.findEntregasDelPeriodo.mockResolvedValue([]);
+      repository.sumarTokensAntesDe.mockResolvedValue(30);
+      repository.sumarCo2AnioPrevio.mockResolvedValue(3);
+
+      const r = await service.congelarReportesPendientes();
+
+      expect(r).toEqual({ congelados: 1 });
+      expect(repository.guardarReporteSnapshot).toHaveBeenCalledWith('c1', {
+        entregas: [],
+        saldoAnterior: 30,
+        canjes: 0,
+        co2Anio: 10,
+      });
+      // El certificado en sí (hash, kg, posición) no se reescribe.
+      expect(repository.emitir).not.toHaveBeenCalled();
     });
   });
 });

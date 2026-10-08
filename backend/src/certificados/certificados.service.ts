@@ -292,6 +292,28 @@ export class CertificadosService {
     });
   }
 
+  /**
+   * Congela el reporte de los certificados que no lo tienen (emitidos antes de
+   * la columna), con los aportes actuales del mes. No toca el certificado: ni
+   * hash, ni kg, ni posición. Idempotente: solo completa los que faltan.
+   */
+  async congelarReportesPendientes(): Promise<{ congelados: number }> {
+    const pendientes = await this.repository.findSinReporteSnapshot();
+    for (const c of pendientes) {
+      const snapshot = await this.armarSnapshotReporte(
+        c.empresaId,
+        c.mes,
+        c.anio,
+        c.co2Evitado,
+      );
+      await this.repository.guardarReporteSnapshot(
+        c.id,
+        snapshot as unknown as Prisma.InputJsonValue,
+      );
+    }
+    return { congelados: pendientes.length };
+  }
+
   /** Entregas, saldos y CO₂ del año del reporte mensual de una empresa. */
   private async armarSnapshotReporte(
     empresaId: string,
