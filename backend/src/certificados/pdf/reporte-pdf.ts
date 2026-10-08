@@ -64,6 +64,8 @@ export interface DatosReportePdf {
   totalEmpresas: number;
   hashVerificacion: string;
   urlVerificacion: string;
+  /** Base del explorador de bloques (p. ej. https://sepolia.etherscan.io). */
+  explorerUrl: string;
   emitidoEn: Date;
 }
 
@@ -92,6 +94,22 @@ const fechaEspaciada = (d: Date) => {
   const p = partes(d);
   return `${p.day} / ${p.month} / ${p.year}`;
 };
+/** Hace clickeable el rectángulo y lo subraya fino, para que se note que es un enlace. */
+function enlace(
+  doc: PDFKit.PDFDocument,
+  url: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+) {
+  doc.link(x, y, w, h, url);
+  doc
+    .moveTo(x, y + h - 1)
+    .lineTo(x + w, y + h - 1)
+    .lineWidth(0.5)
+    .stroke(GREEN);
+}
 const corto = (h: string) =>
   h.length > 16 ? `${h.slice(0, 9)}…${h.slice(-4)}` : h;
 
@@ -367,11 +385,23 @@ export async function generarReportePdf(d: DatosReportePdf): Promise<Buffer> {
       color: GREEN,
       align: 'right',
     });
-    t(doc, e.txHash ? corto(e.txHash) : 'pendiente', xs[4] + 8, y + 9, {
+    const txX = xs[4] + 8;
+    const txFin = t(doc, e.txHash ? corto(e.txHash) : 'pendiente', txX, y + 9, {
       font: 'Courier',
       size: 9.5,
-      color: INK2,
+      color: e.txHash ? GREEN : INK2,
     });
+    // La pestaña de logs de Etherscan muestra el evento on-chain de la entrega.
+    if (e.txHash) {
+      enlace(
+        doc,
+        `${d.explorerUrl}/tx/${e.txHash}#eventlog`,
+        txX,
+        y + 9,
+        txFin - txX,
+        12.6,
+      );
+    }
     y += FILA;
   });
   if (d.entregas.length === 0) {
@@ -523,18 +553,21 @@ export async function generarReportePdf(d: DatosReportePdf): Promise<Buffer> {
     ty,
     { size: 10.5 },
   );
-  const fin = t(doc, 'Data Hash: ', tx, ty + 15.75 + 8, {
+  const hashY = ty + 15.75 + 8;
+  const fin = t(doc, 'Data Hash: ', tx, hashY, {
     font: 'Courier',
     size: 9.5,
     color: INK2,
   });
-  t(
+  const hashFin = t(
     doc,
     `0x${d.hashVerificacion.slice(0, 28)}…${d.hashVerificacion.slice(-4)}`,
     fin,
-    ty + 15.75 + 8,
-    { font: 'Courier', size: 9.5, color: INK },
+    hashY,
+    { font: 'Courier', size: 9.5, color: GREEN },
   );
+  enlace(doc, d.urlVerificacion, fin, hashY, hashFin - fin, 13);
+  doc.link(PAD_X + 15, y + 15, 78, 78, d.urlVerificacion);
   const fin2 = t(
     doc,
     'Verificado y emitido por ',
