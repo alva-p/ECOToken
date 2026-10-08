@@ -6,6 +6,15 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Detrás de proxies (Vercel/Cloudflare) hay que confiar en X-Forwarded-For para
+  // que el rate limit cuente por IP real. TRUST_PROXY = cantidad de saltos.
+  if (process.env.TRUST_PROXY) {
+    app
+      .getHttpAdapter()
+      .getInstance()
+      .set('trust proxy', Number(process.env.TRUST_PROXY));
+  }
+
   app.use(helmet());
 
   app.enableCors({
