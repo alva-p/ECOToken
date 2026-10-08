@@ -15,6 +15,11 @@ describe('CertificadosService', () => {
     emitir: jest.Mock;
     findByEmpresaId: jest.Mock;
     findByIdConEmpresa: jest.Mock;
+    findEntregasDelPeriodo: jest.Mock;
+    findSinReporteSnapshot: jest.Mock;
+    guardarReporteSnapshot: jest.Mock;
+    sumarTokensAntesDe: jest.Mock;
+    sumarCo2AnioPrevio: jest.Mock;
   };
   let empresas: { findOne: jest.Mock };
   let blockchain: { emitirCertificado: jest.Mock };
@@ -28,6 +33,11 @@ describe('CertificadosService', () => {
       emitir: jest.fn().mockResolvedValue({ id: 'cert1' }),
       findByEmpresaId: jest.fn(),
       findByIdConEmpresa: jest.fn(),
+      findEntregasDelPeriodo: jest.fn().mockResolvedValue([]),
+      findSinReporteSnapshot: jest.fn().mockResolvedValue([]),
+      guardarReporteSnapshot: jest.fn().mockResolvedValue({}),
+      sumarTokensAntesDe: jest.fn().mockResolvedValue(0),
+      sumarCo2AnioPrevio: jest.fn().mockResolvedValue(0),
     };
     empresas = {
       findOne: jest
@@ -76,12 +86,57 @@ describe('CertificadosService', () => {
     });
 
     it('hash existente devuelve valido true con el certificado', async () => {
-      const certificado = { id: '1', hashVerificacion: 'abc' };
-      repository.findByHash.mockResolvedValue(certificado);
+      const fecha = new Date('2026-04-03T12:00:00Z');
+      repository.findByHash.mockResolvedValue({
+        id: '1',
+        empresaId: 'emp1',
+        mes: 4,
+        anio: 2026,
+        hashVerificacion: 'abc',
+      });
+      repository.findEntregasDelPeriodo.mockResolvedValue([
+        {
+          fechaIngreso: fecha,
+          peso: 120,
+          tokensAcumulados: 1800,
+          tipoMaterial: { nombre: 'Plástico PET' },
+          movimientoToken: { txHash: '0xtx' },
+        },
+        {
+          fechaIngreso: fecha,
+          peso: 5,
+          tokensAcumulados: 40,
+          tipoMaterial: { nombre: 'Vidrio' },
+          movimientoToken: null,
+        },
+      ]);
 
-      expect(await service.verificar('abc')).toEqual({
+      const r = await service.verificar('abc');
+
+      expect(repository.findEntregasDelPeriodo).toHaveBeenCalledWith(
+        'emp1',
+        4,
+        2026,
+      );
+      // No filtra el id interno de la empresa y lista los aportes del mes.
+      expect(r).toEqual({
         valido: true,
-        certificado,
+        certificado: {
+          id: '1',
+          mes: 4,
+          anio: 2026,
+          hashVerificacion: 'abc',
+          aportes: [
+            {
+              fecha,
+              material: 'Plástico PET',
+              kg: 120,
+              tokens: 1800,
+              txHash: '0xtx',
+            },
+            { fecha, material: 'Vidrio', kg: 5, tokens: 40, txHash: null },
+          ],
+        },
       });
     });
 
@@ -117,6 +172,34 @@ describe('CertificadosService', () => {
 
       expect(repository.emitir).toHaveBeenCalledTimes(2);
       expect(resultado).toEqual({ intentados: 2, emitidos: 2, fallidos: 0 });
+    });
+
+    it('congela el reporte mensual junto con el certificado (mismo cierre)', async () => {
+      repository.findEntregasDelPeriodo.mockResolvedValue([
+        {
+          fechaIngreso: new Date('2026-03-05T12:00:00Z'),
+          peso: 25,
+          tokensAcumulados: 50,
+          tipoMaterial: { nombre: 'Vidrio' },
+          movimientoToken: { txHash: '0xtx' },
+        },
+      ]);
+      repository.sumarTokensAntesDe.mockResolvedValue(1000);
+      repository.sumarCo2AnioPrevio.mockResolvedValue(10);
+
+      await service.emitirCertificadosDelMes(3, 2026, [grilla[0]]);
+
+      expect(repository.emitir).toHaveBeenCalledWith(
+        expect.objectContaining({
+          reporteSnapshot: expect.objectContaining({
+            saldoAnterior: 1000,
+            canjes: 0,
+            entregas: [
+              expect.objectContaining({ material: 'Vidrio', txHash: '0xtx' }),
+            ],
+          }),
+        }),
+      );
     });
 
     it('si falla una empresa, sigue con las demás y lo refleja en el resumen', async () => {
@@ -196,6 +279,132 @@ describe('CertificadosService', () => {
       await expect(
         service.obtenerPdf('cert1', 'otra-empresa'),
       ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('obtenerReportePdf rechaza si el certificado no pertenece a la empresa', async () => {
+      repository.findByIdConEmpresa.mockResolvedValue({
+        id: 'cert1',
+        empresaId: 'emp1',
+      });
+
+      await expect(
+        service.obtenerReportePdf('cert1', 'otra-empresa'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('obtenerReportePdf usa el snapshot guardado sin consultar los ingresos', async () => {
+      repository.findByIdConEmpresa.mockResolvedValue({
+        id: 'abcd-1',
+        empresaId: 'emp1',
+        mes: 4,
+        anio: 2026,
+        posicion: 2,
+        totalEmpresas: 12,
+        co2Evitado: 398,
+        fechaEmision: new Date('2026-05-01T03:00:00Z'),
+        hashVerificacion: 'h'.repeat(64),
+        reporteSnapshot: {
+          entregas: [
+            {
+              fecha: '2026-04-03T12:00:00.000Z',
+              material: 'Cartón',
+              kg: 85,
+              tokens: 850,
+              txHash: null,
+            },
+          ],
+          saldoAnterior: 45130,
+          canjes: 0,
+          co2Anio: 1121,
+        },
+        empresa: {
+          razonSocial: 'Eco SRL',
+          cuit: '30-71204185-3',
+          domicilio: null,
+          walletAddress: '0x' + 'a'.repeat(40),
+        },
+      });
+
+      const pdf = await service.obtenerReportePdf('abcd-1', 'emp1');
+
+      expect(pdf.subarray(0, 4).toString()).toBe('%PDF');
+      expect(repository.findEntregasDelPeriodo).not.toHaveBeenCalled();
+    });
+
+    it('obtenerReportePdf genera un PDF con las entregas del mes', async () => {
+      repository.findByIdConEmpresa.mockResolvedValue({
+        id: 'abcd-1',
+        empresaId: 'emp1',
+        mes: 4,
+        anio: 2026,
+        posicion: 2,
+        totalEmpresas: 12,
+        co2Evitado: 398,
+        hashVerificacion: 'h'.repeat(64),
+        empresa: {
+          razonSocial: 'Eco SRL',
+          cuit: '30-71204185-3',
+          domicilio: null,
+          walletAddress: '0x' + 'a'.repeat(40),
+        },
+      });
+      repository.findEntregasDelPeriodo.mockResolvedValue([
+        {
+          fechaIngreso: new Date('2026-04-03T12:00:00Z'),
+          peso: 120,
+          tokensAcumulados: 1800,
+          tipoMaterial: { nombre: 'Plástico PET' },
+          movimientoToken: { txHash: '0x' + 'b'.repeat(64) },
+        },
+      ]);
+      repository.sumarTokensAntesDe.mockResolvedValue(45130);
+      repository.sumarCo2AnioPrevio.mockResolvedValue(1121);
+
+      const pdf = await service.obtenerReportePdf('abcd-1', 'emp1');
+
+      expect(pdf.subarray(0, 4).toString()).toBe('%PDF');
+      expect(repository.sumarTokensAntesDe).toHaveBeenCalledWith(
+        'emp1',
+        4,
+        2026,
+      );
+    });
+  });
+
+  describe('congelarReportesPendientes', () => {
+    it('completa solo el reporte de los certificados que no lo tienen', async () => {
+      repository.findSinReporteSnapshot.mockResolvedValue([
+        {
+          id: 'c1',
+          empresaId: 'emp1',
+          mes: 9,
+          anio: 2026,
+          co2Evitado: 7,
+          fechaEmision: new Date('2026-09-18T14:00:00Z'),
+        },
+      ]);
+      repository.findEntregasDelPeriodo.mockResolvedValue([]);
+      repository.sumarTokensAntesDe.mockResolvedValue(30);
+      repository.sumarCo2AnioPrevio.mockResolvedValue(3);
+
+      const r = await service.congelarReportesPendientes();
+
+      expect(r).toEqual({ congelados: 1 });
+      // Solo aportes hasta la emisión del certificado.
+      expect(repository.findEntregasDelPeriodo).toHaveBeenCalledWith(
+        'emp1',
+        9,
+        2026,
+        new Date('2026-09-18T14:00:00Z'),
+      );
+      expect(repository.guardarReporteSnapshot).toHaveBeenCalledWith('c1', {
+        entregas: [],
+        saldoAnterior: 30,
+        canjes: 0,
+        co2Anio: 10,
+      });
+      // El certificado en sí (hash, kg, posición) no se reescribe.
+      expect(repository.emitir).not.toHaveBeenCalled();
     });
   });
 });

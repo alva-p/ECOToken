@@ -27,6 +27,10 @@ export class CreateUsuarioDto {
   activo?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  debeCambiarPassword?: boolean;
+
+  @IsOptional()
   @IsString()
   empresaId?: string;
 

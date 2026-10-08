@@ -43,6 +43,11 @@ export function registrarIngreso(
   });
 }
 
+/** Estado actual de la acuñación de un ingreso propio (se consulta mientras corre de fondo). */
+export function consultarAcunacion(id: string): Promise<IngresoRegistrado> {
+  return api<IngresoRegistrado>(`/ingresos/${id}/acunacion`);
+}
+
 /** Reintenta la acuñación de un ingreso que quedó pendiente (E5-HU01). */
 export function reintentarAcunacion(id: string): Promise<IngresoRegistrado> {
   return api<IngresoRegistrado>(`/ingresos/${id}/acunar`, { method: 'POST' });

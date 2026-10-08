@@ -1,0 +1,63 @@
+# Backend de `develop` 24/7 en el homelab (Postgres + NestJS).
+# Uso: ver README.md de esta carpeta. Los secretos van en `.env` (no se commitea).
+name: ecotoken-develop
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ecotoken
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?definir POSTGRES_PASSWORD en .env}
+      POSTGRES_DB: ecotoken
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ecotoken -d ecotoken"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Sin `ports`: la base solo es accesible desde el backend, dentro de la red de compose.
+
+  backend:
+    build:
+      context: ../../../backend
+      dockerfile: ../infra/docker/backend.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://ecotoken:${POSTGRES_PASSWORD}@postgres:5432/ecotoken?schema=public
+      CORS_ORIGIN: ${CORS_ORIGIN:?definir CORS_ORIGIN (URL de Vercel)}
+      # Saltos de proxy delante del backend (Vercel -> Cloudflare -> cloudflared):
+      # hace que el rate limit cuente por IP real y no por la del túnel.
+      TRUST_PROXY: ${TRUST_PROXY:-2}
+      JWT_SECRET: ${JWT_SECRET:?definir JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      SEPOLIA_RPC_URL: ${SEPOLIA_RPC_URL:?definir SEPOLIA_RPC_URL}
+      ECOTOKEN_CONTRACT_ADDRESS: ${ECOTOKEN_CONTRACT_ADDRESS:?definir ECOTOKEN_CONTRACT_ADDRESS}
+      EXPLORER_URL: ${EXPLORER_URL:-https://sepolia.etherscan.io}
+      GAS_PRIORITY_GWEI: ${GAS_PRIORITY_GWEI:-}
+      MINTER_PRIVATE_KEY: ${MINTER_PRIVATE_KEY:?definir MINTER_PRIVATE_KEY}
+      BURNER_PRIVATE_KEY: ${BURNER_PRIVATE_KEY:-}
+      ADMIN_PRIVATE_KEY: ${ADMIN_PRIVATE_KEY:?definir ADMIN_PRIVATE_KEY}
+      WALLET_ENCRYPTION_KEY: ${WALLET_ENCRYPTION_KEY:?definir WALLET_ENCRYPTION_KEY}
+      UPLOADS_DIR: /app/uploads/verificacion
+    volumes:
+      - uploads_data:/app/uploads
+    ports:
+      # Solo loopback: lo publica cloudflared (ecotoken-api.alva-p.xyz -> localhost:3300).
+      - "127.0.0.1:${BACKEND_HOST_PORT:-3300}:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:
+  uploads_data:

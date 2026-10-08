@@ -5,7 +5,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Contract, id, JsonRpcProvider, Wallet } from 'ethers';
+import { Contract, id, JsonRpcProvider, parseUnits, Wallet } from 'ethers';
 
 /**
  * ABI mínimo: sólo lo que este servicio necesita hoy (otorgar/revocar roles
@@ -60,6 +60,8 @@ export class BlockchainService {
   private readonly contract: Contract | null;
   /** Contrato firmado por la cuenta MINTER (acuña tokens, E5-HU01). */
   private readonly minterContract: Contract | null;
+  /** Cola de envíos del MINTER: ver `enviarEnCola`. */
+  private envioMinter: Promise<unknown> = Promise.resolve();
 
   constructor(private readonly config: ConfigService) {
     const rpcUrl = this.config.get<string>('blockchain.rpcUrl');
@@ -135,6 +137,33 @@ export class BlockchainService {
   }
 
   /**
+   * Encola `envio` detrás de los envíos anteriores del MINTER. Un error no
+   * traba la cola: el siguiente corre igual.
+   */
+  private enviarEnCola<T>(envio: () => Promise<T>): Promise<T> {
+    const turno = this.envioMinter.then(envio, envio);
+    this.envioMinter = turno.catch(() => undefined);
+    return turno;
+  }
+
+  /**
+   * Overrides de fee para acuñar: con GAS_PRIORITY_GWEI sube la propina del
+   * minero sobre lo que sugiere el nodo; sin configurar, no toca nada.
+   */
+  private async opcionesDeFee(contrato: Contract) {
+    const gwei = this.config.get<string>('blockchain.gasPriorityGwei');
+    const provider = contrato.runner?.provider;
+    if (!gwei || !provider) return {};
+    const propina = parseUnits(gwei, 'gwei');
+    const { maxFeePerGas, maxPriorityFeePerGas } = await provider.getFeeData();
+    return {
+      maxPriorityFeePerGas: propina,
+      maxFeePerGas:
+        (maxFeePerGas ?? 0n) - (maxPriorityFeePerGas ?? 0n) + propina,
+    };
+  }
+
+  /**
    * Acuña `amount` tokens ECO hacia la billetera de una empresa, dejando
    * trazabilidad del material y el peso (evento `Minted`). Devuelve el hash de
    * la transacción y el bloque de confirmación (E5-HU01).
@@ -151,12 +180,19 @@ export class BlockchainService {
       );
     }
 
+    const minter = this.minterContract;
     try {
-      const tx = await this.minterContract.mint(
-        empresa,
-        BigInt(amount),
-        material,
-        BigInt(Math.round(peso)),
+      // Solo el ENVÍO se serializa (la tx entra al mempool con su nonce); la
+      // confirmación se espera en paralelo, así varias acuñaciones seguidas no
+      // se pisan el nonce ni esperan un bloque cada una.
+      const tx = await this.enviarEnCola(async () =>
+        minter.mint(
+          empresa,
+          BigInt(amount),
+          material,
+          BigInt(Math.round(peso)),
+          await this.opcionesDeFee(minter),
+        ),
       );
       const receipt = await tx.wait();
       return {

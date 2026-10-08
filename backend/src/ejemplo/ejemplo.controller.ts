@@ -6,12 +6,19 @@ import {
   Delete,
   Param,
   Body,
+  UseGuards,
 } from '@nestjs/common';
+import { TipoRol } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { EjemploService } from './ejemplo.service';
 import { CreateEjemploDto } from './dto/create-ejemplo.dto';
 import { UpdateEjemploDto } from './dto/update-ejemplo.dto';
 
 /** Plantilla de controller: solo define rutas HTTP y delega en el service. */
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(TipoRol.ADMIN)
 @Controller('ejemplo')
 export class EjemploController {
   constructor(private readonly service: EjemploService) {}

@@ -66,6 +66,8 @@ model Usuario {
   passwordHash String
   tipoRol      TipoRol
   activo       Boolean @default(true)
+  /// true mientras la cuenta use la contraseña temporal que generó el sistema (aprobación/alta): fuerza el cambio al ingresar.
+  debeCambiarPassword Boolean @default(false)
 
   empresa         Empresa?       @relation(fields: [empresaId], references: [id])
   empresaId       String?
@@ -264,6 +266,8 @@ model CertificadoDigital {
   co2Evitado        Float
   /// Desglose por tipo de material al momento de emitir, ej. [{"material":"PLASTICO","kg":120}] (E8-HU02, PDF).
   desglosePorMaterial Json @default("[]")
+  /// Datos del reporte mensual de actividad congelados al emitir (mismo instante que el certificado). Null en certificados anteriores a esta columna.
+  reporteSnapshot   Json?
   hashVerificacion  String
   credencialFirmada String
   urlPDF            String?

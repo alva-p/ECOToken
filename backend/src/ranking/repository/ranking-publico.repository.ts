@@ -76,4 +76,72 @@ export class RankingPublicoRepository {
       select: { id: true, razonSocial: true },
     });
   }
+
+  /** Kg por tipo de material del mes/año, acotado a las empresas indicadas. */
+  async kgPorMaterial(mes: number, anio: number, empresaIds: string[]) {
+    if (empresaIds.length === 0) return [];
+    const grupos = await this.prisma.ingresoMaterial.groupBy({
+      by: ['tipoMaterialId'],
+      where: {
+        empresaId: { in: empresaIds },
+        fechaIngreso: {
+          gte: new Date(Date.UTC(anio, mes - 1, 1)),
+          lt: new Date(Date.UTC(anio, mes, 1)),
+        },
+      },
+      _sum: { peso: true },
+    });
+    const tipos = await this.prisma.tipoMaterial.findMany({
+      where: { id: { in: grupos.map((g) => g.tipoMaterialId) } },
+      select: { id: true, nombre: true },
+    });
+    const nombres = new Map(tipos.map((t) => [t.id, t.nombre]));
+    return grupos.map((g) => ({
+      material: nombres.get(g.tipoMaterialId) ?? 'Otros',
+      kg: g._sum.peso ?? 0,
+    }));
+  }
+
+  /** Certificados emitidos hasta el período (inclusive) por empresa. */
+  async certificadosPorEmpresa(
+    mes: number,
+    anio: number,
+    empresaIds: string[],
+  ) {
+    if (empresaIds.length === 0) return [];
+    const grupos = await this.prisma.certificadoDigital.groupBy({
+      by: ['empresaId'],
+      where: {
+        empresaId: { in: empresaIds },
+        OR: [{ anio: { lt: anio } }, { anio, mes: { lte: mes } }],
+      },
+      _count: { _all: true },
+    });
+    return grupos.map((g) => ({
+      empresaId: g.empresaId,
+      cantidad: g._count._all,
+    }));
+  }
+
+  /** CO₂ evitado de los certificados emitidos para el período, por empresa. */
+  async co2PorEmpresa(mes: number, anio: number, empresaIds: string[]) {
+    if (empresaIds.length === 0) return [];
+    const grupos = await this.prisma.certificadoDigital.groupBy({
+      by: ['empresaId'],
+      where: { mes, anio, empresaId: { in: empresaIds } },
+      _sum: { co2Evitado: true },
+    });
+    return grupos.map((g) => ({
+      empresaId: g.empresaId,
+      co2: g._sum.co2Evitado ?? 0,
+    }));
+  }
+
+  /** Períodos cerrados en los que participó la empresa. */
+  mesesCerrados(empresaId: string) {
+    return this.prisma.ranking.findMany({
+      where: { empresaId, estado: 'CERRADO' },
+      select: { mes: true, anio: true },
+    });
+  }
 }

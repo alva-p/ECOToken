@@ -16,6 +16,8 @@ export interface JwtPayload {
   rol: TipoRol;
   empresaId: string | null;
   municipalidadId: string | null;
+  /** true mientras use la contraseña temporal (el frontend pide cambiarla). */
+  debeCambiarPassword?: boolean;
 }
 
 @Injectable()

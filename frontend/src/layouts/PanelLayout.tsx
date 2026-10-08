@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { Menu, X } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { cx } from '@/lib/cx';
 import { useAuth } from '@/providers/AuthContext';
@@ -52,6 +53,7 @@ export function PanelLayout({
 }: PanelLayoutProps) {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const [abierto, setAbierto] = useState(false);
 
   function handleLogout() {
     logout();
@@ -59,10 +61,30 @@ export function PanelLayout({
   }
 
   return (
-    <div className="flex h-screen bg-eco-bg text-eco-ink">
-      <aside className="flex w-56 flex-shrink-0 flex-col bg-[#14181C] text-white">
-        <div className="border-b border-white/10 px-4 py-5 text-lg font-bold tracking-tight">
+    <div className="flex h-dvh bg-eco-bg text-eco-ink">
+      {abierto && (
+        <div
+          aria-hidden
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          onClick={() => setAbierto(false)}
+        />
+      )}
+      <aside
+        className={cx(
+          'fixed inset-y-0 left-0 z-40 flex w-64 flex-col overflow-y-auto bg-[#14181C] text-white transition-transform md:static md:w-56 md:flex-shrink-0 md:translate-x-0',
+          abierto ? 'translate-x-0' : '-translate-x-full',
+        )}
+      >
+        <div className="flex items-center justify-between border-b border-white/10 px-4 py-5 text-lg font-bold tracking-tight">
           EcoToken
+          <button
+            type="button"
+            aria-label="Cerrar menú"
+            onClick={() => setAbierto(false)}
+            className="text-white/60 md:hidden"
+          >
+            <X size={20} />
+          </button>
         </div>
         <nav className="flex flex-col gap-1 p-2.5">
           {nav.map((item) =>
@@ -71,6 +93,7 @@ export function PanelLayout({
                 key={item.label}
                 to={item.to}
                 end
+                onClick={() => setAbierto(false)}
                 className={({ isActive }) =>
                   cx(
                     'rounded-lg px-3 py-2.5 text-sm font-medium',
@@ -110,21 +133,31 @@ export function PanelLayout({
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="border-b border-eco-border bg-white">
           <div className={cx('h-[3px]', STRIPE[actorColor])} />
-          <div className="px-7 py-4">
-            <div
-              className={cx(
-                'text-[11px] font-semibold uppercase tracking-wide',
-                LABEL[actorColor],
-              )}
+          <div className="flex items-center gap-3 px-4 py-3 sm:px-7 sm:py-4">
+            <button
+              type="button"
+              aria-label="Abrir menú"
+              onClick={() => setAbierto(true)}
+              className="-ml-1 rounded-lg p-1.5 text-eco-ink hover:bg-eco-bg md:hidden"
             >
-              {subtitle}
+              <Menu size={22} />
+            </button>
+            <div className="min-w-0">
+              <div
+                className={cx(
+                  'text-[11px] font-semibold uppercase tracking-wide',
+                  LABEL[actorColor],
+                )}
+              >
+                {subtitle}
+              </div>
+              <h1 className="mt-0.5 text-xl font-semibold tracking-tight">
+                {title}
+              </h1>
             </div>
-            <h1 className="mt-0.5 text-xl font-semibold tracking-tight">
-              {title}
-            </h1>
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-6">{children}</main>
+        <main className="flex-1 overflow-auto p-4 sm:p-6">{children}</main>
       </div>
     </div>
   );
