@@ -77,6 +77,7 @@ export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
   const [busqueda, setBusqueda] = useState('');
   const [pagina, setPagina] = useState(0);
   const [mia, setMia] = useState<MiPosicionDatos | null>(null);
+  const [miaError, setMiaError] = useState(false);
 
   const pedido = periodoDeUrl(searchParams);
   const ultimo = periodos?.[0];
@@ -113,9 +114,10 @@ export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
     }
     let vigente = true;
     setMia(null);
+    setMiaError(false);
     obtenerMiPosicion({ mes: objetivoMes, anio: objetivoAnio })
       .then((r) => vigente && setMia(r))
-      .catch(() => undefined); // sin su posición igual se muestra el ranking
+      .catch(() => vigente && setMiaError(true)); // el ranking general se muestra igual
     return () => {
       vigente = false;
     };
@@ -242,6 +244,11 @@ export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
 
       {ranking && (
         <>
+          {enPanel && miaError && (
+            <Card className="text-sm text-eco-danger" role="alert">
+              No pudimos cargar tu posición. Probá recargar la página.
+            </Card>
+          )}
           {enPanel && mia && (
             <>
               <MiPosicion datos={mia} periodo={etiquetaPeriodo(ranking)} />
