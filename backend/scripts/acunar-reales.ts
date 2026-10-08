@@ -3,6 +3,7 @@ import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { BlockchainService } from '../src/blockchain/blockchain.service';
 import { BilleterasService } from '../src/billeteras/billeteras.service';
+import { asegurarBilleteraCustodial } from './billetera-propia';
 
 /**
  * Acuña en Sepolia los aportes que no tienen una transacción real: los que no
@@ -82,27 +83,9 @@ async function main() {
     const billeteraDe = new Map<string, string>();
     for (const lista of porEmpresa.values()) {
       const e = lista[0].empresa;
-      if (e.billeteraCustodial) {
-        billeteraDe.set(e.id, e.walletAddress);
-        continue;
-      }
-      const nueva = billeteras.generarBilleteraCustodial('EMPRESA');
-      await prisma.empresa.update({
-        where: { id: e.id },
-        data: {
-          walletAddress: nueva.direccionEVM,
-          billeteraCustodial: {
-            create: {
-              direccionEVM: nueva.direccionEVM,
-              clavePrivadaCifrada: nueva.clavePrivadaCifrada,
-              tipoRolOnChain: nueva.tipoRolOnChain,
-            },
-          },
-        },
-      });
-      billeteraDe.set(e.id, nueva.direccionEVM);
-      console.log(
-        `Billetera custodial creada para ${e.razonSocial}: ${nueva.direccionEVM}`,
+      billeteraDe.set(
+        e.id,
+        await asegurarBilleteraCustodial(prisma, billeteras, e),
       );
     }
 
