@@ -76,8 +76,25 @@ export class CertificadosService {
     // Se guarda en minúsculas sin prefijo; el explorador muestra el bytes32 en
     // mayúsculas y/o con 0x, así que se normaliza antes de buscar.
     const normalizado = hash.trim().replace(/^0x/i, '').toLowerCase();
-    const certificado = await this.repository.findByHash(normalizado);
-    return certificado ? { valido: true, certificado } : { valido: false };
+    const encontrado = await this.repository.findByHash(normalizado);
+    if (!encontrado) return { valido: false };
+
+    // Trazabilidad: los aportes del mes que respaldan los kg del certificado.
+    // Solo datos de la entrega (sin datos internos de la empresa).
+    const { empresaId, ...certificado } = encontrado;
+    const entregas = await this.repository.findEntregasDelPeriodo(
+      empresaId,
+      certificado.mes,
+      certificado.anio,
+    );
+    const aportes = entregas.map((e) => ({
+      fecha: e.fechaIngreso,
+      material: e.tipoMaterial.nombre,
+      kg: e.peso,
+      tokens: e.tokensAcumulados,
+      txHash: e.movimientoToken?.txHash ?? null,
+    }));
+    return { valido: true, certificado: { ...certificado, aportes } };
   }
 
   // ─── E8-HU01: emisión al cierre del ranking mensual ───

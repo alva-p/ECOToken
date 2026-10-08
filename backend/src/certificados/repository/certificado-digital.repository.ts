@@ -70,12 +70,16 @@ export class CertificadoDigitalRepository {
     return this.prisma.certificadoDigital.findUnique({ where: { id } });
   }
 
-  /** Solo campos públicos: sin CUIT/email/domicilio de la empresa (E8-HU03). */
+  /**
+   * Solo campos públicos: sin CUIT/email/domicilio de la empresa (E8-HU03).
+   * `empresaId` es de uso interno (el service lo quita antes de responder).
+   */
   findByHash(hash: string) {
     return this.prisma.certificadoDigital.findFirst({
       where: { hashVerificacion: hash },
       select: {
         id: true,
+        empresaId: true,
         fechaEmision: true,
         mes: true,
         anio: true,

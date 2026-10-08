@@ -82,12 +82,57 @@ describe('CertificadosService', () => {
     });
 
     it('hash existente devuelve valido true con el certificado', async () => {
-      const certificado = { id: '1', hashVerificacion: 'abc' };
-      repository.findByHash.mockResolvedValue(certificado);
+      const fecha = new Date('2026-04-03T12:00:00Z');
+      repository.findByHash.mockResolvedValue({
+        id: '1',
+        empresaId: 'emp1',
+        mes: 4,
+        anio: 2026,
+        hashVerificacion: 'abc',
+      });
+      repository.findEntregasDelPeriodo.mockResolvedValue([
+        {
+          fechaIngreso: fecha,
+          peso: 120,
+          tokensAcumulados: 1800,
+          tipoMaterial: { nombre: 'Plástico PET' },
+          movimientoToken: { txHash: '0xtx' },
+        },
+        {
+          fechaIngreso: fecha,
+          peso: 5,
+          tokensAcumulados: 40,
+          tipoMaterial: { nombre: 'Vidrio' },
+          movimientoToken: null,
+        },
+      ]);
 
-      expect(await service.verificar('abc')).toEqual({
+      const r = await service.verificar('abc');
+
+      expect(repository.findEntregasDelPeriodo).toHaveBeenCalledWith(
+        'emp1',
+        4,
+        2026,
+      );
+      // No filtra el id interno de la empresa y lista los aportes del mes.
+      expect(r).toEqual({
         valido: true,
-        certificado,
+        certificado: {
+          id: '1',
+          mes: 4,
+          anio: 2026,
+          hashVerificacion: 'abc',
+          aportes: [
+            {
+              fecha,
+              material: 'Plástico PET',
+              kg: 120,
+              tokens: 1800,
+              txHash: '0xtx',
+            },
+            { fecha, material: 'Vidrio', kg: 5, tokens: 40, txHash: null },
+          ],
+        },
       });
     });
 
