@@ -137,6 +137,20 @@ export class BlockchainService {
   }
 
   /**
+   * True si la transacción existe en la cadena (tiene recibo). Sirve para
+   * detectar hashes que se guardaron sin haberse enviado nunca (datos de demo).
+   */
+  async existeTransaccion(txHash: string): Promise<boolean> {
+    const provider = this.contract?.runner?.provider;
+    if (!provider) {
+      throw new ServiceUnavailableException(
+        'No se pudo consultar la cadena: la integración blockchain no está configurada.',
+      );
+    }
+    return (await provider.getTransactionReceipt(txHash)) !== null;
+  }
+
+  /**
    * Encola `envio` detrás de los envíos anteriores del MINTER. Un error no
    * traba la cola: el siguiente corre igual.
    */

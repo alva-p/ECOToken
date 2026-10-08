@@ -16,6 +16,7 @@ const mockWait = jest.fn();
 const mockGetBlockNumber = jest.fn();
 const mockMint = jest.fn();
 const mockGetFeeData = jest.fn();
+const mockGetTransactionReceipt = jest.fn();
 
 jest.mock('ethers', () => {
   const actual = jest.requireActual('ethers');
@@ -35,6 +36,7 @@ jest.mock('ethers', () => {
         provider: {
           getBlockNumber: mockGetBlockNumber,
           getFeeData: mockGetFeeData,
+          getTransactionReceipt: mockGetTransactionReceipt,
         },
       },
     })),
@@ -66,6 +68,18 @@ async function buildService(
 describe('BlockchainService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('existeTransaccion', () => {
+    it('es true si la cadena devuelve el recibo y false si no existe', async () => {
+      const service = await buildService();
+
+      mockGetTransactionReceipt.mockResolvedValueOnce({ status: 1 });
+      await expect(service.existeTransaccion('0xreal')).resolves.toBe(true);
+
+      mockGetTransactionReceipt.mockResolvedValueOnce(null);
+      await expect(service.existeTransaccion('0xfalso')).resolves.toBe(false);
+    });
   });
 
   describe('mint', () => {

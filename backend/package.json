@@ -19,6 +19,7 @@
     "prisma:deploy": "prisma migrate deploy",
     "ranking:cerrar": "ts-node scripts/cerrar-ranking.ts",
     "certificados:congelar-reportes": "ts-node scripts/congelar-reportes.ts",
+    "ingresos:acunar-reales": "ts-node scripts/acunar-reales.ts",
     "prisma:seed": "prisma db seed",
     "prisma:seed:demo": "ts-node prisma/seed-demo.ts"
   },
