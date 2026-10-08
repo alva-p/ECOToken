@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { txLink } from '@/lib/explorer';
+import { txLogsLink } from '@/lib/explorer';
 import type { Empresa, TipoMaterial, Puntaje } from '@/types';
 import {
   consultarAcunacion,
@@ -217,7 +217,7 @@ export function RegistrarEntregaForm({ empresa }: RegistrarEntregaFormProps) {
                 </div>
                 {txHash && (
                   <a
-                    href={txLink(txHash)}
+                    href={txLogsLink(txHash)}
                     target="_blank"
                     rel="noreferrer"
                     className="text-sm font-semibold text-eco-coop"
