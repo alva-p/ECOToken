@@ -10,7 +10,9 @@ import { useAuth } from '@/providers/AuthContext';
 import { ROLE_HOME } from '@/lib/auth';
 import {
   listarPeriodos,
+  obtenerMiPosicion,
   obtenerRankingPublico,
+  type MiPosicion as MiPosicionDatos,
   type PeriodoCerrado,
   type RankingPublico,
 } from '../api';
@@ -24,6 +26,7 @@ import { RankingEstadisticas } from '../components/RankingEstadisticas';
 import { PerfilDestacado } from '../components/PerfilDestacado';
 import { Transparencia } from '../components/Transparencia';
 import { Badge } from '@/components/ui/Badge';
+import { MiPosicion } from '../components/MiPosicion';
 
 const POR_PAGINA = 10;
 
@@ -73,6 +76,7 @@ export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
   const [copiado, setCopiado] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [pagina, setPagina] = useState(0);
+  const [mia, setMia] = useState<MiPosicionDatos | null>(null);
 
   const pedido = periodoDeUrl(searchParams);
   const ultimo = periodos?.[0];
@@ -101,6 +105,21 @@ export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
       vigente = false;
     };
   }, [objetivoMes, objetivoAnio]);
+
+  // Solo en el panel de empresa: dónde está la empresa logueada en este período.
+  useEffect(() => {
+    if (!enPanel || objetivoMes === undefined || objetivoAnio === undefined) {
+      return;
+    }
+    let vigente = true;
+    setMia(null);
+    obtenerMiPosicion({ mes: objetivoMes, anio: objetivoAnio })
+      .then((r) => vigente && setMia(r))
+      .catch(() => undefined); // sin su posición igual se muestra el ranking
+    return () => {
+      vigente = false;
+    };
+  }, [enPanel, objetivoMes, objetivoAnio]);
 
   const filas = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -223,6 +242,14 @@ export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
 
       {ranking && (
         <>
+          {enPanel && mia && (
+            <>
+              <MiPosicion datos={mia} periodo={etiquetaPeriodo(ranking)} />
+              <div className="border-t border-eco-border pt-8 text-xs font-semibold uppercase tracking-wide text-eco-org">
+                Ranking general
+              </div>
+            </>
+          )}
           <RankingPreview
             periodo={etiquetaPeriodo(ranking)}
             titulo="Las empresas que más reciclaron"
@@ -311,6 +338,11 @@ export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
                       </span>,
                       <span key="e" className="font-medium">
                         {f.razonSocial}
+                        {enPanel && mia?.posicion === f.posicion && (
+                          <span className="ml-2 align-middle">
+                            <Badge color="org">Vos</Badge>
+                          </span>
+                        )}
                       </span>,
                       f.kgReciclados.toLocaleString('es-AR'),
                       <span key="t" className="font-semibold">

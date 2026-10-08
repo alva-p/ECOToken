@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import { periodosMock, rankingMock } from './mock';
+import { miPosicionMock, periodosMock, rankingMock } from './mock';
 
 // Deploy de demo sin backend: sin VITE_API_URL se sirven datos de ejemplo.
 const SIN_BACKEND = !import.meta.env.VITE_API_URL;
@@ -65,4 +65,39 @@ export function obtenerRankingPublico(periodo?: {
   if (SIN_BACKEND) return Promise.resolve(rankingMock(periodo));
   const qs = periodo ? `?mes=${periodo.mes}&anio=${periodo.anio}` : '';
   return api<RankingPublico>(`/ranking/publico${qs}`);
+}
+
+export interface PuntoEvolucion {
+  mes: number;
+  anio: number;
+  kg: number;
+  posicion: number | null;
+}
+
+/** Posición de la empresa logueada en un ranking cerrado (solo datos propios). */
+export interface MiPosicion {
+  mes: number;
+  anio: number;
+  participa: boolean;
+  totalEmpresas: number;
+  posicion: number | null;
+  kgReciclados: number;
+  tokens: number;
+  certificados: number;
+  tendencia: number | null;
+  nuevo: boolean;
+  co2Evitado: number;
+  puntosParaSubir: number | null;
+  materiales: MaterialKg[];
+  evolucion: PuntoEvolucion[];
+}
+
+/** Dónde está mi empresa en el ranking del período (requiere sesión de empresa). */
+export function obtenerMiPosicion(periodo?: {
+  mes: number;
+  anio: number;
+}): Promise<MiPosicion> {
+  if (SIN_BACKEND) return Promise.resolve(miPosicionMock(periodo));
+  const qs = periodo ? `?mes=${periodo.mes}&anio=${periodo.anio}` : '';
+  return api<MiPosicion>(`/ranking/publico/mio${qs}`);
 }

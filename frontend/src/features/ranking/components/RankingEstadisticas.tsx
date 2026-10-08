@@ -12,7 +12,7 @@ const COLORES = [
 
 const kg = (n: number) => `${n.toLocaleString('es-AR')} kg`;
 
-function Titulo({ children, sub }: { children: string; sub: string }) {
+export function Titulo({ children, sub }: { children: string; sub: string }) {
   return (
     <>
       <h3 className="text-sm font-semibold text-eco-ink">{children}</h3>
@@ -55,20 +55,20 @@ function TopKg({ data }: { data: FilaRanking[] }) {
 const R = 40;
 const C = 2 * Math.PI * R;
 
-function Distribucion({
+export function Distribucion({
   materiales,
   total,
+  titulo = 'Distribución por material',
 }: {
   materiales: MaterialKg[];
   total: number;
+  titulo?: string;
 }) {
   const suma = materiales.reduce((s, m) => s + m.kg, 0) || 1;
   let acumulado = 0;
   return (
     <Card className="p-5">
-      <Titulo sub={`${kg(total)} reciclados en el mes`}>
-        Distribución por material
-      </Titulo>
+      <Titulo sub={`${kg(total)} reciclados en el mes`}>{titulo}</Titulo>
       <div className="flex flex-col items-center gap-5 sm:flex-row">
         <svg
           viewBox="0 0 100 100"
@@ -137,25 +137,25 @@ const MES_CORTO = [
   'Dic',
 ];
 
-function Evolucion({
-  periodos,
-  actual,
+export interface PuntoSerie {
+  mes: number;
+  totalKg: number;
+}
+
+/** Línea de kg por mes; `serie` va del más viejo al más nuevo. */
+export function Evolucion({
+  serie,
+  titulo = 'Evolución mensual',
 }: {
-  periodos: PeriodoCerrado[];
-  actual: { mes: number; anio: number };
+  serie: PuntoSerie[];
+  titulo?: string;
 }) {
-  // Los últimos 12 meses cerrados hasta el período mostrado, de más viejo a más nuevo.
-  const clave = (p: { mes: number; anio: number }) => p.anio * 12 + p.mes;
-  const serie = periodos
-    .filter((p) => clave(p) <= clave(actual))
-    .slice(0, 12)
-    .reverse();
   if (serie.length < 2) return null;
 
   const W = 300;
   const H = 120;
   const max = Math.max(...serie.map((p) => p.totalKg), 1);
-  const punto = (p: PeriodoCerrado, i: number) => [
+  const punto = (p: PuntoSerie, i: number) => [
     (i / (serie.length - 1)) * W,
     H - (p.totalKg / max) * (H - 10) - 5,
   ];
@@ -166,7 +166,7 @@ function Evolucion({
   return (
     <Card className="p-5">
       <Titulo sub={`kg reciclados · últimos ${serie.length} meses`}>
-        Evolución mensual
+        {titulo}
       </Titulo>
       <svg
         viewBox={`-8 -8 ${W + 16} ${H + 16}`}
@@ -246,6 +246,18 @@ function Impacto({
   );
 }
 
+/** Últimos 12 meses cerrados hasta `actual`, del más viejo al más nuevo. */
+function serieDe(
+  periodos: PeriodoCerrado[],
+  actual: { mes: number; anio: number },
+): PuntoSerie[] {
+  const clave = (p: { mes: number; anio: number }) => p.anio * 12 + p.mes;
+  return periodos
+    .filter((p) => clave(p) <= clave(actual))
+    .slice(0, 12)
+    .reverse();
+}
+
 export function RankingEstadisticas({
   data,
   materiales,
@@ -281,7 +293,7 @@ export function RankingEstadisticas({
             empresas={data.length}
           />
         )}
-        <Evolucion periodos={periodos} actual={actual} />
+        <Evolucion serie={serieDe(periodos, actual)} />
         {materiales.length > 0 && (
           <Impacto
             co2={co2Evitado}

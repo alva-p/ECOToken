@@ -1,5 +1,9 @@
 import { Test } from '@nestjs/testing';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { RankingPublicoService } from './ranking-publico.service';
 import { RankingPublicoRepository } from './repository/ranking-publico.repository';
 
@@ -245,6 +249,80 @@ describe('RankingPublicoService (E7-HU03)', () => {
       await expect(service.obtener(undefined, 2026)).rejects.toBeInstanceOf(
         BadRequestException,
       );
+    });
+  });
+
+  describe('miPosicion', () => {
+    const periodoAgosto = {
+      mes: 8,
+      anio: 2026,
+      fechaCierre: cierre,
+      empresas: 3,
+    };
+
+    beforeEach(() => {
+      repository.periodosCerrados.mockResolvedValue([periodoAgosto]);
+      repository.snapshotCerrado.mockResolvedValue(
+        snapshot(['e1', 'e2', 'e3']),
+      );
+      repository.totalesPorEmpresa.mockResolvedValue([
+        { empresaId: 'e1', kg: 50, tokens: 100 },
+        { empresaId: 'e2', kg: 300, tokens: 900 },
+        { empresaId: 'e3', kg: 120, tokens: 400 },
+      ]);
+      repository.razonesSociales.mockResolvedValue([
+        { id: 'e1', razonSocial: 'Eco SRL' },
+        { id: 'e2', razonSocial: 'Top SA' },
+        { id: 'e3', razonSocial: 'GreenPack' },
+      ]);
+    });
+
+    it('exige una empresa asociada al usuario', async () => {
+      await expect(service.miPosicion(null)).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+    });
+
+    it('devuelve posición, números propios y puntos para subir', async () => {
+      repository.certificadosPorEmpresa.mockResolvedValue([
+        { empresaId: 'e3', cantidad: 2 },
+      ]);
+      repository.kgPorMaterial.mockResolvedValue([
+        { material: 'Vidrio', kg: 120 },
+      ]);
+
+      const r = await service.miPosicion('e3');
+
+      expect(r).toMatchObject({
+        participa: true,
+        posicion: 2,
+        totalEmpresas: 3,
+        kgReciclados: 120,
+        tokens: 400,
+        certificados: 2,
+        puntosParaSubir: 500,
+        materiales: [{ material: 'Vidrio', kg: 120 }],
+      });
+      expect(r.evolucion).toEqual([
+        { mes: 8, anio: 2026, kg: 120, posicion: 2 },
+      ]);
+    });
+
+    it('la primera no tiene a quién alcanzar', async () => {
+      const r = await service.miPosicion('e2');
+
+      expect(r.posicion).toBe(1);
+      expect(r.puntosParaSubir).toBeNull();
+    });
+
+    it('una empresa sin aportes ese mes no participa', async () => {
+      const r = await service.miPosicion('otra');
+
+      expect(r).toMatchObject({
+        participa: false,
+        posicion: null,
+        totalEmpresas: 3,
+      });
     });
   });
 });

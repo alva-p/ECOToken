@@ -1,5 +1,6 @@
 import type {
   FilaRanking,
+  MiPosicion,
   MaterialKg,
   PeriodoCerrado,
   RankingPublico,
@@ -99,7 +100,7 @@ const BRUTOS = MESES.map(armar);
 
 // Segunda pasada: tendencia contra el mes siguiente en la lista (el anterior
 // en el tiempo), reparto de materiales y perfil del líder.
-const RANKINGS = BRUTOS.map((r, i) => {
+const RANKINGS: RankingPublico[] = BRUTOS.map((r, i) => {
   const previo = BRUTOS[i + 1];
   const posPrevia = new Map(
     previo?.data.map((f) => [f.razonSocial, f.posicion]),
@@ -152,3 +153,48 @@ export const rankingMock = (periodo?: {
   RANKINGS.find(
     (r) => !periodo || (r.mes === periodo.mes && r.anio === periodo.anio),
   ) ?? RANKINGS[0];
+
+// Empresa "logueada" en el demo sin backend.
+const MI_EMPRESA = 'Panadería El Trigal';
+
+export const miPosicionMock = (periodo?: {
+  mes: number;
+  anio: number;
+}): MiPosicion => {
+  const r = rankingMock(periodo);
+  const mia = r.data.find((f) => f.razonSocial === MI_EMPRESA);
+  const arriba = mia && r.data[mia.posicion - 2];
+  const evolucion = RANKINGS.slice(
+    RANKINGS.indexOf(r),
+    RANKINGS.indexOf(r) + 12,
+  )
+    .reverse()
+    .map((x) => {
+      const f = x.data.find((d) => d.razonSocial === MI_EMPRESA);
+      return {
+        mes: x.mes,
+        anio: x.anio,
+        kg: f?.kgReciclados ?? 0,
+        posicion: f?.posicion ?? null,
+      };
+    });
+  return {
+    mes: r.mes,
+    anio: r.anio,
+    participa: !!mia,
+    totalEmpresas: r.empresas,
+    posicion: mia?.posicion ?? null,
+    kgReciclados: mia?.kgReciclados ?? 0,
+    tokens: mia?.tokens ?? 0,
+    certificados: mia?.certificados ?? 0,
+    tendencia: mia?.tendencia ?? null,
+    nuevo: mia?.nuevo ?? false,
+    co2Evitado: redondear((mia?.kgReciclados ?? 0) * CO2_POR_KG),
+    puntosParaSubir: mia && arriba ? arriba.tokens - mia.tokens : null,
+    materiales: MATERIALES.map(([material, parte]) => ({
+      material,
+      kg: redondear((mia?.kgReciclados ?? 0) * parte),
+    })),
+    evolucion,
+  };
+};
