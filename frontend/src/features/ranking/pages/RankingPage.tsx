@@ -140,7 +140,7 @@ export function RankingPage() {
   return (
     <div className="min-h-screen bg-eco-bg text-eco-ink">
       <header className="border-b border-eco-border bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Link to="/" aria-label="ECOToken, volver al inicio">
             <img
               src="/logos/logo-ecotoken.png"
@@ -157,7 +157,7 @@ export function RankingPage() {
         </div>
       </header>
 
-      <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10">
+      <main className="mx-auto flex max-w-4xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             {ranking?.fechaCierre && (
@@ -301,15 +301,15 @@ export function RankingPage() {
                 </label>
               </div>
               <div className="overflow-x-auto">
-                <div className="min-w-[34rem]">
+                <div className="min-w-[30rem]">
                   <Table
                     columns={[
-                      { label: 'Pos.', width: '3.5rem' },
+                      { label: 'Pos.', width: '3rem' },
                       { label: 'Empresa' },
-                      { label: 'Kg', align: 'right', width: '6rem' },
-                      { label: 'Puntos ECO', align: 'right', width: '6.5rem' },
-                      { label: 'Certif.', align: 'right', width: '4.5rem' },
-                      { label: 'Tendencia', align: 'right', width: '6rem' },
+                      { label: 'Kg', align: 'right', width: '5rem' },
+                      { label: 'Puntos ECO', align: 'right', width: '6rem' },
+                      { label: 'Certif.', align: 'right', width: '4rem' },
+                      { label: 'Tendencia', align: 'right', width: '5rem' },
                     ]}
                     rows={visibles.map((f) => ({
                       cells: [
