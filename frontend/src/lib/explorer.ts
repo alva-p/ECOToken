@@ -5,5 +5,11 @@ const EXPLORER_URL =
 
 /** Helpers para armar links de verificación al explorador de bloques (Sepolia). */
 export const txLink = (hash: string) => `${EXPLORER_URL}/tx/${hash}`;
+/**
+ * Igual que `txLink` pero abre directo la pestaña "Logs" de Etherscan, donde
+ * figuran los eventos de la transacción (p. ej. `Minted`: empresa, tokens,
+ * material y kg).
+ */
+export const txLogsLink = (hash: string) => `${txLink(hash)}#eventlog`;
 export const addressLink = (address: string) =>
   `${EXPLORER_URL}/address/${address}`;
