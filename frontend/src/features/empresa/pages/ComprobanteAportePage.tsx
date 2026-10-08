@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingState } from '@/components/ui/States';
-import { txLink } from '@/lib/explorer';
+import { txLogsLink } from '@/lib/explorer';
 import { comprobanteAporte, type ComprobanteAporte } from '../api';
 
 function Dato({ label, children }: { label: string; children: ReactNode }) {
@@ -72,7 +72,7 @@ export function ComprobanteAportePage() {
           <div className="mt-6 border-t border-eco-border pt-4">
             {comprobante.txHash ? (
               <a
-                href={txLink(comprobante.txHash)}
+                href={txLogsLink(comprobante.txHash)}
                 target="_blank"
                 rel="noreferrer"
                 className="text-sm font-semibold text-eco-org"

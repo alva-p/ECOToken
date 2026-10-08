@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingState } from '@/components/ui/States';
 import { Table } from '@/components/ui/Table';
-import { txLink } from '@/lib/explorer';
+import { txLogsLink } from '@/lib/explorer';
 import {
   verificarCertificado,
   type CertificadoVerificado,
@@ -66,7 +66,7 @@ function Aportes({ certificado }: { certificado: CertificadoVerificado }) {
             a.txHash ? (
               <a
                 key="tx"
-                href={`${txLink(a.txHash)}#eventlog`}
+                href={txLogsLink(a.txHash)}
                 target="_blank"
                 rel="noreferrer"
                 className="font-semibold text-eco-org"
@@ -208,7 +208,7 @@ export function VerificarPage() {
             )}
             {resultado.certificado.txHashOnChain ? (
               <a
-                href={txLink(resultado.certificado.txHashOnChain)}
+                href={txLogsLink(resultado.certificado.txHashOnChain)}
                 target="_blank"
                 rel="noreferrer"
                 className="text-sm font-semibold text-eco-org"

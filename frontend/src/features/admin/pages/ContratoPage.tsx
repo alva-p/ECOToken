@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { LoadingState } from '@/components/ui/States';
-import { txLink } from '@/lib/explorer';
+import { txLogsLink } from '@/lib/explorer';
 import {
   despausarContrato,
   obtenerEstadoContrato,
@@ -103,7 +103,7 @@ export function ContratoPage() {
               on-chain.
             </p>
             <a
-              href={txLink(ultimaTx.txHash)}
+              href={txLogsLink(ultimaTx.txHash)}
               target="_blank"
               rel="noreferrer"
               className="mt-1 inline-block font-semibold text-eco-org"
