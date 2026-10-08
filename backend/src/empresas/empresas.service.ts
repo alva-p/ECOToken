@@ -21,6 +21,15 @@ import { ArchivoSubido } from './subida-verificacion';
 
 const BCRYPT_ROUNDS = 10;
 const BUSQUEDA_LARGO_MINIMO = 2;
+const BUSQUEDA_MAX_RESULTADOS = 10;
+
+/** Minúsculas y sin acentos, para comparar texto. */
+const normalizarTexto = (s: string) =>
+  s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+const soloDigitos = (s: string) => s.replace(/\D/g, '');
 
 /** Lógica de negocio de Empresa. */
 @Injectable()
@@ -285,16 +294,38 @@ export class EmpresasService {
   // ─── E4-HU03: buscador de empresas (cooperativa, con autocompletado) ───
 
   /**
-   * Busca empresas adherentes APROBADAS por razón social o CUIT, para que la
-   * cooperativa le asocie un ingreso (E5-HU01). Con menos de
+   * Busca empresas adherentes APROBADAS y activas por razón social, nombre o
+   * CUIT, para que la cooperativa le asocie un ingreso (E5-HU01). Con menos de
    * BUSQUEDA_LARGO_MINIMO caracteres devuelve `[]` sin pegarle a la DB.
+   *
+   * Ignora mayúsculas y acentos ("panaderia" encuentra "Panadería"), acepta las
+   * palabras en cualquier orden y el CUIT con o sin guiones. Se filtra acá y no
+   * en SQL porque ILIKE no ignora acentos y el CUIT se guardó con y sin guiones;
+   * el universo (empresas aprobadas) es chico.
    */
   async buscar(query: string) {
     const q = query?.trim() ?? '';
     if (q.length < BUSQUEDA_LARGO_MINIMO) {
       return [];
     }
-    return this.repository.buscar(q);
+    const terminos = normalizarTexto(q).split(/\s+/).filter(Boolean);
+    const candidatas = await this.repository.findAprobadasActivas();
+
+    return candidatas
+      .filter((empresa) => {
+        const texto = normalizarTexto(
+          `${empresa.razonSocial} ${empresa.nombre ?? ''}`,
+        );
+        const cuit = soloDigitos(empresa.cuit);
+        return terminos.every((t) => {
+          const digitos = soloDigitos(t);
+          return (
+            texto.includes(t) || (digitos !== '' && cuit.includes(digitos))
+          );
+        });
+      })
+      .sort((a, b) => a.razonSocial.localeCompare(b.razonSocial, 'es'))
+      .slice(0, BUSQUEDA_MAX_RESULTADOS);
   }
 
   // ─── Métodos de negocio del diagrama (stubs — completar en próximos sprints) ───

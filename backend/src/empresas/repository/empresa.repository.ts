@@ -93,19 +93,13 @@ export class EmpresaRepository {
    * Buscador con autocompletado para la cooperativa (E4-HU03): solo empresas
    * adherentes APROBADAS (no otras cooperativas), por razón social o CUIT.
    */
-  buscar(query: string) {
+  findAprobadasActivas() {
     return this.prisma.empresa.findMany({
       where: {
         estado: EstadoEmpresa.APROBADA,
         categoria: CategoriaEmpresa.EMPRESA,
         activa: true,
-        OR: [
-          { razonSocial: { contains: query, mode: 'insensitive' } },
-          { cuit: { contains: query } },
-        ],
       },
-      orderBy: { razonSocial: 'asc' },
-      take: 10,
     });
   }
 
