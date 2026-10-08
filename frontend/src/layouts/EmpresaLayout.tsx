@@ -5,7 +5,7 @@ import { PanelLayout, type PanelNavItem } from './PanelLayout';
 const NAV: PanelNavItem[] = [
   { label: 'Resumen', to: '/empresa' },
   { label: 'Aportes', to: '/empresa/aportes' },
-  { label: 'Ranking', to: '/ranking' }, // ponytail: ranking público; E6-HU03 (posición propia) pendiente
+  { label: 'Ranking', to: '/empresa/ranking' }, // mismo ranking público, dentro del panel; E6-HU03 (posición propia) pendiente
   { label: 'Certificados', to: '/empresa/certificados' },
 ];
 
@@ -15,9 +15,11 @@ export function EmpresaLayout() {
 
   const title = location.pathname.includes('/aportes/')
     ? 'Comprobante de aporte'
-    : location.pathname.endsWith('/aportes')
-      ? 'Historial de aportes'
-      : 'Resumen';
+    : location.pathname.endsWith('/ranking')
+      ? 'Ranking'
+      : location.pathname.endsWith('/aportes')
+        ? 'Historial de aportes'
+        : 'Resumen';
 
   return (
     <PanelLayout

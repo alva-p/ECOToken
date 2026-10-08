@@ -64,7 +64,7 @@ export function CierreMesPage() {
         <div className="text-xs font-semibold uppercase tracking-wide text-eco-ink2">
           Próximo cierre de mes
         </div>
-        <div className="mt-3 flex gap-6">
+        <div className="mt-3 flex flex-wrap gap-6">
           <Unidad valor={dias} label="días" />
           <Unidad valor={horas} label="horas" />
           <Unidad valor={minutos} label="min" />
