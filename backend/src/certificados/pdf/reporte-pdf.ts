@@ -90,10 +90,9 @@ function partes(d: Date) {
   );
   return p as Record<'day' | 'month' | 'year' | 'hour' | 'minute', string>;
 }
-const fechaEspaciada = (d: Date) => {
-  const p = partes(d);
-  return `${p.day} / ${p.month} / ${p.year}`;
-};
+/** Fecha de una entrega en UTC: así el sistema define a qué mes pertenece. */
+const fechaEspaciada = (d: Date) =>
+  `${dos(d.getUTCDate())} / ${dos(d.getUTCMonth() + 1)} / ${d.getUTCFullYear()}`;
 /** Hace clickeable el rectángulo y lo subraya fino, para que se note que es un enlace. */
 function enlace(
   doc: PDFKit.PDFDocument,
@@ -446,8 +445,8 @@ export async function generarReportePdf(d: DatosReportePdf): Promise<Buffer> {
   );
   y += altoTotal;
 
-  // Las secciones 2-4 miden ~430: si no entran en esta página, van a la siguiente.
-  if (y + 430 > LIMITE) y = paginaNueva() - 22;
+  // Las secciones 2-4 miden ~530: si no entran en esta página, van a la siguiente.
+  if (y + 530 > LIMITE) y = paginaNueva() - 22;
 
   // ─── 2. Resumen de tokens ───
   y = seccion(doc, 2, 'Resumen de tokens', y);

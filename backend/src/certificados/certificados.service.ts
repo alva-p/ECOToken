@@ -294,7 +294,8 @@ export class CertificadosService {
 
   /**
    * Congela el reporte de los certificados que no lo tienen (emitidos antes de
-   * la columna), con los aportes actuales del mes. No toca el certificado: ni
+   * la columna), con los aportes del mes hasta su fecha de emisión (lo cargado
+   * después no entra, igual que en el certificado). No toca el certificado: ni
    * hash, ni kg, ni posición. Idempotente: solo completa los que faltan.
    */
   async congelarReportesPendientes(): Promise<{ congelados: number }> {
@@ -305,6 +306,7 @@ export class CertificadosService {
         c.mes,
         c.anio,
         c.co2Evitado,
+        c.fechaEmision,
       );
       await this.repository.guardarReporteSnapshot(
         c.id,
@@ -320,9 +322,10 @@ export class CertificadosService {
     mes: number,
     anio: number,
     co2Mes: number,
+    hasta?: Date,
   ): Promise<ReporteSnapshot> {
     const [entregas, saldoAnterior, co2Previo] = await Promise.all([
-      this.repository.findEntregasDelPeriodo(empresaId, mes, anio),
+      this.repository.findEntregasDelPeriodo(empresaId, mes, anio, hasta),
       this.repository.sumarTokensAntesDe(empresaId, mes, anio),
       this.repository.sumarCo2AnioPrevio(empresaId, mes, anio),
     ]);
