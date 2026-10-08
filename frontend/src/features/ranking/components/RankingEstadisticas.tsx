@@ -70,7 +70,7 @@ export function Distribucion({
   return (
     <Card className="p-5">
       <Titulo sub={`${kg(total)} reciclados en el mes`}>{titulo}</Titulo>
-      <div className="flex flex-col items-center gap-5 sm:flex-row">
+      <div className="flex flex-col items-center gap-5 sm:flex-row sm:justify-center sm:gap-8">
         <svg
           viewBox="0 0 100 100"
           className="h-44 w-44 shrink-0 -rotate-90"
@@ -104,15 +104,15 @@ export function Distribucion({
             return el;
           })}
         </svg>
-        <ul className="flex w-full flex-col gap-1.5 text-xs">
+        <ul className="grid grid-cols-[auto_auto_auto] items-center gap-x-3 gap-y-2 text-xs">
           {materiales.map((m, i) => (
-            <li key={m.material} className="flex items-center gap-2">
+            <li key={m.material} className="contents">
               <span
                 className="h-2.5 w-2.5 rounded-sm"
                 style={{ background: COLORES[i % COLORES.length] }}
               />
-              <span className="flex-1 text-eco-ink">{m.material}</span>
-              <span className="font-semibold">
+              <span className="text-eco-ink">{m.material}</span>
+              <span className="text-right font-semibold">
                 {Math.round((m.kg / suma) * 100)}%
               </span>
             </li>
