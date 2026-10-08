@@ -17,6 +17,11 @@ import { asegurarBilleteraCustodial } from './billetera-propia';
  * rotando cooperativas y materiales, con pesos en kg enteros (el evento
  * on-chain guarda el peso redondeado).
  *
+ * Solo participan las empresas que tienen un usuario de login (si nadie puede
+ * entrar a su panel, no se les cargan aportes). El script NO es idempotente:
+ * si ya hay aportes de las últimas 24 h, `--ejecutar` se niega para no repetir
+ * la carga; `--forzar` lo permite igual.
+ *
  * Uso:
  *   npm run ingresos:cargar-reales                 # solo muestra el plan
  *   npm run ingresos:cargar-reales -- --ejecutar   # registra y acuña de verdad
@@ -27,6 +32,7 @@ const ESPERA_MAXIMA_MS = 5 * 60_000;
 
 async function main() {
   const ejecutar = process.argv.includes('--ejecutar');
+  const forzar = process.argv.includes('--forzar');
   const app = await NestFactory.createApplicationContext(AppModule, {
     logger: ['warn', 'error'],
   });
@@ -42,7 +48,11 @@ async function main() {
     const activas = { estado: 'APROBADA' as const, activa: true };
     const [empresas, cooperativas, materiales] = await Promise.all([
       prisma.empresa.findMany({
-        where: { ...activas, categoria: 'EMPRESA' },
+        where: {
+          ...activas,
+          categoria: 'EMPRESA',
+          usuarios: { some: {} },
+        },
         include: { billeteraCustodial: true },
         orderBy: { razonSocial: 'asc' },
       }),
@@ -104,6 +114,14 @@ async function main() {
     if (!ejecutar) {
       console.log('\nSolo plan. Para ejecutarlo: -- --ejecutar');
       return;
+    }
+    const recientes = await prisma.ingresoMaterial.count({
+      where: { fechaIngreso: { gte: new Date(Date.now() - 24 * 3600_000) } },
+    });
+    if (recientes > 0 && !forzar) {
+      throw new Error(
+        `Ya hay ${recientes} aportes de las últimas 24 h: ejecutar de nuevo repetiría la carga. Usá --forzar si es a propósito.`,
+      );
     }
 
     for (const c of sinRol) {
