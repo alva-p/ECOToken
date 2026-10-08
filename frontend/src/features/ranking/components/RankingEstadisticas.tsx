@@ -164,13 +164,15 @@ export function Evolucion({
   const [ux, uy] = puntos[puntos.length - 1];
 
   return (
-    <Card className="p-5">
+    <Card className="flex flex-col p-5">
       <Titulo sub={`kg reciclados · últimos ${serie.length} meses`}>
         {titulo}
       </Titulo>
+      {/* Se estira al alto de la tarjeta vecina; trazos y punto no se deforman. */}
       <svg
-        viewBox={`-8 -8 ${W + 16} ${H + 16}`}
-        className="w-full overflow-visible"
+        viewBox={`0 0 ${W} ${H}`}
+        preserveAspectRatio="none"
+        className="min-h-[7rem] w-full flex-1 overflow-visible"
         role="img"
         aria-label="Evolución mensual de kg reciclados"
       >
@@ -185,8 +187,18 @@ export function Evolucion({
           stroke="#1D9E75"
           strokeWidth="2"
           strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
         />
-        <circle cx={ux} cy={uy} r="4" fill="#1D9E75" />
+        <line
+          x1={ux}
+          y1={uy}
+          x2={ux}
+          y2={uy}
+          stroke="#1D9E75"
+          strokeWidth="8"
+          strokeLinecap="round"
+          vectorEffect="non-scaling-stroke"
+        />
       </svg>
       <div className="mt-2 flex justify-between text-[10px] text-eco-ink2">
         <span>{MES_CORTO[serie[0].mes - 1]}</span>
