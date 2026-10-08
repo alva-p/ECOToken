@@ -16,7 +16,6 @@ const LINE = '#D9DEDC';
 const ZEBRA = '#F7F7F5';
 const ASSETS = join(__dirname, 'assets');
 const MUNICIPALIDAD = 'Municipalidad de Villa María';
-const COOPERATIVA = 'Cooperativa 7 de Febrero';
 
 const MESES = [
   'Enero',
@@ -400,7 +399,7 @@ export async function generarReportePdf(d: DatosReportePdf): Promise<Buffer> {
   });
   t(
     doc,
-    `Verificado y emitido por ${COOPERATIVA} · EcoToken V1.0`,
+    `Verificado y emitido por EcoToken · V1.0`,
     tx,
     y + 50,
     { size: 8, color: INK2 },
