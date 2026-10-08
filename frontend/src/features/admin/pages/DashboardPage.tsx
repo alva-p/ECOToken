@@ -12,6 +12,7 @@ import {
   editarEmpresa,
   filtrarEmpresas,
   listarEmpresas,
+  pendientesPrimero,
   rechazarEmpresa,
 } from '../api';
 
@@ -81,7 +82,12 @@ export function AdminDashboardPage() {
     return <LoadingState label="Cargando empresas…" />;
   }
 
-  const empresasVisibles = filtrarEmpresas(empresas ?? [], busqueda);
+  const empresasVisibles = pendientesPrimero(
+    filtrarEmpresas(empresas ?? [], busqueda),
+  );
+  const cantidadPendientes = (empresas ?? []).filter(
+    (e) => e.estado === 'PENDIENTE',
+  ).length;
 
   return (
     <div className="flex flex-col gap-5">
@@ -93,6 +99,18 @@ export function AdminDashboardPage() {
         </p>
       </div>
       {error && <p className="text-xs text-eco-danger">{error}</p>}
+
+      {cantidadPendientes > 0 && (
+        <div className="rounded-lg border border-eco-coop bg-eco-coop-soft px-4 py-3 text-sm text-eco-ink">
+          <b>
+            {cantidadPendientes}{' '}
+            {cantidadPendientes === 1
+              ? 'empresa pendiente'
+              : 'empresas pendientes'}
+          </b>{' '}
+          de aprobar o rechazar, arriba de todo en la lista.
+        </div>
+      )}
 
       <div className="max-w-sm">
         <Field
