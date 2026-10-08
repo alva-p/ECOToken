@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCertificadoDigitalDto } from '../dto/create-certificado-digital.dto';
 import { UpdateCertificadoDigitalDto } from '../dto/update-certificado-digital.dto';
@@ -144,5 +145,28 @@ export class CertificadoDigitalRepository {
       _sum: { co2Evitado: true },
     });
     return _sum.co2Evitado ?? 0;
+  }
+
+  /** Certificados emitidos antes de existir `reporteSnapshot` (sin reporte congelado). */
+  findSinReporteSnapshot() {
+    return this.prisma.certificadoDigital.findMany({
+      where: { reporteSnapshot: { equals: Prisma.DbNull } },
+      select: {
+        id: true,
+        empresaId: true,
+        mes: true,
+        anio: true,
+        co2Evitado: true,
+      },
+      orderBy: [{ anio: 'asc' }, { mes: 'asc' }],
+    });
+  }
+
+  /** Guarda solo el reporte: el certificado (hash, kg, posición) no se toca. */
+  guardarReporteSnapshot(id: string, reporteSnapshot: Prisma.InputJsonValue) {
+    return this.prisma.certificadoDigital.update({
+      where: { id },
+      data: { reporteSnapshot },
+    });
   }
 }
