@@ -14,6 +14,8 @@ const mockUnpause = jest.fn();
 const mockPaused = jest.fn();
 const mockWait = jest.fn();
 const mockGetBlockNumber = jest.fn();
+const mockMint = jest.fn();
+const mockGetFeeData = jest.fn();
 
 jest.mock('ethers', () => {
   const actual = jest.requireActual('ethers');
@@ -28,7 +30,13 @@ jest.mock('ethers', () => {
       pause: mockPause,
       unpause: mockUnpause,
       paused: mockPaused,
-      runner: { provider: { getBlockNumber: mockGetBlockNumber } },
+      mint: mockMint,
+      runner: {
+        provider: {
+          getBlockNumber: mockGetBlockNumber,
+          getFeeData: mockGetFeeData,
+        },
+      },
     })),
   };
 });
@@ -58,6 +66,82 @@ async function buildService(
 describe('BlockchainService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('mint', () => {
+    const conMinter = { 'blockchain.minterPrivateKey': '0xMinterKey' };
+
+    it('serializa el envío de acuñaciones (no pisan el nonce) pero confirma en paralelo', async () => {
+      const orden: string[] = [];
+      let liberarPrimero!: (tx: unknown) => void;
+      mockMint
+        .mockImplementationOnce(() => {
+          orden.push('envío 1');
+          return new Promise((resolve) => (liberarPrimero = resolve));
+        })
+        .mockImplementationOnce(() => {
+          orden.push('envío 2');
+          return Promise.resolve({
+            wait: () => Promise.resolve({ hash: '0xB', blockNumber: 2 }),
+          });
+        });
+      const service = await buildService(conMinter);
+
+      const a = service.mint('0xE', 10, 'VIDRIO', 1);
+      const b = service.mint('0xE', 20, 'VIDRIO', 2);
+      await new Promise((r) => setImmediate(r));
+      // El segundo no se envía hasta que el primero entró al mempool.
+      expect(orden).toEqual(['envío 1']);
+
+      liberarPrimero({
+        wait: () => Promise.resolve({ hash: '0xA', blockNumber: 1 }),
+      });
+      await expect(a).resolves.toEqual({ txHash: '0xA', bloque: 1 });
+      await expect(b).resolves.toEqual({ txHash: '0xB', bloque: 2 });
+      expect(orden).toEqual(['envío 1', 'envío 2']);
+    });
+
+    it('un envío que falla no traba la cola', async () => {
+      mockMint
+        .mockRejectedValueOnce(new Error('nonce too low'))
+        .mockResolvedValueOnce({
+          wait: () => Promise.resolve({ hash: '0xOK', blockNumber: 9 }),
+        });
+      const service = await buildService(conMinter);
+
+      await expect(service.mint('0xE', 1, 'VIDRIO', 1)).rejects.toBeInstanceOf(
+        ServiceUnavailableException,
+      );
+      await expect(service.mint('0xE', 1, 'VIDRIO', 1)).resolves.toEqual({
+        txHash: '0xOK',
+        bloque: 9,
+      });
+    });
+
+    it('con GAS_PRIORITY_GWEI sube la propina; sin configurar no toca la fee', async () => {
+      mockMint.mockResolvedValue({
+        wait: () => Promise.resolve({ hash: '0xA', blockNumber: 1 }),
+      });
+      mockGetFeeData.mockResolvedValue({
+        maxFeePerGas: 2_000_000_000n,
+        maxPriorityFeePerGas: 1_000_000_000n,
+      });
+
+      await (await buildService(conMinter)).mint('0xE', 1, 'VIDRIO', 1);
+      expect(mockMint).toHaveBeenLastCalledWith('0xE', 1n, 'VIDRIO', 1n, {});
+
+      await (
+        await buildService({
+          ...conMinter,
+          'blockchain.gasPriorityGwei': '5',
+        })
+      ).mint('0xE', 1, 'VIDRIO', 1);
+      expect(mockMint).toHaveBeenLastCalledWith('0xE', 1n, 'VIDRIO', 1n, {
+        maxPriorityFeePerGas: 5_000_000_000n,
+        // base (2 gwei - 1 de propina) + 5 gwei de propina nueva
+        maxFeePerGas: 6_000_000_000n,
+      });
+    });
   });
 
   describe('grantValidatorRole', () => {

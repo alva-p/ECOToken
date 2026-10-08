@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
@@ -22,6 +23,8 @@ const ESTADO_ACUNADO = 'ACUNADO';
 @Injectable()
 export class IngresosService {
   private readonly logger = new Logger(IngresosService.name);
+  /** Ingresos cuya acuñación está corriendo de fondo (evita duplicarla). */
+  private readonly acunando = new Set<string>();
 
   constructor(
     private readonly repository: IngresoMaterialRepository,
@@ -71,10 +74,11 @@ export class IngresosService {
 
   /**
    * Registra un ingreso de material aportado por una empresa y validado por una
-   * cooperativa, y dispara la acuñación de tokens. El ingreso se persiste SIEMPRE
-   * (estado REGISTRADO); si la acuñación on-chain está disponible y sale bien, el
-   * ingreso pasa a ACUÑADO con su MovimientoToken; si no, queda pendiente y
-   * reintentable (ver `reintentarAcunacion`).
+   * cooperativa, y dispara la acuñación de tokens EN SEGUNDO PLANO. Responde con
+   * el ingreso en estado REGISTRADO; cuando la acuñación on-chain confirma, pasa
+   * a ACUÑADO con su MovimientoToken (la UI consulta `estadoAcunacion`). Si la
+   * acuñación no está disponible o falla, queda pendiente y reintentable (ver
+   * `reintentarAcunacion`).
    */
   async registrar(dto: RegistrarIngresoDto, cooperativaId: string | null) {
     if (!cooperativaId) {
@@ -141,8 +145,10 @@ export class IngresosService {
       tokensAcumulados: tokens,
     });
 
-    // 5) Acuñación on-chain (best-effort; si falla, queda reintentable).
-    const acunado = await this.acunarSiPosible(
+    // 5) Acuñación on-chain en segundo plano: se responde al instante y la
+    //    cooperativa sigue trabajando; confirmar la tx tarda 1-2 bloques
+    //    (12-18 s en Sepolia). Si falla, queda REGISTRADO y reintentable.
+    this.acunarEnSegundoPlano(
       ingreso.id,
       empresa.walletAddress,
       material.nombre,
@@ -150,7 +156,7 @@ export class IngresosService {
       tokens,
     );
 
-    return acunado ?? this.repository.findByIdFull(ingreso.id);
+    return this.repository.findByIdFull(ingreso.id);
   }
 
   /**
@@ -165,6 +171,11 @@ export class IngresosService {
     }
     if (ingreso.movimientoToken) {
       throw new BadRequestException('El ingreso ya fue acuñado');
+    }
+    if (this.acunando.has(id)) {
+      throw new ConflictException(
+        'La acuñación de este ingreso ya está en curso',
+      );
     }
     const acunado = await this.repository.findEstadoByNombre(ESTADO_ACUNADO);
     if (!acunado) {
@@ -311,6 +322,41 @@ export class IngresosService {
       );
     }
     return Math.round(peso * factor);
+  }
+
+  /**
+   * Estado de la acuñación de un ingreso propio de la cooperativa: la UI lo
+   * consulta hasta que aparece el `movimientoToken` (acuñación confirmada).
+   */
+  async estadoAcunacion(id: string, cooperativaId: string | null) {
+    const ingreso = await this.repository.findByIdFull(id);
+    if (!ingreso) {
+      throw new NotFoundException(`IngresoMaterial ${id} no encontrado`);
+    }
+    if (!cooperativaId || ingreso.cooperativaId !== cooperativaId) {
+      throw new ForbiddenException(
+        'Este ingreso no lo registró tu cooperativa',
+      );
+    }
+    return ingreso;
+  }
+
+  /** Lanza `acunarSiPosible` sin esperarlo; nunca propaga errores. */
+  private acunarEnSegundoPlano(
+    ingresoId: string,
+    walletEmpresa: string,
+    material: string,
+    peso: number,
+    tokens: number,
+  ): void {
+    this.acunando.add(ingresoId);
+    void this.acunarSiPosible(ingresoId, walletEmpresa, material, peso, tokens)
+      .catch((err: Error) =>
+        this.logger.error(
+          `Acuñación en segundo plano del ingreso ${ingresoId}: ${err.message}`,
+        ),
+      )
+      .finally(() => this.acunando.delete(ingresoId));
   }
 
   /**

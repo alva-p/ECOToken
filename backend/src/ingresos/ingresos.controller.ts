@@ -41,6 +41,14 @@ export class IngresosController {
     return this.service.reintentarAcunacion(id);
   }
 
+  // ─── Estado de una acuñación en segundo plano (la UI lo consulta) ───
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.COOPERATIVA)
+  @Get(':id/acunacion')
+  estadoAcunacion(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.service.estadoAcunacion(id, user.empresaId);
+  }
+
   // ─── Historial de entregas de la cooperativa logueada ───
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(TipoRol.COOPERATIVA)
