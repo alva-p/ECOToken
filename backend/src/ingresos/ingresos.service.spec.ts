@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing';
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
@@ -28,6 +29,8 @@ const dto: RegistrarIngresoDto = {
   tipoMaterialId: 'mat1',
   peso: 2.5,
 };
+
+const flush = () => new Promise((resolve) => setImmediate(resolve));
 
 describe('IngresosService (E5-HU01)', () => {
   let service: IngresosService;
@@ -150,6 +153,7 @@ describe('IngresosService (E5-HU01)', () => {
 
   it('registra el ingreso, calcula tokens y lo acuña cuando el mint está disponible', async () => {
     await service.registrar(dto, 'coop1');
+    await flush(); // la acuñación corre en segundo plano
 
     // tokens = round(2.5 * 10) = 25
     expect(repository.registrar).toHaveBeenCalledWith(
@@ -168,6 +172,58 @@ describe('IngresosService (E5-HU01)', () => {
       123,
       'estAcu',
     );
+  });
+
+  it('responde al instante: no espera a que confirme la acuñación', async () => {
+    let confirmar!: (r: { txHash: string; bloque: number }) => void;
+    blockchain.mint.mockReturnValueOnce(
+      new Promise((resolve) => (confirmar = resolve)),
+    );
+
+    // La respuesta llega aunque el mint siga pendiente.
+    await expect(service.registrar(dto, 'coop1')).resolves.toBeDefined();
+    expect(repository.acunar).not.toHaveBeenCalled();
+
+    confirmar({ txHash: '0xtx', bloque: 7 });
+    await flush();
+    expect(repository.acunar).toHaveBeenCalledWith(
+      'ing1',
+      25,
+      '0xtx',
+      7,
+      'estAcu',
+    );
+  });
+
+  it('no deja reintentar una acuñación que sigue corriendo de fondo', async () => {
+    blockchain.mint.mockReturnValueOnce(new Promise(() => undefined));
+    await service.registrar(dto, 'coop1');
+    repository.findByIdFull.mockResolvedValue({
+      id: 'ing1',
+      movimientoToken: null,
+      empresa: { walletAddress: '0xemp' },
+      tipoMaterial: { nombre: 'PLASTICO' },
+      tokensAcumulados: 25,
+      peso: 2.5,
+    });
+
+    await expect(service.reintentarAcunacion('ing1')).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+  });
+
+  it('estadoAcunacion solo lo ve la cooperativa que registró el ingreso', async () => {
+    repository.findByIdFull.mockResolvedValue({
+      id: 'ing1',
+      cooperativaId: 'coop1',
+    });
+
+    await expect(
+      service.estadoAcunacion('ing1', 'coop1'),
+    ).resolves.toMatchObject({ id: 'ing1' });
+    await expect(
+      service.estadoAcunacion('ing1', 'coop2'),
+    ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
   it('deja el ingreso REGISTRADO (sin acuñar) cuando el mint no está disponible', async () => {

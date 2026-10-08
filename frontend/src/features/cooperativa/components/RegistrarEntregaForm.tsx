@@ -1,16 +1,23 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { txLink } from '@/lib/explorer';
 import type { Empresa, TipoMaterial, Puntaje } from '@/types';
 import {
+  consultarAcunacion,
   listarMateriales,
   listarPuntajesVigentes,
   registrarIngreso,
   reintentarAcunacion,
   type IngresoRegistrado,
 } from '../api';
+
+// La acuñación corre de fondo: se consulta cada 4 s hasta confirmar (1-2 bloques
+// de Sepolia, 12-18 s) y se da por demorada pasados ~80 s.
+const CADA_MS = 4000;
+const MAX_CONSULTAS = 20;
+const MAX_VISIBLES = 5;
 
 const inputClass =
   'w-full rounded-lg border border-eco-border-strong bg-eco-surface px-3.5 py-2.5 text-sm text-eco-ink focus:outline-none focus:ring-2 focus:ring-eco-coop/30';
@@ -22,16 +29,21 @@ interface RegistrarEntregaFormProps {
 // Formulario de registro de ingreso (E5-HU01): completa el flujo que el
 // backend de Tobias ya soporta (registrar + reintentar acuñación) pero que
 // nunca tuvo pantalla. Muestra un resumen de tokens estimados antes de
-// confirmar, y el estado final: pendiente, confirmado o error.
+// confirmar, y el estado de cada registro: acuñando, confirmado o demorado.
+// La cooperativa puede seguir registrando mientras las acuñaciones se
+// completan de fondo.
 export function RegistrarEntregaForm({ empresa }: RegistrarEntregaFormProps) {
   const [materiales, setMateriales] = useState<TipoMaterial[]>([]);
   const [puntajes, setPuntajes] = useState<Puntaje[]>([]);
   const [tipoMaterialId, setTipoMaterialId] = useState('');
   const [peso, setPeso] = useState('');
   const [enviando, setEnviando] = useState(false);
-  const [reintentando, setReintentando] = useState(false);
+  const [reintentando, setReintentando] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [resultado, setResultado] = useState<IngresoRegistrado | null>(null);
+  const [registros, setRegistros] = useState<IngresoRegistrado[]>([]);
+  // Consultas hechas por registro; al pasar MAX_CONSULTAS se da por demorado.
+  const consultas = useRef<Record<string, number>>({});
+  const [demorados, setDemorados] = useState<string[]>([]);
 
   useEffect(() => {
     listarMateriales()
@@ -41,6 +53,37 @@ export function RegistrarEntregaForm({ empresa }: RegistrarEntregaFormProps) {
       .then(setPuntajes)
       .catch(() => setPuntajes([]));
   }, []);
+
+  const enCurso = registros.filter(
+    (r) => !r.movimientoToken?.txHash && !demorados.includes(r.id),
+  );
+  const hayEnCurso = enCurso.length > 0;
+
+  useEffect(() => {
+    if (!hayEnCurso) return;
+    const timer = setInterval(async () => {
+      for (const r of enCurso) {
+        consultas.current[r.id] = (consultas.current[r.id] ?? 0) + 1;
+        try {
+          const actual = await consultarAcunacion(r.id);
+          if (actual.movimientoToken?.txHash) {
+            setRegistros((prev) =>
+              prev.map((x) => (x.id === r.id ? actual : x)),
+            );
+            continue;
+          }
+        } catch {
+          // un fallo de red puntual no corta el seguimiento
+        }
+        if (consultas.current[r.id] >= MAX_CONSULTAS) {
+          setDemorados((prev) => [...prev, r.id]);
+        }
+      }
+    }, CADA_MS);
+    return () => clearInterval(timer);
+    // `enCurso` se recalcula cada render; alcanza con saber cuáles hay.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enCurso.map((r) => r.id).join(',')]);
 
   const pesoNum = Number(peso);
   const material = materiales.find((m) => m.id === tipoMaterialId);
@@ -54,7 +97,6 @@ export function RegistrarEntregaForm({ empresa }: RegistrarEntregaFormProps) {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    setResultado(null);
     setEnviando(true);
     try {
       const res = await registrarIngreso({
@@ -62,7 +104,7 @@ export function RegistrarEntregaForm({ empresa }: RegistrarEntregaFormProps) {
         tipoMaterialId,
         peso: pesoNum,
       });
-      setResultado(res);
+      setRegistros((prev) => [res, ...prev].slice(0, MAX_VISIBLES));
       setTipoMaterialId('');
       setPeso('');
     } catch {
@@ -74,20 +116,20 @@ export function RegistrarEntregaForm({ empresa }: RegistrarEntregaFormProps) {
     }
   }
 
-  async function handleReintentar() {
-    if (!resultado) return;
+  async function handleReintentar(id: string) {
     setError(null);
-    setReintentando(true);
+    setReintentando(id);
     try {
-      setResultado(await reintentarAcunacion(resultado.id));
+      const actual = await reintentarAcunacion(id);
+      setRegistros((prev) => prev.map((x) => (x.id === id ? actual : x)));
+      consultas.current[id] = 0;
+      setDemorados((prev) => prev.filter((x) => x !== id));
     } catch {
       setError('La acuñación volvió a fallar. Podés reintentarla de nuevo.');
     } finally {
-      setReintentando(false);
+      setReintentando(null);
     }
   }
-
-  const acunado = !!resultado?.movimientoToken?.txHash;
 
   return (
     <Card className="mt-3 border-eco-coop p-5">
@@ -146,43 +188,65 @@ export function RegistrarEntregaForm({ empresa }: RegistrarEntregaFormProps) {
         </Button>
       </form>
 
-      {resultado && (
-        <div className="mt-4 flex flex-col gap-2 border-t border-eco-border pt-4">
-          {acunado ? (
-            <>
-              <Badge color="coop">Confirmado</Badge>
-              <p className="text-sm text-eco-ink">
-                Se acuñaron <strong>{resultado.tokensAcumulados} ECO</strong>{' '}
-                por {resultado.peso} kg de {resultado.tipoMaterial.nombre}.
-              </p>
-              <a
-                href={txLink(resultado.movimientoToken!.txHash!)}
-                target="_blank"
-                rel="noreferrer"
-                className="text-sm font-semibold text-eco-coop"
+      {registros.length > 0 && (
+        <div className="mt-4 flex flex-col gap-3 border-t border-eco-border pt-4">
+          <p className="text-xs text-eco-ink2">
+            Podés seguir registrando: las acuñaciones se completan solas en
+            segundo plano.
+          </p>
+          {registros.map((r) => {
+            const txHash = r.movimientoToken?.txHash;
+            const demorado = !txHash && demorados.includes(r.id);
+            return (
+              <div
+                key={r.id}
+                className="flex flex-col gap-1.5 rounded-lg border border-eco-border p-3"
               >
-                Ver transacción en el explorador ↗
-              </a>
-            </>
-          ) : (
-            <>
-              <Badge color="ink">Pendiente de acuñación</Badge>
-              <p className="text-sm text-eco-ink2">
-                El ingreso quedó registrado, pero la acuñación on-chain no se
-                completó todavía.
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                color="coop"
-                className="self-start"
-                onClick={handleReintentar}
-                disabled={reintentando}
-              >
-                {reintentando ? 'Reintentando…' : 'Reintentar acuñación'}
-              </Button>
-            </>
-          )}
+                <div className="flex items-center gap-2">
+                  {txHash ? (
+                    <Badge color="coop">Confirmado</Badge>
+                  ) : demorado ? (
+                    <Badge color="danger">Demorado</Badge>
+                  ) : (
+                    <Badge color="ink">Acuñando…</Badge>
+                  )}
+                  <span className="text-sm text-eco-ink">
+                    <strong>{r.tokensAcumulados} ECO</strong> · {r.peso} kg de{' '}
+                    {r.tipoMaterial.nombre}
+                  </span>
+                </div>
+                {txHash && (
+                  <a
+                    href={txLink(txHash)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm font-semibold text-eco-coop"
+                  >
+                    Ver transacción en el explorador ↗
+                  </a>
+                )}
+                {demorado && (
+                  <>
+                    <p className="text-sm text-eco-ink2">
+                      La acuñación tarda más de lo normal. Podés reintentarla.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      color="coop"
+                      className="self-start"
+                      onClick={() => handleReintentar(r.id)}
+                      disabled={reintentando === r.id}
+                    >
+                      {reintentando === r.id
+                        ? 'Reintentando…'
+                        : 'Reintentar acuñación'}
+                    </Button>
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </Card>

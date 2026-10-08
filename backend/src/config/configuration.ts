@@ -19,6 +19,10 @@ export default () => ({
     // Cuenta con MINTER_ROLE on-chain: firma la acuñación de tokens al registrar
     // un ingreso de material (E5-HU01).
     minterPrivateKey: process.env.MINTER_PRIVATE_KEY ?? '',
+    // Propina (gwei) opcional para acuñar más rápido cuando la red está
+    // congelada. Vacío = el valor que sugiere el nodo (suficiente en Sepolia,
+    // donde el bloque tarda 12 s fijos).
+    gasPriorityGwei: process.env.GAS_PRIORITY_GWEI ?? '',
   },
   // Cifra datos sensibles que deben poder recuperarse (p. ej. la clave privada
   // de una billetera custodial) — ver common/helpers/crypto.helper.ts.
