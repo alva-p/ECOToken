@@ -374,7 +374,14 @@ describe('CertificadosService', () => {
   describe('congelarReportesPendientes', () => {
     it('completa solo el reporte de los certificados que no lo tienen', async () => {
       repository.findSinReporteSnapshot.mockResolvedValue([
-        { id: 'c1', empresaId: 'emp1', mes: 9, anio: 2026, co2Evitado: 7 },
+        {
+          id: 'c1',
+          empresaId: 'emp1',
+          mes: 9,
+          anio: 2026,
+          co2Evitado: 7,
+          fechaEmision: new Date('2026-09-18T14:00:00Z'),
+        },
       ]);
       repository.findEntregasDelPeriodo.mockResolvedValue([]);
       repository.sumarTokensAntesDe.mockResolvedValue(30);
@@ -383,6 +390,13 @@ describe('CertificadosService', () => {
       const r = await service.congelarReportesPendientes();
 
       expect(r).toEqual({ congelados: 1 });
+      // Solo aportes hasta la emisión del certificado.
+      expect(repository.findEntregasDelPeriodo).toHaveBeenCalledWith(
+        'emp1',
+        9,
+        2026,
+        new Date('2026-09-18T14:00:00Z'),
+      );
       expect(repository.guardarReporteSnapshot).toHaveBeenCalledWith('c1', {
         entregas: [],
         saldoAnterior: 30,

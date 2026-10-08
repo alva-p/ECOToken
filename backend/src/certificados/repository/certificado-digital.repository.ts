@@ -105,14 +105,23 @@ export class CertificadoDigitalRepository {
 
   // ─── Reporte mensual de actividad ───
 
-  /** Entregas de la empresa en el mes, con el hash de acuñación si ya existe. */
-  findEntregasDelPeriodo(empresaId: string, mes: number, anio: number) {
+  /**
+   * Entregas de la empresa en el mes, con el hash de acuñación si ya existe.
+   * `hasta` descarta lo cargado después (p. ej. tras la emisión del certificado).
+   */
+  findEntregasDelPeriodo(
+    empresaId: string,
+    mes: number,
+    anio: number,
+    hasta?: Date,
+  ) {
     return this.prisma.ingresoMaterial.findMany({
       where: {
         empresaId,
         fechaIngreso: {
           gte: new Date(Date.UTC(anio, mes - 1, 1)),
           lt: new Date(Date.UTC(anio, mes, 1)),
+          ...(hasta ? { lte: hasta } : {}),
         },
       },
       orderBy: { fechaIngreso: 'asc' },
@@ -157,6 +166,7 @@ export class CertificadoDigitalRepository {
         mes: true,
         anio: true,
         co2Evitado: true,
+        fechaEmision: true,
       },
       orderBy: [{ anio: 'asc' }, { mes: 'asc' }],
     });
