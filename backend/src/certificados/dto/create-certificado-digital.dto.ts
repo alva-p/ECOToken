@@ -31,6 +31,9 @@ export class CreateCertificadoDigitalDto {
   @IsArray()
   desglosePorMaterial: Prisma.InputJsonValue;
 
+  @IsOptional()
+  reporteSnapshot?: Prisma.InputJsonValue;
+
   @IsString()
   @IsNotEmpty()
   hashVerificacion: string;

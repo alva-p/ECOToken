@@ -17,6 +17,7 @@ import type { FilaRankingMes } from '../ranking/interfaces/ranking-resultado.int
 import type { DesgloseMaterial } from './desglose-material';
 import { generarCertificadoPdf } from './pdf/certificado-pdf';
 import { generarReportePdf } from './pdf/reporte-pdf';
+import type { ReporteSnapshot } from './reporte-snapshot';
 
 /** Agrupa kg por nombre de material (E8-HU02, desglose del PDF). */
 function sumarPorMaterial(
@@ -158,6 +159,14 @@ export class CertificadosService {
       0,
     );
 
+    // El reporte mensual se congela junto con el certificado (mismo cierre).
+    const reporteSnapshot = await this.armarSnapshotReporte(
+      fila.empresaId,
+      mes,
+      anio,
+      co2Evitado,
+    );
+
     const hashVerificacion = createHash('sha256')
       .update(
         JSON.stringify({
@@ -203,6 +212,7 @@ export class CertificadosService {
       co2Evitado,
       desglosePorMaterial:
         desglosePorMaterial as unknown as Prisma.InputJsonValue,
+      reporteSnapshot: reporteSnapshot as unknown as Prisma.InputJsonValue,
       hashVerificacion,
       credencialFirmada,
       ...(onchain ? { txHashOnChain: onchain.txHash } : {}),
@@ -250,15 +260,15 @@ export class CertificadosService {
     empresaId: string | null,
   ): Promise<Buffer> {
     const cert = await this.certificadoPropio(id, empresaId);
-    const [entregas, saldoAnterior, co2Anio] = await Promise.all([
-      this.repository.findEntregasDelPeriodo(
+    // Certificados anteriores a la columna no tienen snapshot: se arma al vuelo.
+    const snap =
+      (cert.reporteSnapshot as unknown as ReporteSnapshot | null) ??
+      (await this.armarSnapshotReporte(
         cert.empresaId,
         cert.mes,
         cert.anio,
-      ),
-      this.repository.sumarTokensAntesDe(cert.empresaId, cert.mes, cert.anio),
-      this.repository.sumarCo2Anio(cert.empresaId, cert.mes, cert.anio),
-    ]);
+        cert.co2Evitado,
+      ));
     const frontendUrl = this.config.get<string>('corsOrigin') ?? '';
     return generarReportePdf({
       numero: `REP-${cert.anio}-${String(cert.mes).padStart(2, '0')}-${cert.id.slice(0, 4).toUpperCase()}`,
@@ -268,8 +278,35 @@ export class CertificadosService {
       cuit: cert.empresa.cuit,
       domicilio: cert.empresa.domicilio,
       walletAddress: cert.empresa.walletAddress,
+      entregas: snap.entregas.map((e) => ({ ...e, fecha: new Date(e.fecha) })),
+      saldoAnterior: snap.saldoAnterior,
+      canjes: snap.canjes,
+      co2Mes: cert.co2Evitado,
+      co2Anio: snap.co2Anio,
+      posicion: cert.posicion,
+      totalEmpresas: cert.totalEmpresas,
+      hashVerificacion: cert.hashVerificacion,
+      urlVerificacion: `${frontendUrl}/verificar/${cert.hashVerificacion}`,
+      explorerUrl: this.config.get<string>('explorerUrl') ?? '',
+      emitidoEn: cert.fechaEmision,
+    });
+  }
+
+  /** Entregas, saldos y CO₂ del año del reporte mensual de una empresa. */
+  private async armarSnapshotReporte(
+    empresaId: string,
+    mes: number,
+    anio: number,
+    co2Mes: number,
+  ): Promise<ReporteSnapshot> {
+    const [entregas, saldoAnterior, co2Previo] = await Promise.all([
+      this.repository.findEntregasDelPeriodo(empresaId, mes, anio),
+      this.repository.sumarTokensAntesDe(empresaId, mes, anio),
+      this.repository.sumarCo2AnioPrevio(empresaId, mes, anio),
+    ]);
+    return {
       entregas: entregas.map((e) => ({
-        fecha: e.fechaIngreso,
+        fecha: e.fechaIngreso.toISOString(),
         material: e.tipoMaterial.nombre,
         kg: e.peso,
         tokens: e.tokensAcumulados,
@@ -278,15 +315,8 @@ export class CertificadosService {
       saldoAnterior,
       // ponytail: el sistema aún no registra canjes; sale 0 hasta que exista ese flujo
       canjes: 0,
-      co2Mes: cert.co2Evitado,
-      co2Anio,
-      posicion: cert.posicion,
-      totalEmpresas: cert.totalEmpresas,
-      hashVerificacion: cert.hashVerificacion,
-      urlVerificacion: `${frontendUrl}/verificar/${cert.hashVerificacion}`,
-      explorerUrl: this.config.get<string>('explorerUrl') ?? '',
-      emitidoEn: cert.fechaEmision,
-    });
+      co2Anio: co2Previo + co2Mes,
+    };
   }
 
   /** Certificado con datos de empresa; exige que pertenezca a la empresa logueada. */

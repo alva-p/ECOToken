@@ -17,7 +17,7 @@ describe('CertificadosService', () => {
     findByIdConEmpresa: jest.Mock;
     findEntregasDelPeriodo: jest.Mock;
     sumarTokensAntesDe: jest.Mock;
-    sumarCo2Anio: jest.Mock;
+    sumarCo2AnioPrevio: jest.Mock;
   };
   let empresas: { findOne: jest.Mock };
   let blockchain: { emitirCertificado: jest.Mock };
@@ -31,9 +31,9 @@ describe('CertificadosService', () => {
       emitir: jest.fn().mockResolvedValue({ id: 'cert1' }),
       findByEmpresaId: jest.fn(),
       findByIdConEmpresa: jest.fn(),
-      findEntregasDelPeriodo: jest.fn(),
-      sumarTokensAntesDe: jest.fn(),
-      sumarCo2Anio: jest.fn(),
+      findEntregasDelPeriodo: jest.fn().mockResolvedValue([]),
+      sumarTokensAntesDe: jest.fn().mockResolvedValue(0),
+      sumarCo2AnioPrevio: jest.fn().mockResolvedValue(0),
     };
     empresas = {
       findOne: jest
@@ -170,6 +170,34 @@ describe('CertificadosService', () => {
       expect(resultado).toEqual({ intentados: 2, emitidos: 2, fallidos: 0 });
     });
 
+    it('congela el reporte mensual junto con el certificado (mismo cierre)', async () => {
+      repository.findEntregasDelPeriodo.mockResolvedValue([
+        {
+          fechaIngreso: new Date('2026-03-05T12:00:00Z'),
+          peso: 25,
+          tokensAcumulados: 50,
+          tipoMaterial: { nombre: 'Vidrio' },
+          movimientoToken: { txHash: '0xtx' },
+        },
+      ]);
+      repository.sumarTokensAntesDe.mockResolvedValue(1000);
+      repository.sumarCo2AnioPrevio.mockResolvedValue(10);
+
+      await service.emitirCertificadosDelMes(3, 2026, [grilla[0]]);
+
+      expect(repository.emitir).toHaveBeenCalledWith(
+        expect.objectContaining({
+          reporteSnapshot: expect.objectContaining({
+            saldoAnterior: 1000,
+            canjes: 0,
+            entregas: [
+              expect.objectContaining({ material: 'Vidrio', txHash: '0xtx' }),
+            ],
+          }),
+        }),
+      );
+    });
+
     it('si falla una empresa, sigue con las demás y lo refleja en el resumen', async () => {
       empresas.findOne
         .mockRejectedValueOnce(new Error('empresa dada de baja'))
@@ -260,6 +288,45 @@ describe('CertificadosService', () => {
       ).rejects.toBeInstanceOf(ForbiddenException);
     });
 
+    it('obtenerReportePdf usa el snapshot guardado sin consultar los ingresos', async () => {
+      repository.findByIdConEmpresa.mockResolvedValue({
+        id: 'abcd-1',
+        empresaId: 'emp1',
+        mes: 4,
+        anio: 2026,
+        posicion: 2,
+        totalEmpresas: 12,
+        co2Evitado: 398,
+        fechaEmision: new Date('2026-05-01T03:00:00Z'),
+        hashVerificacion: 'h'.repeat(64),
+        reporteSnapshot: {
+          entregas: [
+            {
+              fecha: '2026-04-03T12:00:00.000Z',
+              material: 'Cartón',
+              kg: 85,
+              tokens: 850,
+              txHash: null,
+            },
+          ],
+          saldoAnterior: 45130,
+          canjes: 0,
+          co2Anio: 1121,
+        },
+        empresa: {
+          razonSocial: 'Eco SRL',
+          cuit: '30-71204185-3',
+          domicilio: null,
+          walletAddress: '0x' + 'a'.repeat(40),
+        },
+      });
+
+      const pdf = await service.obtenerReportePdf('abcd-1', 'emp1');
+
+      expect(pdf.subarray(0, 4).toString()).toBe('%PDF');
+      expect(repository.findEntregasDelPeriodo).not.toHaveBeenCalled();
+    });
+
     it('obtenerReportePdf genera un PDF con las entregas del mes', async () => {
       repository.findByIdConEmpresa.mockResolvedValue({
         id: 'abcd-1',
@@ -287,7 +354,7 @@ describe('CertificadosService', () => {
         },
       ]);
       repository.sumarTokensAntesDe.mockResolvedValue(45130);
-      repository.sumarCo2Anio.mockResolvedValue(1121);
+      repository.sumarCo2AnioPrevio.mockResolvedValue(1121);
 
       const pdf = await service.obtenerReportePdf('abcd-1', 'emp1');
 

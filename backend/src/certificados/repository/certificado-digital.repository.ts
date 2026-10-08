@@ -137,10 +137,10 @@ export class CertificadoDigitalRepository {
     return _sum.tokensAcumulados ?? 0;
   }
 
-  /** CO₂ evitado por la empresa en el año, hasta el mes indicado inclusive. */
-  async sumarCo2Anio(empresaId: string, mes: number, anio: number) {
+  /** CO₂ evitado por la empresa en el año, en los meses anteriores al indicado. */
+  async sumarCo2AnioPrevio(empresaId: string, mes: number, anio: number) {
     const { _sum } = await this.prisma.certificadoDigital.aggregate({
-      where: { empresaId, anio, mes: { lte: mes } },
+      where: { empresaId, anio, mes: { lt: mes } },
       _sum: { co2Evitado: true },
     });
     return _sum.co2Evitado ?? 0;
