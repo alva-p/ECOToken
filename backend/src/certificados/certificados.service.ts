@@ -285,7 +285,7 @@ export class CertificadosService {
       hashVerificacion: cert.hashVerificacion,
       urlVerificacion: `${frontendUrl}/verificar/${cert.hashVerificacion}`,
       explorerUrl: this.config.get<string>('explorerUrl') ?? '',
-      emitidoEn: new Date(),
+      emitidoEn: cert.fechaEmision,
     });
   }
 
