@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import type { MiPosicion as Datos } from '../api';
 import { Distribucion, Evolucion } from './RankingEstadisticas';
+import { SubtituloSeccion } from './SubtituloSeccion';
 
 const num = (n: number) => n.toLocaleString('es-AR');
 
@@ -40,10 +41,11 @@ export function MiPosicion({
   if (!datos.participa) {
     return (
       <Card className="p-6">
-        <div className="text-xs font-semibold uppercase tracking-wide text-eco-org">
-          Tu posición · {periodo}
-        </div>
-        <p className="mt-2 text-sm text-eco-ink2">
+        <SubtituloSeccion
+          titulo="Tu posición"
+          detalle={`Tu empresa en ${periodo}`}
+        />
+        <p className="mt-4 text-center text-sm text-eco-ink2">
           En este período no registraste aportes, por eso tu empresa no figura
           en el ranking. Mirá cómo sumar en{' '}
           <Link to="/empresa/aportes" className="font-semibold text-eco-org">
@@ -59,10 +61,11 @@ export function MiPosicion({
   const serie = datos.evolucion.map((p) => ({ mes: p.mes, totalKg: p.kg }));
   return (
     <section>
-      <div className="text-xs font-semibold uppercase tracking-wide text-eco-org">
-        Tu posición · {periodo}
-      </div>
-      <div className="mt-3 overflow-hidden rounded-2xl border border-eco-org bg-white">
+      <SubtituloSeccion
+        titulo="Tu posición"
+        detalle={`Tu empresa en ${periodo}`}
+      />
+      <div className="mt-5 overflow-hidden rounded-2xl border border-eco-org bg-white">
         <div className="flex flex-col gap-5 bg-eco-org-soft p-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-eco-org text-white">

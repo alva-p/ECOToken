@@ -27,6 +27,7 @@ import { PerfilDestacado } from '../components/PerfilDestacado';
 import { Transparencia } from '../components/Transparencia';
 import { Badge } from '@/components/ui/Badge';
 import { MiPosicion } from '../components/MiPosicion';
+import { SubtituloSeccion } from '../components/SubtituloSeccion';
 
 const POR_PAGINA = 10;
 
@@ -252,8 +253,11 @@ export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
           {enPanel && mia && (
             <>
               <MiPosicion datos={mia} periodo={etiquetaPeriodo(ranking)} />
-              <div className="border-t border-eco-border pt-8 text-xs font-semibold uppercase tracking-wide text-eco-org">
-                Ranking general
+              <div className="border-t border-eco-border pt-8">
+                <SubtituloSeccion
+                  titulo="Ranking general"
+                  detalle={`Todas las empresas participantes en ${etiquetaPeriodo(ranking)}`}
+                />
               </div>
             </>
           )}
