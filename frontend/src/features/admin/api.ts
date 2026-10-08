@@ -15,6 +15,17 @@ export const filtrarEmpresas = (empresas: Empresa[], busqueda: string) =>
     ).includes(normalizarBusqueda(busqueda)),
   );
 
+/**
+ * Las pendientes de aprobar o rechazar van primero (las más antiguas arriba,
+ * para atenderlas en orden); el resto conserva el orden que trae el backend.
+ */
+export const pendientesPrimero = (empresas: Empresa[]) => {
+  const pendientes = empresas
+    .filter((e) => e.estado === 'PENDIENTE')
+    .sort((a, b) => a.fechaRegistro.localeCompare(b.fechaRegistro));
+  return [...pendientes, ...empresas.filter((e) => e.estado !== 'PENDIENTE')];
+};
+
 export interface EditarEmpresaInput {
   razonSocial?: string;
   cuit?: string;
