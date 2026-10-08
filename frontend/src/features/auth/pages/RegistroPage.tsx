@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { Field } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
+import { esCuitValido } from '@/lib/cuit';
 import { registrarEmpresa } from '../api';
 import { TerminosModal, VERSION_TERMINOS } from '../components/TerminosModal';
 
@@ -45,6 +46,9 @@ export function RegistroPage() {
     const cuit = soloDigitos(form.cuit);
     if (cuit.length !== 11) {
       nuevosErrores.cuit = 'El CUIT debe tener 11 dígitos.';
+    } else if (!esCuitValido(cuit)) {
+      nuevosErrores.cuit =
+        'El CUIT no es válido: revisá el dígito verificador (el último).';
     }
     if (!/^\S+@\S+\.\S+$/.test(form.emailContacto)) {
       nuevosErrores.emailContacto = 'Ingresá un email válido.';
