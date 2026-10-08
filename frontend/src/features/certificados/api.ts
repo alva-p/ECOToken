@@ -1,5 +1,14 @@
 import { api, apiBlob } from '@/lib/api';
 
+/** Aporte (entrega) del mes que respalda los kg de un certificado. */
+export interface AporteCertificado {
+  fecha: string;
+  material: string;
+  kg: number;
+  tokens: number;
+  txHash: string | null;
+}
+
 export interface CertificadoVerificado {
   id: string;
   fechaEmision: string;
@@ -12,6 +21,7 @@ export interface CertificadoVerificado {
   urlPDF: string | null;
   txHashOnChain: string | null;
   empresa: { razonSocial: string };
+  aportes: AporteCertificado[];
 }
 
 export interface ResultadoVerificacion {
@@ -49,4 +59,9 @@ export function misCertificados(): Promise<MiCertificado[]> {
 /** PDF del certificado (E8-HU02), listo para descargar. */
 export function descargarCertificadoPdf(id: string): Promise<Blob> {
   return apiBlob(`/certificados/${id}/pdf`);
+}
+
+/** Reporte mensual de actividad (PDF) del mes de un certificado propio. */
+export function descargarReportePdf(id: string): Promise<Blob> {
+  return apiBlob(`/certificados/${id}/reporte`);
 }

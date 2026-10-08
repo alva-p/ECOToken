@@ -5,8 +5,13 @@ import { Field } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingState } from '@/components/ui/States';
+import { Table } from '@/components/ui/Table';
 import { txLink } from '@/lib/explorer';
-import { verificarCertificado, type ResultadoVerificacion } from '../api';
+import {
+  verificarCertificado,
+  type CertificadoVerificado,
+  type ResultadoVerificacion,
+} from '../api';
 
 function Dato({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -16,6 +21,68 @@ function Dato({ label, children }: { label: string; children: ReactNode }) {
       </div>
       <div className="mt-1 text-sm text-eco-ink">{children}</div>
     </div>
+  );
+}
+
+const fmtKg = (n: number) => `${n.toLocaleString('es-AR')} kg`;
+
+// Desplegable con todos los aportes del mes: permite comprobar que el hash y
+// los kg del certificado salen de esas entregas (cada una con su transacción).
+function Aportes({ certificado }: { certificado: CertificadoVerificado }) {
+  const { aportes } = certificado;
+  const suma = Math.round(aportes.reduce((s, a) => s + a.kg, 0) * 100) / 100;
+  const coincide = Math.abs(suma - certificado.kgReciclados) < 0.01;
+  return (
+    <details className="group mt-6 border-t border-eco-border pt-4">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-eco-ink">
+        <span>
+          Ver los {aportes.length} {aportes.length === 1 ? 'aporte' : 'aportes'}{' '}
+          de este certificado
+        </span>
+        <span className="text-eco-org transition-transform group-open:rotate-180">
+          ▾
+        </span>
+      </summary>
+      <p className="mb-3 mt-2 text-xs text-eco-ink2">
+        Suma de los aportes: <b className="text-eco-ink">{fmtKg(suma)}</b>
+        {coincide
+          ? ' · coincide con los kg certificados.'
+          : ` · difiere de los ${fmtKg(certificado.kgReciclados)} certificados.`}
+      </p>
+      <Table
+        columns={[
+          { label: 'Fecha', width: '5.5rem' },
+          { label: 'Material' },
+          { label: 'Kg', align: 'right', width: '5rem' },
+          { label: 'Tokens', align: 'right', width: '5rem' },
+          { label: 'Tx', align: 'right', width: '4rem' },
+        ]}
+        rows={aportes.map((a) => ({
+          cells: [
+            new Date(a.fecha).toLocaleDateString('es-AR'),
+            a.material,
+            a.kg.toLocaleString('es-AR'),
+            a.tokens.toLocaleString('es-AR'),
+            a.txHash ? (
+              <a
+                key="tx"
+                href={`${txLink(a.txHash)}#eventlog`}
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-eco-org"
+              >
+                Ver ↗
+              </a>
+            ) : (
+              <span key="tx" className="text-eco-ink3">
+                —
+              </span>
+            ),
+          ],
+        }))}
+        emptyLabel="Sin aportes registrados en el período."
+      />
+    </details>
   );
 }
 
@@ -91,7 +158,7 @@ export function VerificarPage() {
       )}
 
       {resultado?.valido && resultado.certificado && (
-        <Card className="w-full max-w-md p-6">
+        <Card className="w-full max-w-2xl p-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-eco-ink">
               Certificado de Impacto Ambiental
@@ -125,6 +192,8 @@ export function VerificarPage() {
               {resultado.certificado.co2Evitado.toLocaleString('es-AR')} kg
             </Dato>
           </div>
+
+          <Aportes certificado={resultado.certificado} />
 
           <div className="mt-6 flex flex-col gap-2 border-t border-eco-border pt-4">
             {resultado.certificado.urlPDF && (

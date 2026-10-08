@@ -16,6 +16,8 @@ import { BlockchainService } from '../blockchain/blockchain.service';
 import type { FilaRankingMes } from '../ranking/interfaces/ranking-resultado.interface';
 import type { DesgloseMaterial } from './desglose-material';
 import { generarCertificadoPdf } from './pdf/certificado-pdf';
+import { generarReportePdf } from './pdf/reporte-pdf';
+import type { ReporteSnapshot } from './reporte-snapshot';
 
 /** Agrupa kg por nombre de material (E8-HU02, desglose del PDF). */
 function sumarPorMaterial(
@@ -75,8 +77,25 @@ export class CertificadosService {
     // Se guarda en minúsculas sin prefijo; el explorador muestra el bytes32 en
     // mayúsculas y/o con 0x, así que se normaliza antes de buscar.
     const normalizado = hash.trim().replace(/^0x/i, '').toLowerCase();
-    const certificado = await this.repository.findByHash(normalizado);
-    return certificado ? { valido: true, certificado } : { valido: false };
+    const encontrado = await this.repository.findByHash(normalizado);
+    if (!encontrado) return { valido: false };
+
+    // Trazabilidad: los aportes del mes que respaldan los kg del certificado.
+    // Solo datos de la entrega (sin datos internos de la empresa).
+    const { empresaId, ...certificado } = encontrado;
+    const entregas = await this.repository.findEntregasDelPeriodo(
+      empresaId,
+      certificado.mes,
+      certificado.anio,
+    );
+    const aportes = entregas.map((e) => ({
+      fecha: e.fechaIngreso,
+      material: e.tipoMaterial.nombre,
+      kg: e.peso,
+      tokens: e.tokensAcumulados,
+      txHash: e.movimientoToken?.txHash ?? null,
+    }));
+    return { valido: true, certificado: { ...certificado, aportes } };
   }
 
   // ─── E8-HU01: emisión al cierre del ranking mensual ───
@@ -140,6 +159,14 @@ export class CertificadosService {
       0,
     );
 
+    // El reporte mensual se congela junto con el certificado (mismo cierre).
+    const reporteSnapshot = await this.armarSnapshotReporte(
+      fila.empresaId,
+      mes,
+      anio,
+      co2Evitado,
+    );
+
     const hashVerificacion = createHash('sha256')
       .update(
         JSON.stringify({
@@ -185,6 +212,7 @@ export class CertificadosService {
       co2Evitado,
       desglosePorMaterial:
         desglosePorMaterial as unknown as Prisma.InputJsonValue,
+      reporteSnapshot: reporteSnapshot as unknown as Prisma.InputJsonValue,
       hashVerificacion,
       credencialFirmada,
       ...(onchain ? { txHashOnChain: onchain.txHash } : {}),
@@ -205,20 +233,7 @@ export class CertificadosService {
 
   /** PDF del certificado, solo para la empresa dueña. */
   async obtenerPdf(id: string, empresaId: string | null): Promise<Buffer> {
-    if (!empresaId) {
-      throw new ForbiddenException(
-        'El usuario no está asociado a ninguna empresa',
-      );
-    }
-    const certificado = await this.repository.findByIdConEmpresa(id);
-    if (!certificado) {
-      throw new NotFoundException(`CertificadoDigital ${id} no encontrado`);
-    }
-    if (certificado.empresaId !== empresaId) {
-      throw new ForbiddenException(
-        'Este certificado no pertenece a tu empresa',
-      );
-    }
+    const certificado = await this.certificadoPropio(id, empresaId);
 
     const frontendUrl = this.config.get<string>('corsOrigin') ?? '';
     return generarCertificadoPdf({
@@ -234,5 +249,92 @@ export class CertificadosService {
       hashVerificacion: certificado.hashVerificacion,
       urlVerificacion: `${frontendUrl}/verificar/${certificado.hashVerificacion}`,
     });
+  }
+
+  /**
+   * Reporte mensual de actividad (PDF) del período de un certificado propio.
+   * Solo hay reporte de meses cerrados: cuelga del certificado del mes.
+   */
+  async obtenerReportePdf(
+    id: string,
+    empresaId: string | null,
+  ): Promise<Buffer> {
+    const cert = await this.certificadoPropio(id, empresaId);
+    // Certificados anteriores a la columna no tienen snapshot: se arma al vuelo.
+    const snap =
+      (cert.reporteSnapshot as unknown as ReporteSnapshot | null) ??
+      (await this.armarSnapshotReporte(
+        cert.empresaId,
+        cert.mes,
+        cert.anio,
+        cert.co2Evitado,
+      ));
+    const frontendUrl = this.config.get<string>('corsOrigin') ?? '';
+    return generarReportePdf({
+      numero: `REP-${cert.anio}-${String(cert.mes).padStart(2, '0')}-${cert.id.slice(0, 4).toUpperCase()}`,
+      mes: cert.mes,
+      anio: cert.anio,
+      razonSocial: cert.empresa.razonSocial,
+      cuit: cert.empresa.cuit,
+      domicilio: cert.empresa.domicilio,
+      walletAddress: cert.empresa.walletAddress,
+      entregas: snap.entregas.map((e) => ({ ...e, fecha: new Date(e.fecha) })),
+      saldoAnterior: snap.saldoAnterior,
+      canjes: snap.canjes,
+      co2Mes: cert.co2Evitado,
+      co2Anio: snap.co2Anio,
+      posicion: cert.posicion,
+      totalEmpresas: cert.totalEmpresas,
+      hashVerificacion: cert.hashVerificacion,
+      urlVerificacion: `${frontendUrl}/verificar/${cert.hashVerificacion}`,
+      explorerUrl: this.config.get<string>('explorerUrl') ?? '',
+      emitidoEn: cert.fechaEmision,
+    });
+  }
+
+  /** Entregas, saldos y CO₂ del año del reporte mensual de una empresa. */
+  private async armarSnapshotReporte(
+    empresaId: string,
+    mes: number,
+    anio: number,
+    co2Mes: number,
+  ): Promise<ReporteSnapshot> {
+    const [entregas, saldoAnterior, co2Previo] = await Promise.all([
+      this.repository.findEntregasDelPeriodo(empresaId, mes, anio),
+      this.repository.sumarTokensAntesDe(empresaId, mes, anio),
+      this.repository.sumarCo2AnioPrevio(empresaId, mes, anio),
+    ]);
+    return {
+      entregas: entregas.map((e) => ({
+        fecha: e.fechaIngreso.toISOString(),
+        material: e.tipoMaterial.nombre,
+        kg: e.peso,
+        tokens: e.tokensAcumulados,
+        txHash: e.movimientoToken?.txHash ?? null,
+      })),
+      saldoAnterior,
+      // ponytail: el sistema aún no registra canjes; sale 0 hasta que exista ese flujo
+      canjes: 0,
+      co2Anio: co2Previo + co2Mes,
+    };
+  }
+
+  /** Certificado con datos de empresa; exige que pertenezca a la empresa logueada. */
+  private async certificadoPropio(id: string, empresaId: string | null) {
+    if (!empresaId) {
+      throw new ForbiddenException(
+        'El usuario no está asociado a ninguna empresa',
+      );
+    }
+    const certificado = await this.repository.findByIdConEmpresa(id);
+    if (!certificado) {
+      throw new NotFoundException(`CertificadoDigital ${id} no encontrado`);
+    }
+    if (certificado.empresaId !== empresaId) {
+      throw new ForbiddenException(
+        'Este certificado no pertenece a tu empresa',
+      );
+    }
+    return certificado;
   }
 }

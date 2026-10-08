@@ -264,6 +264,8 @@ model CertificadoDigital {
   co2Evitado        Float
   /// Desglose por tipo de material al momento de emitir, ej. [{"material":"PLASTICO","kg":120}] (E8-HU02, PDF).
   desglosePorMaterial Json @default("[]")
+  /// Datos del reporte mensual de actividad congelados al emitir (mismo instante que el certificado). Null en certificados anteriores a esta columna.
+  reporteSnapshot   Json?
   hashVerificacion  String
   credencialFirmada String
   urlPDF            String?
