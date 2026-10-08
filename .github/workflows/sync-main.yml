@@ -1,0 +1,67 @@
+# Mantiene `main` a la par de `develop`: cuando el CI de `develop` termina en
+# verde, abre un PR a `main` con el mismo contenido y lo mergea (squash).
+# Producción en Vercel se despliega desde `main`, así que queda siempre igual
+# a `develop`.
+#
+# El PR no se arma como `develop → main` porque, con el historial de squashes,
+# ese PR muestra conflictos falsos. En cambio se parte de `main` y se aplica el
+# diff exacto contra `develop`: el resultado es idéntico en contenido.
+#
+# Este workflow no ejecuta código de `develop` (solo aplica un diff), por eso es
+# seguro darle permisos de escritura.
+name: Sync main con develop
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [develop]
+  workflow_dispatch: # para forzarlo a mano desde la pestaña Actions
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# Una sincronización a la vez; si llegan varias, se encolan (cada una compara
+# contra el estado actual de `main`, así que son idempotentes).
+concurrency:
+  group: sync-main
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    # Solo con CI en verde (o a mano).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Aplicar develop sobre main y mergear
+        run: |
+          git fetch origin develop
+          DEVELOP="$(git rev-parse origin/develop)"
+          if git diff --quiet origin/main "$DEVELOP"; then
+            echo "main y develop ya están a la par."
+            exit 0
+          fi
+
+          RAMA="auto/sync-main-${DEVELOP:0:7}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$RAMA" origin/main
+          git diff --binary origin/main "$DEVELOP" | git apply --index --binary
+          git commit -m "release: sincroniza main con develop (${DEVELOP:0:7})"
+          git push origin "$RAMA"
+
+          URL="$(gh pr create --base main --head "$RAMA" \
+            --title "release: sincroniza main con develop (${DEVELOP:0:7})" \
+            --body "Sincronización automática: \`main\` queda con el mismo contenido que \`develop\` en ${DEVELOP:0:7} (CI de develop en verde). Generado por .github/workflows/sync-main.yml.")"
+          gh pr merge "$URL" --squash --delete-branch
