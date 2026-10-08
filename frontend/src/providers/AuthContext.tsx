@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { loginRequest } from '@/features/auth/api';
+import { cambiarPasswordRequest, loginRequest } from '@/features/auth/api';
 import {
   clearToken,
   getToken,
@@ -25,6 +25,8 @@ interface AuthState {
   status: AuthStatus;
   login: (email: string, password: string) => Promise<Usuario>;
   logout: () => void;
+  /** Cambia la contraseña y actualiza la sesión (ya sin la marca de temporal). */
+  cambiarPassword: (actual: string, nueva: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -82,8 +84,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [scheduleExpiry],
   );
 
+  const cambiarPassword = useCallback(
+    async (actual: string, nueva: string) => {
+      const { token } = await cambiarPasswordRequest(actual, nueva);
+      const usuario = usuarioFromToken(token);
+      if (!usuario) throw new Error('El servidor devolvió un token inválido.');
+      setToken(token);
+      setUser(usuario);
+      scheduleExpiry(token);
+    },
+    [scheduleExpiry],
+  );
+
   return (
-    <AuthContext.Provider value={{ user, status, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, status, login, logout, cambiarPassword }}
+    >
       {children}
     </AuthContext.Provider>
   );

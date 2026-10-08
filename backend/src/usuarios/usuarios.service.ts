@@ -1,9 +1,12 @@
+import * as bcrypt from 'bcrypt';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UsuarioRepository } from './repository/usuario.repository';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 
 /** Lógica de negocio de Usuario. */
+const BCRYPT_ROUNDS = 10;
+
 @Injectable()
 export class UsuariosService {
   constructor(private readonly repository: UsuarioRepository) {}
@@ -56,13 +59,21 @@ export class UsuariosService {
     // TODO: flujo de recuperación (envío de email con token temporal, etc.).
   }
 
-  /** Cambia la contraseña del usuario validando la actual. */
+  /**
+   * Cambia la contraseña validando la actual y baja la marca de "contraseña
+   * temporal". Devuelve false si la actual no coincide.
+   */
   async cambiarPassword(
     id: string,
     actual: string,
     nueva: string,
   ): Promise<boolean> {
-    // TODO: validar la contraseña actual y actualizar el passwordHash con la nueva.
-    return false;
+    const usuario = await this.findOne(id);
+    if (!(await bcrypt.compare(actual, usuario.passwordHash))) return false;
+    await this.repository.update(id, {
+      passwordHash: await bcrypt.hash(nueva, BCRYPT_ROUNDS),
+      debeCambiarPassword: false,
+    });
+    return true;
   }
 }

@@ -163,6 +163,7 @@ export class EmpresasService {
         email: dto.emailContacto,
         passwordHash: await bcrypt.hash(passwordTemporal, BCRYPT_ROUNDS),
         tipoRol: TipoRol.COOPERATIVA,
+        debeCambiarPassword: true,
         empresaId: empresa.id,
       });
       usuarioId = usuario.id;
@@ -217,6 +218,7 @@ export class EmpresasService {
       email: empresa.emailContacto,
       passwordHash: await bcrypt.hash(passwordTemporal, BCRYPT_ROUNDS),
       tipoRol: TipoRol.EMPRESA,
+      debeCambiarPassword: true,
       empresaId: empresa.id,
     });
 
