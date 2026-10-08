@@ -16,6 +16,17 @@ export function loginRequest(
   });
 }
 
+/** Cambia la contraseña del usuario logueado; devuelve un token nuevo sin la marca de temporal. */
+export function cambiarPasswordRequest(
+  passwordActual: string,
+  passwordNueva: string,
+): Promise<LoginResponse> {
+  return api<LoginResponse>('/auth/cambiar-password', {
+    method: 'POST',
+    body: JSON.stringify({ passwordActual, passwordNueva }),
+  });
+}
+
 export interface RegistrarEmpresaInput {
   razonSocial: string;
   cuit: string;

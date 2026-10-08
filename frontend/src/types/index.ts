@@ -39,6 +39,8 @@ export interface Usuario {
   activo: boolean;
   empresaId: string | null;
   municipalidadId: string | null;
+  /** true mientras use la contraseña temporal que generó el sistema. */
+  debeCambiarPassword: boolean;
 }
 
 /** Municipalidad: autoridad institucional (consume reportes y ranking público). */

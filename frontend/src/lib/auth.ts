@@ -14,6 +14,7 @@ interface JwtPayload {
   rol: UserRole;
   empresaId: string | null;
   municipalidadId: string | null;
+  debeCambiarPassword?: boolean;
   exp: number;
 }
 
@@ -59,6 +60,7 @@ export function usuarioFromToken(token: string): Usuario | null {
     activo: true,
     empresaId: payload.empresaId,
     municipalidadId: payload.municipalidadId,
+    debeCambiarPassword: payload.debeCambiarPassword ?? false,
   };
 }
 

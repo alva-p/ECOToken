@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
-import { UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { TipoRol, type Usuario } from '@prisma/client';
 import { AuthService } from './auth.service';
@@ -12,6 +12,7 @@ const usuarioBase: Usuario = {
   passwordHash: '',
   tipoRol: TipoRol.COOPERATIVA,
   activo: true,
+  debeCambiarPassword: false,
   empresaId: 'empresa-1',
   municipalidadId: null,
   createdAt: new Date(),
@@ -20,11 +21,19 @@ const usuarioBase: Usuario = {
 
 describe('AuthService', () => {
   let service: AuthService;
-  let usuariosService: { findByEmail: jest.Mock };
+  let usuariosService: {
+    findByEmail: jest.Mock;
+    findOne: jest.Mock;
+    cambiarPassword: jest.Mock;
+  };
   let jwtService: { signAsync: jest.Mock };
 
   beforeEach(async () => {
-    usuariosService = { findByEmail: jest.fn() };
+    usuariosService = {
+      findByEmail: jest.fn(),
+      findOne: jest.fn(),
+      cambiarPassword: jest.fn(),
+    };
     jwtService = { signAsync: jest.fn().mockResolvedValue('token-firmado') };
 
     const moduleRef = await Test.createTestingModule({
@@ -55,7 +64,23 @@ describe('AuthService', () => {
         rol: TipoRol.COOPERATIVA,
         empresaId: usuarioBase.empresaId,
         municipalidadId: usuarioBase.municipalidadId,
+        debeCambiarPassword: false,
       });
+    });
+
+    it('marca en el token que la cuenta debe cambiar su contraseña temporal', async () => {
+      const passwordHash = await bcrypt.hash('temporal-123', 4);
+      usuariosService.findByEmail.mockResolvedValue({
+        ...usuarioBase,
+        passwordHash,
+        debeCambiarPassword: true,
+      });
+
+      await service.login('coop@ejemplo.com', 'temporal-123');
+
+      expect(jwtService.signAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ debeCambiarPassword: true }),
+      );
     });
 
     it('lanza UnauthorizedException si el usuario no existe', async () => {
@@ -91,6 +116,48 @@ describe('AuthService', () => {
         service.login('coop@ejemplo.com', 'incorrecta'),
       ).rejects.toBeInstanceOf(UnauthorizedException);
       expect(jwtService.signAsync).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('cambiarPassword', () => {
+    it('cambia la contraseña y devuelve un token sin la marca de temporal', async () => {
+      usuariosService.cambiarPassword.mockResolvedValue(true);
+      usuariosService.findOne.mockResolvedValue({
+        ...usuarioBase,
+        debeCambiarPassword: false,
+      });
+
+      const res = await service.cambiarPassword(
+        'u1',
+        'Temporal-1',
+        'Nueva-clave-99',
+      );
+
+      expect(res).toEqual({ token: 'token-firmado' });
+      expect(usuariosService.cambiarPassword).toHaveBeenCalledWith(
+        'u1',
+        'Temporal-1',
+        'Nueva-clave-99',
+      );
+      expect(jwtService.signAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ debeCambiarPassword: false }),
+      );
+    });
+
+    it('rechaza si la contraseña actual es incorrecta', async () => {
+      usuariosService.cambiarPassword.mockResolvedValue(false);
+
+      await expect(
+        service.cambiarPassword('u1', 'mal', 'Nueva-clave-99'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+      expect(jwtService.signAsync).not.toHaveBeenCalled();
+    });
+
+    it('rechaza una contraseña nueva igual a la actual', async () => {
+      await expect(
+        service.cambiarPassword('u1', 'Misma-clave-1', 'Misma-clave-1'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(usuariosService.cambiarPassword).not.toHaveBeenCalled();
     });
   });
 });

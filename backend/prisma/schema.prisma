@@ -66,6 +66,8 @@ model Usuario {
   passwordHash String
   tipoRol      TipoRol
   activo       Boolean @default(true)
+  /// true mientras la cuenta use la contraseña temporal que generó el sistema (aprobación/alta): fuerza el cambio al ingresar.
+  debeCambiarPassword Boolean @default(false)
 
   empresa         Empresa?       @relation(fields: [empresaId], references: [id])
   empresaId       String?
