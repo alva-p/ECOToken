@@ -61,7 +61,7 @@ export function PanelLayout({
   }
 
   return (
-    <div className="flex h-dvh bg-eco-bg text-eco-ink">
+    <div className="flex h-dvh bg-eco-bg text-eco-ink print:block print:h-auto print:bg-white">
       {abierto && (
         <div
           aria-hidden
@@ -71,7 +71,7 @@ export function PanelLayout({
       )}
       <aside
         className={cx(
-          'fixed inset-y-0 left-0 z-40 flex w-64 flex-col overflow-y-auto bg-[#14181C] text-white transition-transform md:static md:w-56 md:flex-shrink-0 md:translate-x-0',
+          'fixed inset-y-0 left-0 z-40 flex w-64 print:hidden flex-col overflow-y-auto bg-[#14181C] text-white transition-transform md:static md:w-56 md:flex-shrink-0 md:translate-x-0',
           abierto ? 'translate-x-0' : '-translate-x-full',
         )}
       >
@@ -157,7 +157,9 @@ export function PanelLayout({
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-4 sm:p-6">{children}</main>
+        <main className="flex-1 overflow-auto p-4 sm:p-6 print:overflow-visible print:p-0">
+          {children}
+        </main>
       </div>
     </div>
   );
