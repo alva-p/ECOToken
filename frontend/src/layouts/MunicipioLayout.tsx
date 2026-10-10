@@ -15,7 +15,9 @@ export function MunicipioLayout() {
       actorColor="muni"
       subtitle="Panel de municipalidad"
       title={
-        pathname.endsWith('/beneficios') ? 'Premios | Beneficios' : 'Dashboard'
+        pathname.endsWith('/beneficios')
+          ? 'Premios | Beneficios'
+          : 'Panel de Gestión Ambiental'
       }
       who={user?.email ?? ''}
       whoRole="Autoridad municipal"

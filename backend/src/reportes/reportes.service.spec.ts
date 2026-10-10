@@ -4,10 +4,16 @@ import { ReporteRepository } from './repository/reporte.repository';
 
 describe('ReportesService', () => {
   let service: ReportesService;
-  let repository: { findIngresosEnPeriodo: jest.Mock };
+  let repository: {
+    findIngresosEnPeriodo: jest.Mock;
+    findIngresosDetalle: jest.Mock;
+  };
 
   beforeEach(async () => {
-    repository = { findIngresosEnPeriodo: jest.fn().mockResolvedValue([]) };
+    repository = {
+      findIngresosEnPeriodo: jest.fn().mockResolvedValue([]),
+      findIngresosDetalle: jest.fn().mockResolvedValue([]),
+    };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -108,6 +114,50 @@ describe('ReportesService', () => {
         desde: null,
         hasta: null,
       });
+    });
+  });
+
+  describe('obtenerAportes', () => {
+    it('aplana cada ingreso y marca los anclados on-chain', async () => {
+      repository.findIngresosDetalle.mockResolvedValueOnce([
+        {
+          id: 'i1',
+          fechaIngreso: new Date('2026-09-01T10:00:00Z'),
+          empresaId: 'emp1',
+          empresa: { razonSocial: 'Eco SRL', cuit: '30-1' },
+          tipoMaterial: { nombre: 'Vidrio' },
+          peso: 5,
+          tokensAcumulados: 50,
+          movimientoToken: { txHash: '0xabc' },
+        },
+        {
+          id: 'i2',
+          fechaIngreso: new Date('2026-09-02T10:00:00Z'),
+          empresaId: 'emp1',
+          empresa: { razonSocial: 'Eco SRL', cuit: '30-1' },
+          tipoMaterial: { nombre: 'Papel' },
+          peso: 2,
+          tokensAcumulados: 20,
+          movimientoToken: null,
+        },
+      ]);
+
+      const res = await service.obtenerAportes();
+
+      expect(res).toEqual([
+        {
+          id: 'i1',
+          fecha: '2026-09-01T10:00:00.000Z',
+          organizacionId: 'emp1',
+          organizacion: 'Eco SRL',
+          cuit: '30-1',
+          material: 'Vidrio',
+          kg: 5,
+          puntos: 50,
+          verificado: true,
+        },
+        expect.objectContaining({ id: 'i2', verificado: false }),
+      ]);
     });
   });
 });

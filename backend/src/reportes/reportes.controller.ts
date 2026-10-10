@@ -30,6 +30,14 @@ export class ReportesController {
     return this.service.obtenerVolumenPorPeriodo({ desde, hasta });
   }
 
+  // Aportes en filas planas para el dashboard de gestión ambiental.
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.MUNICIPALIDAD, TipoRol.ADMIN)
+  @Get('ingresos')
+  ingresos() {
+    return this.service.obtenerAportes();
+  }
+
   @Post()
   create(@Body() dto: CreateReporteDto) {
     return this.service.create(dto);

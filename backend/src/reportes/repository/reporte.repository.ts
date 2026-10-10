@@ -46,4 +46,16 @@ export class ReporteRepository {
       orderBy: { fechaIngreso: 'asc' },
     });
   }
+
+  /** Todos los aportes, con organización, material y anclaje on-chain (dashboard municipal). */
+  findIngresosDetalle() {
+    return this.prisma.ingresoMaterial.findMany({
+      include: {
+        empresa: { select: { id: true, razonSocial: true, cuit: true } },
+        tipoMaterial: { select: { nombre: true } },
+        movimientoToken: { select: { txHash: true } },
+      },
+      orderBy: { fechaIngreso: 'asc' },
+    });
+  }
 }

@@ -116,6 +116,27 @@ export class ReportesService {
     };
   }
 
+  /**
+   * Aportes en filas planas para el dashboard municipal: el front deriva
+   * períodos, comparaciones y rankings sin un endpoint por métrica.
+   * ponytail: devuelve todo el histórico; con decenas de miles de aportes
+   * conviene agregar por mes × organización × material en SQL.
+   */
+  async obtenerAportes() {
+    const ingresos = await this.repository.findIngresosDetalle();
+    return ingresos.map((i) => ({
+      id: i.id,
+      fecha: i.fechaIngreso.toISOString(),
+      organizacionId: i.empresaId,
+      organizacion: i.empresa.razonSocial,
+      cuit: i.empresa.cuit,
+      material: i.tipoMaterial.nombre,
+      kg: i.peso,
+      puntos: i.tokensAcumulados,
+      verificado: !!i.movimientoToken?.txHash,
+    }));
+  }
+
   /** Empresas reconocidas en el mes indicado. */
   async obtenerEmpresasReconocidas(mes: number): Promise<unknown[]> {
     // TODO: devolver las empresas reconocidas del mes.
