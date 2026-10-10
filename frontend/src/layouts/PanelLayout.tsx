@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { cx } from '@/lib/cx';
+import { CierreMesBadge } from '@/components/CierreMesBadge';
 import { useAuth } from '@/providers/AuthContext';
 
 export type ActorColor = 'org' | 'coop' | 'muni';
@@ -275,6 +276,9 @@ export function PanelLayout({
               <h1 className="mt-0.5 text-xl font-semibold tracking-tight">
                 {title}
               </h1>
+            </div>
+            <div className="ml-auto print:hidden">
+              <CierreMesBadge />
             </div>
           </div>
         </header>
