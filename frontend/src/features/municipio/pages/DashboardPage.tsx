@@ -8,7 +8,6 @@ import {
   COMPARACIONES,
   coloresMateriales,
   comparacionMensual,
-  descargarCsv,
   enRango,
   filtrarDimensiones,
   fmtFecha,
@@ -28,6 +27,7 @@ import {
   type Filtros,
   type ModoComparacion,
 } from '../dashboard/data';
+import { descargarCsv, descargarExcel } from '../dashboard/exportar';
 import { Delta, Swatch } from '../components/dashboard/ChartCard';
 import { MetricCard } from '../components/dashboard/MetricCard';
 import { DashboardFilters } from '../components/dashboard/DashboardFilters';
@@ -138,7 +138,8 @@ export function MunicipioDashboardPage() {
         comparacion={modo}
         onComparacion={setModo}
         puedeComparar={d.puedeComparar}
-        onExportCsv={() => descargarCsv(d.organizaciones, filtros)}
+        onExportCsv={() => descargarCsv(d.periodo, filtros)}
+        onExportExcel={() => descargarExcel(d.periodo, filtros)}
         exportDisabled={d.periodo.length === 0}
       />
 

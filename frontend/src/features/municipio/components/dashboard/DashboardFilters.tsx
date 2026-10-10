@@ -24,6 +24,7 @@ export function DashboardFilters({
   onComparacion,
   puedeComparar,
   onExportCsv,
+  onExportExcel,
   exportDisabled,
 }: {
   filtros: Filtros;
@@ -34,6 +35,7 @@ export function DashboardFilters({
   onComparacion: (m: ModoComparacion) => void;
   puedeComparar: boolean;
   onExportCsv: () => void;
+  onExportExcel: () => void;
   exportDisabled: boolean;
 }) {
   const set = (parcial: Partial<Filtros>) =>
@@ -137,11 +139,20 @@ export function DashboardFilters({
           </Button>
           <Button
             type="button"
-            color="org"
+            variant="outline"
+            color="ink"
             onClick={onExportCsv}
             disabled={exportDisabled}
           >
             Exportar CSV
+          </Button>
+          <Button
+            type="button"
+            color="org"
+            onClick={onExportExcel}
+            disabled={exportDisabled}
+          >
+            Exportar Excel
           </Button>
         </div>
       </div>
