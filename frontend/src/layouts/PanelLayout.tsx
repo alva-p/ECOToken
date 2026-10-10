@@ -116,7 +116,12 @@ export function PanelLayout({
           abierto ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        <div className="flex h-16 items-center gap-2.5 border-b border-white/10 px-4">
+        <div
+          className={cx(
+            'flex h-16 items-center gap-2.5 border-b border-white/10 px-4',
+            colapsada && 'md:h-auto md:flex-col md:gap-2 md:px-0 md:py-3',
+          )}
+        >
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-eco-org">
             <Leaf size={18} aria-hidden />
           </span>
@@ -133,6 +138,19 @@ export function PanelLayout({
               {subtitle}
             </div>
           </div>
+          <button
+            type="button"
+            onClick={alternarColapsada}
+            aria-label={colapsada ? 'Expandir menú' : 'Colapsar menú'}
+            title={colapsada ? 'Expandir menú' : 'Colapsar menú'}
+            className="hidden rounded-md p-1.5 text-white/50 hover:bg-white/10 hover:text-white md:block"
+          >
+            {colapsada ? (
+              <PanelLeftOpen size={18} />
+            ) : (
+              <PanelLeftClose size={18} />
+            )}
+          </button>
           <button
             type="button"
             aria-label="Cerrar menú"
@@ -231,20 +249,6 @@ export function PanelLayout({
               <LogOut size={17} />
             </button>
           </div>
-          <button
-            type="button"
-            onClick={() => alternarColapsada()}
-            aria-label={colapsada ? 'Expandir menú' : 'Colapsar menú'}
-            title={colapsada ? 'Expandir menú' : 'Colapsar menú'}
-            className="mt-2 hidden w-full items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium text-white/40 hover:bg-white/5 hover:text-white md:flex"
-          >
-            {colapsada ? (
-              <PanelLeftOpen size={17} />
-            ) : (
-              <PanelLeftClose size={17} />
-            )}
-            <span className={cx(colapsada && 'sr-only')}>Colapsar menú</span>
-          </button>
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
