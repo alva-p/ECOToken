@@ -1,12 +1,17 @@
+import { FileBadge, LayoutDashboard, Recycle, Trophy } from 'lucide-react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthContext';
 import { PanelLayout, type PanelNavItem } from './PanelLayout';
 
 const NAV: PanelNavItem[] = [
-  { label: 'Resumen', to: '/empresa' },
-  { label: 'Aportes', to: '/empresa/aportes' },
-  { label: 'Ranking', to: '/empresa/ranking' }, // mismo ranking público, dentro del panel
-  { label: 'Certificados y Reportes', to: '/empresa/certificados' },
+  { label: 'Resumen', to: '/empresa', icon: LayoutDashboard },
+  { label: 'Aportes', to: '/empresa/aportes', icon: Recycle },
+  { label: 'Ranking', to: '/empresa/ranking', icon: Trophy }, // mismo ranking público, dentro del panel
+  {
+    label: 'Certificados y Reportes',
+    to: '/empresa/certificados',
+    icon: FileBadge,
+  },
 ];
 
 export function EmpresaLayout() {
