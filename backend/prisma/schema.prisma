@@ -317,3 +317,21 @@ model Ranking {
   // antes de cerrar.
   @@unique([empresaId, mes, anio])
 }
+
+/// Premio o beneficio que la municipalidad publica para que las empresas lo
+/// canjeen con tokens ECO (p. ej. publicidad en la web o en pantallas digitales).
+model Beneficio {
+  id           String    @id @default(uuid())
+  titulo       String
+  descripcion  String
+  /// WEB | PANTALLAS | OTRO (texto libre acotado por el DTO).
+  tipo         String
+  costoTokens  Int
+  /// null = sin límite de cupos.
+  cupos        Int?
+  vigenteHasta DateTime?
+  activo       Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

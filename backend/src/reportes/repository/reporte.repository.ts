@@ -41,6 +41,7 @@ export class ReporteRepository {
       },
       include: {
         empresa: { select: { id: true, razonSocial: true } },
+        tipoMaterial: { select: { nombre: true } },
       },
       orderBy: { fechaIngreso: 'asc' },
     });

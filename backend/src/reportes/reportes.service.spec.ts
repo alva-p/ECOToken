@@ -31,18 +31,24 @@ describe('ReportesService', () => {
           empresa: { razonSocial: 'Eco SRL' },
           peso: 5,
           tokensAcumulados: 50,
+          tipoMaterial: { nombre: 'Vidrio' },
+          fechaIngreso: new Date('2026-08-10T12:00:00Z'),
         },
         {
           empresaId: 'emp1',
           empresa: { razonSocial: 'Eco SRL' },
           peso: 3,
           tokensAcumulados: 30,
+          tipoMaterial: { nombre: 'Papel' },
+          fechaIngreso: new Date('2026-09-02T12:00:00Z'),
         },
         {
           empresaId: 'emp2',
           empresa: { razonSocial: 'Supermercado Top' },
           peso: 20,
           tokensAcumulados: 200,
+          tipoMaterial: { nombre: 'Vidrio' },
+          fechaIngreso: new Date('2026-09-15T12:00:00Z'),
         },
       ]);
 
@@ -51,6 +57,14 @@ describe('ReportesService', () => {
       expect(res.empresasActivas).toBe(2);
       expect(res.totalKg).toBe(28);
       expect(res.totalTokens).toBe(280);
+      expect(res.porMaterial).toEqual([
+        { material: 'Vidrio', kg: 25 },
+        { material: 'Papel', kg: 3 },
+      ]);
+      expect(res.porMes).toEqual([
+        { mes: '2026-08', kgPorMaterial: { Vidrio: 5 } },
+        { mes: '2026-09', kgPorMaterial: { Papel: 3, Vidrio: 20 } },
+      ]);
       // Ordenado de mayor a menor kg reciclados.
       expect(res.data).toEqual([
         {
@@ -86,6 +100,8 @@ describe('ReportesService', () => {
       const res = await service.obtenerVolumenPorPeriodo({});
       expect(res).toEqual({
         data: [],
+        porMaterial: [],
+        porMes: [],
         totalKg: 0,
         totalTokens: 0,
         empresasActivas: 0,

@@ -85,8 +85,29 @@ export class ReportesService {
       (a, b) => b.kgReciclados - a.kgReciclados,
     );
 
+    // Por material (total del período) y por mes × material (tendencia).
+    const porMaterial = new Map<string, number>();
+    const porMes = new Map<string, Record<string, number>>();
+    for (const ingreso of ingresos) {
+      const material = ingreso.tipoMaterial.nombre;
+      porMaterial.set(
+        material,
+        (porMaterial.get(material) ?? 0) + ingreso.peso,
+      );
+      const mes = ingreso.fechaIngreso.toISOString().slice(0, 7);
+      const fila = porMes.get(mes) ?? {};
+      fila[material] = (fila[material] ?? 0) + ingreso.peso;
+      porMes.set(mes, fila);
+    }
+
     return {
       data,
+      porMaterial: [...porMaterial]
+        .map(([material, kg]) => ({ material, kg }))
+        .sort((a, b) => b.kg - a.kg),
+      porMes: [...porMes]
+        .map(([mes, kgPorMaterial]) => ({ mes, kgPorMaterial }))
+        .sort((a, b) => a.mes.localeCompare(b.mes)),
       totalKg: data.reduce((sum, e) => sum + e.kgReciclados, 0),
       totalTokens: data.reduce((sum, e) => sum + e.tokensAcumulados, 0),
       empresasActivas: data.length,

@@ -10,6 +10,8 @@ export interface VolumenPorEmpresa {
 
 export interface VolumenReciclado {
   data: VolumenPorEmpresa[];
+  porMaterial: { material: string; kg: number }[];
+  porMes: { mes: string; kgPorMaterial: Record<string, number> }[];
   totalKg: number;
   totalTokens: number;
   empresasActivas: number;
@@ -32,3 +34,32 @@ export function obtenerVolumen(
   const qs = params.toString();
   return api<VolumenReciclado>(`/reportes/volumen${qs ? `?${qs}` : ''}`);
 }
+
+export type TipoBeneficio = 'WEB' | 'PANTALLAS' | 'OTRO';
+
+export interface Beneficio {
+  id: string;
+  titulo: string;
+  descripcion: string;
+  tipo: TipoBeneficio;
+  costoTokens: number;
+  cupos: number | null;
+  vigenteHasta: string | null;
+  activo: boolean;
+}
+
+export type BeneficioInput = Omit<Beneficio, 'id' | 'activo'>;
+
+export const listarBeneficios = () => api<Beneficio[]>('/beneficios');
+
+export const crearBeneficio = (dto: BeneficioInput) =>
+  api<Beneficio>('/beneficios', { method: 'POST', body: JSON.stringify(dto) });
+
+export const actualizarBeneficio = (id: string, dto: Partial<Beneficio>) =>
+  api<Beneficio>(`/beneficios/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(dto),
+  });
+
+export const eliminarBeneficio = (id: string) =>
+  api<Beneficio>(`/beneficios/${id}`, { method: 'DELETE' });

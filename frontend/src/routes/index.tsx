@@ -23,6 +23,7 @@ import { RolesPage } from '@/features/admin/pages/RolesPage';
 import { ContratoPage } from '@/features/admin/pages/ContratoPage';
 import { MunicipioLayout } from '@/layouts/MunicipioLayout';
 import { MunicipioDashboardPage } from '@/features/municipio/pages/DashboardPage';
+import { BeneficiosPage } from '@/features/municipio/pages/BeneficiosPage';
 
 /** Definición de rutas. Ver doc/ESTRUCTURA-PROYECTO.md §5. */
 export const router = createBrowserRouter([
@@ -83,7 +84,10 @@ export const router = createBrowserRouter([
         <MunicipioLayout />
       </ProtectedRoute>
     ),
-    children: [{ index: true, element: <MunicipioDashboardPage /> }],
+    children: [
+      { index: true, element: <MunicipioDashboardPage /> },
+      { path: 'beneficios', element: <BeneficiosPage /> },
+    ],
   },
 
   { path: '*', element: <Navigate to="/" replace /> },
