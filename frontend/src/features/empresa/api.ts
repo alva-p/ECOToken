@@ -1,5 +1,6 @@
 import { api } from '@/lib/api';
 import type { TipoMaterial } from '@/types';
+import type { Beneficio, Canje } from '@/features/municipio/api';
 
 /** Fila del historial de aportes (E6-HU02): ya viene aplanada por el backend. */
 export interface AporteHistorial {
@@ -63,12 +64,35 @@ export function comprobanteAporte(id: string): Promise<ComprobanteAporte> {
   return api<ComprobanteAporte>(`/ingresos/${id}/comprobante`);
 }
 
-/** Saldo actual de tokens ECO y dirección EVM de la empresa logueada (E6-HU01). */
-export function miSaldo(): Promise<{
+export interface MiSaldo {
   saldo: number;
   walletAddress: string | null;
-}> {
-  return api<{ saldo: number; walletAddress: string | null }>(
-    '/tokens/mi-saldo',
-  );
+  razonSocial: string | null;
 }
+
+/** Saldo actual de tokens ECO, dirección EVM y razón social de la organización logueada (E6-HU01). */
+export function miSaldo(): Promise<MiSaldo> {
+  return api<MiSaldo>('/tokens/mi-saldo');
+}
+
+// ─── Beneficios municipales ───
+
+export interface BeneficioDisponible extends Beneficio {
+  /** null = sin límite de cupos. */
+  cuposDisponibles: number | null;
+}
+
+/** Catálogo vigente, saldo y canjes propios. disponible = saldo − ECO reservados en canjes no rechazados. */
+export interface BeneficiosOrganizacion {
+  saldo: number;
+  reservado: number;
+  disponible: number;
+  beneficios: BeneficioDisponible[];
+  canjes: Canje[];
+}
+
+export const beneficiosOrganizacion = () =>
+  api<BeneficiosOrganizacion>('/beneficios/organizacion');
+
+export const canjearBeneficio = (id: string) =>
+  api<Canje>(`/beneficios/${id}/canjear`, { method: 'POST' });

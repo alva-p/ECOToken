@@ -1,3 +1,5 @@
+import { HistorialEntregas } from '@/features/cooperativa/components/HistorialEntregas';
+import { OrganizacionBeneficiosPage } from '@/features/empresa/pages/BeneficiosPage';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import App from '@/App';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -23,6 +25,7 @@ import { RolesPage } from '@/features/admin/pages/RolesPage';
 import { ContratoPage } from '@/features/admin/pages/ContratoPage';
 import { MunicipioLayout } from '@/layouts/MunicipioLayout';
 import { MunicipioDashboardPage } from '@/features/municipio/pages/DashboardPage';
+import { BeneficiosPage } from '@/features/municipio/pages/BeneficiosPage';
 
 /** Definición de rutas. Ver doc/ESTRUCTURA-PROYECTO.md §5. */
 export const router = createBrowserRouter([
@@ -48,6 +51,7 @@ export const router = createBrowserRouter([
       { path: 'aportes/:id', element: <ComprobanteAportePage /> },
       { path: 'ranking', element: <RankingContenido enPanel /> },
       { path: 'certificados', element: <CertificadosPage /> },
+      { path: 'beneficios', element: <OrganizacionBeneficiosPage /> },
     ],
   },
   {
@@ -59,6 +63,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <CooperativaDashboardPage /> },
+      { path: 'historial', element: <HistorialEntregas /> },
       { path: 'cierre-de-mes', element: <CierreMesPage /> },
     ],
   },
@@ -83,7 +88,10 @@ export const router = createBrowserRouter([
         <MunicipioLayout />
       </ProtectedRoute>
     ),
-    children: [{ index: true, element: <MunicipioDashboardPage /> }],
+    children: [
+      { index: true, element: <MunicipioDashboardPage /> },
+      { path: 'beneficios', element: <BeneficiosPage /> },
+    ],
   },
 
   { path: '*', element: <Navigate to="/" replace /> },

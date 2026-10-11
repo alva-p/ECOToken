@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { fechaAR } from '@/lib/fecha';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table } from '@/components/ui/Table';
@@ -129,7 +130,7 @@ export function CertificadosPage() {
                 cells: [
                   nombrePeriodo(c.mes, c.anio),
                   `${c.kgReciclados.toLocaleString('es-AR')} kg`,
-                  new Date(c.fechaEmision).toLocaleDateString('es-AR'),
+                  fechaAR(c.fechaEmision),
                   boton('reporte', c),
                 ],
               }))}

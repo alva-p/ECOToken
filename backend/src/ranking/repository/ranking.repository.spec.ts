@@ -54,8 +54,9 @@ describe('RankingRepository', () => {
       expect(prisma.ingresoMaterial.findMany).toHaveBeenCalledWith({
         where: {
           fechaIngreso: {
-            gte: new Date(Date.UTC(2026, 8, 1, 0, 0, 0, 0)),
-            lt: new Date(Date.UTC(2026, 9, 1, 0, 0, 0, 0)),
+            // Mes en hora argentina: 1/9 00:00 ART = 03:00 UTC.
+            gte: new Date('2026-09-01T03:00:00.000Z'),
+            lt: new Date('2026-10-01T03:00:00.000Z'),
           },
           tokensAcumulados: {
             gt: 0,

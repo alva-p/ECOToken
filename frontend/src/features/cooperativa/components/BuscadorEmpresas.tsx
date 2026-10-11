@@ -94,8 +94,8 @@ export function BuscadorEmpresas({ onSelect }: BuscadorEmpresasProps) {
         // antes de que el blur cierre el dropdown.
         onBlur={() => setTimeout(() => setAbierto(false), 150)}
         onKeyDown={handleKeyDown}
-        placeholder="Buscar por nombre, razón social o CUIT…"
-        aria-label="Buscar empresa"
+        placeholder="Buscar organización: nombre o CUIT…"
+        aria-label="Buscar organización"
         className="w-full rounded-lg border border-eco-border-strong bg-eco-surface px-3.5 py-2.5 text-sm text-eco-ink placeholder:text-eco-ink3 focus:outline-none focus:ring-2 focus:ring-eco-coop/30"
       />
       {mostrarDropdown && (
@@ -104,7 +104,7 @@ export function BuscadorEmpresas({ onSelect }: BuscadorEmpresasProps) {
             <div className="px-3 py-2 text-sm text-eco-ink2">Buscando…</div>
           ) : resultados.length === 0 ? (
             <div className="px-3 py-2 text-sm text-eco-ink2">
-              No se encontraron empresas aprobadas.
+              No se encontraron organizaciones aprobadas.
             </div>
           ) : (
             resultados.map((empresa, i) => (

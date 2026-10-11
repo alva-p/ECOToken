@@ -1,34 +1,75 @@
 import { api } from '@/lib/api';
+import { aHoraArgentina } from '@/lib/fecha';
 
-export interface VolumenPorEmpresa {
+import type { Aporte } from './dashboard/data';
+
+/**
+ * Aportes planos para el Panel de Gestión Ambiental (las métricas se derivan
+ * en dashboard/data.ts). Las fechas se pasan a hora argentina al recibirlas.
+ */
+export const obtenerAportes = () =>
+  api<Aporte[]>('/reportes/ingresos').then((a) =>
+    a.map((x) => ({ ...x, fecha: aHoraArgentina(x.fecha) })),
+  );
+
+export type TipoBeneficio = 'WEB' | 'PANTALLAS' | 'OTRO';
+
+export const TIPOS_BENEFICIO: Record<TipoBeneficio, string> = {
+  WEB: 'Publicidad web',
+  PANTALLAS: 'Pantallas digitales',
+  OTRO: 'Otro',
+};
+
+export interface Beneficio {
+  id: string;
+  titulo: string;
+  descripcion: string;
+  tipo: TipoBeneficio;
+  costoTokens: number;
+  cupos: number | null;
+  vigenteHasta: string | null;
+  activo: boolean;
+}
+
+export type BeneficioInput = Omit<Beneficio, 'id' | 'activo'>;
+
+export const listarBeneficios = () => api<Beneficio[]>('/beneficios');
+
+export const crearBeneficio = (dto: BeneficioInput) =>
+  api<Beneficio>('/beneficios', { method: 'POST', body: JSON.stringify(dto) });
+
+export const actualizarBeneficio = (id: string, dto: Partial<Beneficio>) =>
+  api<Beneficio>(`/beneficios/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(dto),
+  });
+
+export const eliminarBeneficio = (id: string) =>
+  api<Beneficio>(`/beneficios/${id}`, { method: 'DELETE' });
+
+// ─── Solicitudes de canje ───
+
+export type EstadoCanje = 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
+
+export interface Canje {
+  id: string;
+  costoTokens: number;
+  estado: EstadoCanje;
+  beneficioId: string;
   empresaId: string;
-  razonSocial: string;
-  kgReciclados: number;
-  tokensAcumulados: number;
-  aportes: number;
+  createdAt: string;
+  updatedAt: string;
+  beneficio: { titulo: string; tipo: TipoBeneficio };
 }
 
-export interface VolumenReciclado {
-  data: VolumenPorEmpresa[];
-  totalKg: number;
-  totalTokens: number;
-  empresasActivas: number;
-  desde: string | null;
-  hasta: string | null;
+export interface CanjeConEmpresa extends Canje {
+  empresa: { razonSocial: string };
 }
 
-export interface VolumenFiltros {
-  desde?: string;
-  hasta?: string;
-}
+export const listarCanjes = () => api<CanjeConEmpresa[]>('/beneficios/canjes');
 
-/** Volumen reciclado por canal empresarial en un período (E9-HU02). */
-export function obtenerVolumen(
-  filtros: VolumenFiltros = {},
-): Promise<VolumenReciclado> {
-  const params = new URLSearchParams();
-  if (filtros.desde) params.set('desde', filtros.desde);
-  if (filtros.hasta) params.set('hasta', filtros.hasta);
-  const qs = params.toString();
-  return api<VolumenReciclado>(`/reportes/volumen${qs ? `?${qs}` : ''}`);
-}
+export const resolverCanje = (id: string, estado: 'APROBADO' | 'RECHAZADO') =>
+  api<Canje>(`/beneficios/canjes/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ estado }),
+  });

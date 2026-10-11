@@ -16,7 +16,10 @@ describe('TokensService', () => {
     blockchain = { saldoOnChain: jest.fn().mockResolvedValue(null) };
     prisma = {
       empresa: {
-        findUnique: jest.fn().mockResolvedValue({ walletAddress: '0xabc' }),
+        findUnique: jest.fn().mockResolvedValue({
+          walletAddress: '0xabc',
+          razonSocial: 'Eco SRL',
+        }),
       },
     };
 
@@ -41,6 +44,7 @@ describe('TokensService', () => {
       await expect(service.miSaldo('emp1')).resolves.toEqual({
         saldo: 165,
         walletAddress: '0xabc',
+        razonSocial: 'Eco SRL',
       });
       expect(repository.sumarSaldoEmpresa).toHaveBeenCalledWith('emp1');
     });
@@ -50,6 +54,7 @@ describe('TokensService', () => {
       await expect(service.miSaldo('emp1')).resolves.toEqual({
         saldo: 1000,
         walletAddress: '0xabc',
+        razonSocial: 'Eco SRL',
       });
       expect(blockchain.saldoOnChain).toHaveBeenCalledWith('0xabc');
     });

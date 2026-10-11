@@ -1,12 +1,24 @@
+import {
+  FileBadge,
+  Gift,
+  LayoutDashboard,
+  Recycle,
+  Trophy,
+} from 'lucide-react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthContext';
 import { PanelLayout, type PanelNavItem } from './PanelLayout';
 
 const NAV: PanelNavItem[] = [
-  { label: 'Resumen', to: '/empresa' },
-  { label: 'Aportes', to: '/empresa/aportes' },
-  { label: 'Ranking', to: '/empresa/ranking' }, // mismo ranking público, dentro del panel
-  { label: 'Certificados y Reportes', to: '/empresa/certificados' },
+  { label: 'Panel de impacto', to: '/empresa', icon: LayoutDashboard },
+  { label: 'Aportes', to: '/empresa/aportes', icon: Recycle },
+  { label: 'Ranking', to: '/empresa/ranking', icon: Trophy }, // mismo ranking público, dentro del panel
+  {
+    label: 'Certificados y Reportes',
+    to: '/empresa/certificados',
+    icon: FileBadge,
+  },
+  { label: 'Beneficios', to: '/empresa/beneficios', icon: Gift },
 ];
 
 export function EmpresaLayout() {
@@ -21,15 +33,17 @@ export function EmpresaLayout() {
         ? 'Certificados y reportes'
         : location.pathname.endsWith('/aportes')
           ? 'Historial de aportes'
-          : 'Resumen';
+          : location.pathname.endsWith('/beneficios')
+            ? 'Beneficios municipales'
+            : 'Panel de Impacto Ambiental';
 
   return (
     <PanelLayout
       actorColor="org"
-      subtitle="Panel de empresa"
+      subtitle="Panel de organización"
       title={title}
       who={user?.email ?? ''}
-      whoRole="Cuenta empresa"
+      whoRole="Organización participante"
       nav={NAV}
     >
       <Outlet />
