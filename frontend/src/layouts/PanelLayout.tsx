@@ -1,7 +1,17 @@
 import { useState, type ReactNode } from 'react';
-import { Menu, X } from 'lucide-react';
+import {
+  Circle,
+  Leaf,
+  LogOut,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { cx } from '@/lib/cx';
+import { CierreMesBadge } from '@/components/CierreMesBadge';
 import { useAuth } from '@/providers/AuthContext';
 
 export type ActorColor = 'org' | 'coop' | 'muni';
@@ -28,6 +38,24 @@ export interface PanelNavItem {
   label: string;
   /** Sin `to`: ítem visible pero deshabilitado (pantalla de una HU futura). */
   to?: string;
+  icon?: LucideIcon;
+}
+
+// Variante legible del color del actor sobre la barra oscura.
+const LABEL_OSCURO: Record<ActorColor, string> = {
+  org: 'text-emerald-400',
+  coop: 'text-amber-400',
+  muni: 'text-indigo-300',
+};
+
+const CLAVE_COLAPSADA = 'ecotoken-sidebar-colapsada';
+
+function leerColapsada() {
+  try {
+    return localStorage.getItem(CLAVE_COLAPSADA) === '1';
+  } catch {
+    return false;
+  }
 }
 
 interface PanelLayoutProps {
@@ -54,6 +82,19 @@ export function PanelLayout({
   const { logout } = useAuth();
   const navigate = useNavigate();
   const [abierto, setAbierto] = useState(false);
+  // Preferencia por navegador: barra angosta solo con íconos (desktop/tablet).
+  const [colapsada, setColapsada] = useState(leerColapsada);
+
+  function alternarColapsada() {
+    setColapsada((c) => {
+      try {
+        localStorage.setItem(CLAVE_COLAPSADA, c ? '0' : '1');
+      } catch {
+        // sin storage: la preferencia dura solo la sesión
+      }
+      return !c;
+    });
+  }
 
   function handleLogout() {
     logout();
@@ -61,7 +102,7 @@ export function PanelLayout({
   }
 
   return (
-    <div className="flex h-dvh bg-eco-bg text-eco-ink">
+    <div className="flex h-dvh bg-eco-bg text-eco-ink print:block print:h-auto print:bg-white">
       {abierto && (
         <div
           aria-hidden
@@ -71,12 +112,46 @@ export function PanelLayout({
       )}
       <aside
         className={cx(
-          'fixed inset-y-0 left-0 z-40 flex w-64 flex-col overflow-y-auto bg-[#14181C] text-white transition-transform md:static md:w-56 md:flex-shrink-0 md:translate-x-0',
+          'fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-[#14181C] text-white transition-[transform,width] md:static md:flex-shrink-0 md:translate-x-0 print:hidden',
+          colapsada ? 'md:w-[72px]' : 'md:w-60',
           abierto ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        <div className="flex items-center justify-between border-b border-white/10 px-4 py-5 text-lg font-bold tracking-tight">
-          EcoToken
+        <div
+          className={cx(
+            'flex h-16 items-center gap-2.5 border-b border-white/10 px-4',
+            colapsada && 'md:h-auto md:flex-col md:gap-2 md:px-0 md:py-3',
+          )}
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-eco-org">
+            <Leaf size={18} aria-hidden />
+          </span>
+          <div className={cx('min-w-0 flex-1', colapsada && 'md:hidden')}>
+            <div className="text-base font-bold leading-tight tracking-tight">
+              EcoToken
+            </div>
+            <div
+              className={cx(
+                'truncate text-[11px] font-medium',
+                LABEL_OSCURO[actorColor],
+              )}
+            >
+              {subtitle}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={alternarColapsada}
+            aria-label={colapsada ? 'Expandir menú' : 'Colapsar menú'}
+            title={colapsada ? 'Expandir menú' : 'Colapsar menú'}
+            className="hidden rounded-md p-1.5 text-white/50 hover:bg-white/10 hover:text-white md:block"
+          >
+            {colapsada ? (
+              <PanelLeftOpen size={18} />
+            ) : (
+              <PanelLeftClose size={18} />
+            )}
+          </button>
           <button
             type="button"
             aria-label="Cerrar menú"
@@ -86,48 +161,95 @@ export function PanelLayout({
             <X size={20} />
           </button>
         </div>
-        <nav className="flex flex-col gap-1 p-2.5">
-          {nav.map((item) =>
-            item.to ? (
+
+        <nav
+          className="flex flex-1 flex-col gap-1 overflow-y-auto p-3"
+          aria-label="Secciones del panel"
+        >
+          <div
+            className={cx(
+              'px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest text-white/30',
+              colapsada && 'md:hidden',
+            )}
+          >
+            Menú
+          </div>
+          {nav.map((item) => {
+            const Icon = item.icon ?? Circle;
+            const contenido = (
+              <>
+                <Icon size={18} aria-hidden className="shrink-0" />
+                <span className={cx('truncate', colapsada && 'md:sr-only')}>
+                  {item.label}
+                </span>
+              </>
+            );
+            const base = cx(
+              'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium',
+              colapsada && 'md:justify-center md:px-0',
+            );
+            return item.to ? (
               <NavLink
                 key={item.label}
                 to={item.to}
                 end
+                title={colapsada ? item.label : undefined}
                 onClick={() => setAbierto(false)}
                 className={({ isActive }) =>
                   cx(
-                    'rounded-lg px-3 py-2.5 text-sm font-medium',
+                    base,
                     isActive
                       ? NAV_ACTIVE[actorColor]
-                      : 'text-white/60 hover:bg-white/5',
+                      : 'text-white/60 hover:bg-white/5 hover:text-white',
                   )
                 }
               >
-                {item.label}
+                {contenido}
               </NavLink>
             ) : (
               <span
                 key={item.label}
                 title="Disponible en una próxima entrega"
-                className="cursor-not-allowed rounded-lg px-3 py-2.5 text-sm font-medium text-white/30"
+                className={cx(base, 'cursor-not-allowed text-white/25')}
               >
-                {item.label}
+                {contenido}
               </span>
-            ),
-          )}
+            );
+          })}
         </nav>
-        <div className="mt-auto border-t border-white/10 px-4 py-4">
-          <div className="truncate text-sm font-semibold text-white/80">
-            {who}
-          </div>
-          <div className="mt-0.5 text-xs text-white/40">{whoRole}</div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="mt-3 text-xs font-semibold text-white/60 hover:text-white"
+
+        <div className="border-t border-white/10 p-3">
+          <div
+            className={cx(
+              'flex items-center gap-3 rounded-lg bg-white/5 p-2.5',
+              colapsada && 'md:flex-col md:bg-transparent md:p-0',
+            )}
           >
-            Cerrar sesión
-          </button>
+            <span
+              title={colapsada ? `${who} · ${whoRole}` : undefined}
+              className={cx(
+                'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold uppercase',
+                STRIPE[actorColor],
+              )}
+            >
+              {who.charAt(0) || '?'}
+            </span>
+            <div className={cx('min-w-0 flex-1', colapsada && 'md:hidden')}>
+              <div className="truncate text-sm font-semibold text-white/85">
+                {who}
+              </div>
+              <div className="truncate text-xs text-white/40">{whoRole}</div>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              aria-label="Cerrar sesión"
+              title="Cerrar sesión"
+              className="rounded-md p-1.5 text-white/50 hover:bg-white/10 hover:text-white"
+            >
+              <LogOut size={17} />
+            </button>
+          </div>
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
@@ -155,9 +277,16 @@ export function PanelLayout({
                 {title}
               </h1>
             </div>
+            <div className="ml-auto print:hidden">
+              <CierreMesBadge />
+            </div>
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-4 sm:p-6">{children}</main>
+        {/* relative: los sr-only (absolute) quedan dentro del scroll del main; si no,
+            estiran el body y aparece una segunda barra de scroll. */}
+        <main className="relative flex-1 overflow-auto p-4 sm:p-6 print:overflow-visible print:p-0">
+          {children}
+        </main>
       </div>
     </div>
   );

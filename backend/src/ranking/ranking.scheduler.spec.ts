@@ -138,16 +138,24 @@ describe('RankingScheduler (E8-HU01: catch-up al arrancar)', () => {
 
 describe('mesAnterior (E7-HU02)', () => {
   it('devuelve el mes calendario anterior dentro del mismo año', () => {
-    // Sin sufijo `Z`: se parsea en hora local, igual que dispara el cron —
-    // evita que el resultado dependa del huso horario donde corra el test.
-    expect(mesAnterior(new Date('2026-03-01T00:00:00'))).toEqual({
+    // 1/3 00:00 en Buenos Aires (03:00 UTC), cuando dispara el cron: el
+    // resultado no depende del huso del servidor.
+    expect(mesAnterior(new Date('2026-03-01T00:00:00-03:00'))).toEqual({
+      mes: 2,
+      anio: 2026,
+    });
+  });
+
+  it('usa el mes argentino aunque en UTC ya sea el mes siguiente', () => {
+    // 31/3 22:00 ART = 1/4 01:00 UTC: sigue siendo marzo.
+    expect(mesAnterior(new Date('2026-04-01T01:00:00Z'))).toEqual({
       mes: 2,
       anio: 2026,
     });
   });
 
   it('en enero, devuelve diciembre del año anterior', () => {
-    expect(mesAnterior(new Date('2026-01-15T00:00:00'))).toEqual({
+    expect(mesAnterior(new Date('2026-01-15T00:00:00-03:00'))).toEqual({
       mes: 12,
       anio: 2025,
     });

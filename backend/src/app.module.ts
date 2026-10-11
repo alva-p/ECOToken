@@ -21,6 +21,7 @@ import { CertificadosModule } from './certificados/certificados.module';
 import { RankingModule } from './ranking/ranking.module';
 import { ReportesModule } from './reportes/reportes.module';
 import { RolesModule } from './roles/roles.module';
+import { BeneficiosModule } from './beneficios/beneficios.module';
 
 /**
  * Módulo raíz. Registra los módulos de dominio derivados del diagrama de clases.
@@ -48,6 +49,7 @@ import { RolesModule } from './roles/roles.module';
     RankingModule,
     ReportesModule,
     RolesModule,
+    BeneficiosModule,
   ],
   controllers: [HealthController],
 })

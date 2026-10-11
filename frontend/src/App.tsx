@@ -447,7 +447,7 @@ function App() {
               className="h-6 w-auto object-contain"
             />
           </a>
-          <span>© 2026 EcoToken · Municipalidad de Villa María</span>
+          <span>© 2026 EcoToken</span>
           <span>Proyecto final · UTN</span>
         </div>
       </footer>

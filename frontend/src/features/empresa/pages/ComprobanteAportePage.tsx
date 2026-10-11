@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { fechaAR } from '@/lib/fecha';
 import { Link, useParams } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -55,9 +56,7 @@ export function ComprobanteAportePage() {
             Comprobante de aporte
           </h2>
           <div className="grid grid-cols-2 gap-4">
-            <Dato label="Fecha">
-              {new Date(comprobante.fecha).toLocaleDateString('es-AR')}
-            </Dato>
+            <Dato label="Fecha">{fechaAR(comprobante.fecha)}</Dato>
             <Dato label="Cooperativa">{comprobante.cooperativa ?? '—'}</Dato>
             <Dato label="Material">{comprobante.material}</Dato>
             <Dato label="Peso">

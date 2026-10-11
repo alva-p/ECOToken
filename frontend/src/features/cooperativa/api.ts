@@ -56,13 +56,28 @@ export function reintentarAcunacion(id: string): Promise<IngresoRegistrado> {
 export interface EntregaHistorial {
   id: string;
   fecha: string;
+  empresaId: string;
   empresa: string;
   material: string;
   peso: number;
   tokens: number;
+  estado: string;
+  /** Transacción de acuñación; null mientras no se confirmó on-chain. */
+  txHash: string | null;
 }
 
-/** Entregas registradas por la cooperativa en los últimos `dias` días (0 = hoy). */
+export interface MiCooperativa {
+  razonSocial: string;
+  walletAddress: string | null;
+  /** VALIDATOR_ROLE on-chain; null si no se pudo verificar. */
+  validador: boolean | null;
+}
+
+/** Nombre y estado de validación de la cooperativa logueada. */
+export const miCooperativa = () =>
+  api<MiCooperativa>('/ingresos/mi-cooperativa');
+
+/** Entregas registradas por la cooperativa en los últimos `dias` días (0 = hoy, máx. 366). */
 export function misEntregas(dias: number): Promise<EntregaHistorial[]> {
   return api<EntregaHistorial[]>(`/ingresos/mis-entregas?dias=${dias}`);
 }

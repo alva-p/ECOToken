@@ -1,3 +1,4 @@
+import { partesArt } from '../common/helpers/fecha-art.helper';
 import {
   ConflictException,
   Injectable,
@@ -33,10 +34,13 @@ export class RankingScheduler implements OnApplicationBootstrap {
    * POST /ranking/cerrar a mano.
    */
   async onApplicationBootstrap(): Promise<void> {
-    const ahora = new Date();
+    const { mes, anio } = partesArt();
     for (let i = MESES_DE_REINTENTO_AL_ARRANCAR; i >= 1; i--) {
-      const fecha = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
-      await this.intentarCerrar(fecha.getMonth() + 1, fecha.getFullYear());
+      const fecha = new Date(Date.UTC(anio, mes - 1 - i, 1));
+      await this.intentarCerrar(
+        fecha.getUTCMonth() + 1,
+        fecha.getUTCFullYear(),
+      );
     }
   }
 

@@ -1,3 +1,4 @@
+import { limiteDiaArt } from '../common/helpers/fecha-art.helper';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ReporteRepository } from './repository/reporte.repository';
 import { CreateReporteDto } from './dto/create-reporte.dto';
@@ -53,8 +54,12 @@ export class ReportesService {
    * cada empresa aparte, y evita una segunda consulta.
    */
   async obtenerVolumenPorPeriodo(filtros: { desde?: string; hasta?: string }) {
-    const desde = filtros.desde ? new Date(filtros.desde) : undefined;
-    const hasta = filtros.hasta ? new Date(filtros.hasta) : undefined;
+    const desde = filtros.desde
+      ? limiteDiaArt(filtros.desde, 'desde')
+      : undefined;
+    const hasta = filtros.hasta
+      ? limiteDiaArt(filtros.hasta, 'hasta')
+      : undefined;
     const ingresos = await this.repository.findIngresosEnPeriodo(desde, hasta);
 
     const porEmpresa = new Map<
@@ -85,14 +90,56 @@ export class ReportesService {
       (a, b) => b.kgReciclados - a.kgReciclados,
     );
 
+    // Por material (total del período) y por mes × material (tendencia).
+    const porMaterial = new Map<string, number>();
+    const porMes = new Map<string, Record<string, number>>();
+    for (const ingreso of ingresos) {
+      const material = ingreso.tipoMaterial.nombre;
+      porMaterial.set(
+        material,
+        (porMaterial.get(material) ?? 0) + ingreso.peso,
+      );
+      const mes = ingreso.fechaIngreso.toISOString().slice(0, 7);
+      const fila = porMes.get(mes) ?? {};
+      fila[material] = (fila[material] ?? 0) + ingreso.peso;
+      porMes.set(mes, fila);
+    }
+
     return {
       data,
+      porMaterial: [...porMaterial]
+        .map(([material, kg]) => ({ material, kg }))
+        .sort((a, b) => b.kg - a.kg),
+      porMes: [...porMes]
+        .map(([mes, kgPorMaterial]) => ({ mes, kgPorMaterial }))
+        .sort((a, b) => a.mes.localeCompare(b.mes)),
       totalKg: data.reduce((sum, e) => sum + e.kgReciclados, 0),
       totalTokens: data.reduce((sum, e) => sum + e.tokensAcumulados, 0),
       empresasActivas: data.length,
       desde: filtros.desde ?? null,
       hasta: filtros.hasta ?? null,
     };
+  }
+
+  /**
+   * Aportes en filas planas para el dashboard municipal: el front deriva
+   * períodos, comparaciones y rankings sin un endpoint por métrica.
+   * ponytail: devuelve todo el histórico; con decenas de miles de aportes
+   * conviene agregar por mes × organización × material en SQL.
+   */
+  async obtenerAportes() {
+    const ingresos = await this.repository.findIngresosDetalle();
+    return ingresos.map((i) => ({
+      id: i.id,
+      fecha: i.fechaIngreso.toISOString(),
+      organizacionId: i.empresaId,
+      organizacion: i.empresa.razonSocial,
+      cuit: i.empresa.cuit,
+      material: i.tipoMaterial.nombre,
+      kg: i.peso,
+      puntos: i.tokensAcumulados,
+      verificado: !!i.movimientoToken?.txHash,
+    }));
   }
 
   /** Empresas reconocidas en el mes indicado. */

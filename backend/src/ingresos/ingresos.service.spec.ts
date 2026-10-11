@@ -1,3 +1,4 @@
+import { inicioDiaArt } from '../common/helpers/fecha-art.helper';
 import { Test } from '@nestjs/testing';
 import {
   BadRequestException,
@@ -35,7 +36,7 @@ const flush = () => new Promise((resolve) => setImmediate(resolve));
 describe('IngresosService (E5-HU01)', () => {
   let service: IngresosService;
   let repository: Record<string, jest.Mock>;
-  let empresas: { verificarAprobada: jest.Mock };
+  let empresas: { verificarAprobada: jest.Mock; findOne: jest.Mock };
   let blockchain: {
     configurada: boolean;
     mintDisponible: boolean;
@@ -96,8 +97,11 @@ describe('IngresosService (E5-HU01)', () => {
         {
           id: 'i1',
           fechaIngreso: new Date(),
+          empresaId: 'emp1',
           empresa: { razonSocial: 'ACME' },
           tipoMaterial: { nombre: 'PET' },
+          estado: { nombre: 'ACUNADO' },
+          movimientoToken: { txHash: '0xtx' },
           peso: 5,
           tokensAcumulados: 10,
         },
@@ -122,6 +126,10 @@ describe('IngresosService (E5-HU01)', () => {
         .mockImplementation((id: string) =>
           Promise.resolve(id === 'coop1' ? coop : empresa),
         ),
+      findOne: jest.fn().mockResolvedValue({
+        razonSocial: 'Coop Puente Verde',
+        walletAddress: '0xcoop',
+      }),
     };
     blockchain = {
       configurada: false,
@@ -369,17 +377,47 @@ describe('IngresosService (E5-HU01)', () => {
     it('filtra desde el inicio del día `dias` atrás y mapea la fila', async () => {
       const r = await service.misEntregas('coop-1', 7);
       const desde: Date = repository.findEntregasCooperativa.mock.calls[0][1];
-      expect(desde.getHours()).toBe(0);
-      expect(Math.floor((Date.now() - desde.getTime()) / 864e5)).toBe(7);
+      // Medianoche de Buenos Aires (03:00 UTC), sin importar el huso del servidor.
+      expect(desde.getUTCHours()).toBe(3);
+      expect(desde).toEqual(inicioDiaArt(7));
       expect(r[0]).toMatchObject({
+        empresaId: 'emp1',
         empresa: 'ACME',
         material: 'PET',
         tokens: 10,
+        estado: 'ACUNADO',
+        txHash: '0xtx',
       });
     });
 
     it('rechaza usuario sin cooperativa', async () => {
       await expect(service.misEntregas(null, 0)).rejects.toThrow();
+    });
+  });
+
+  describe('miCooperativa', () => {
+    it('sin cadena configurada no informa el rol (null, no false)', async () => {
+      await expect(service.miCooperativa('coop1')).resolves.toEqual({
+        razonSocial: 'Coop Puente Verde',
+        walletAddress: '0xcoop',
+        validador: null,
+      });
+      expect(blockchain.tieneValidatorRole).not.toHaveBeenCalled();
+    });
+
+    it('consulta VALIDATOR_ROLE on-chain y tolera que la cadena falle', async () => {
+      blockchain.configurada = true;
+      await expect(service.miCooperativa('coop1')).resolves.toMatchObject({
+        validador: true,
+      });
+      blockchain.tieneValidatorRole.mockRejectedValueOnce(new Error('rpc'));
+      await expect(service.miCooperativa('coop1')).resolves.toMatchObject({
+        validador: null,
+      });
+    });
+
+    it('rechaza usuario sin cooperativa', async () => {
+      await expect(service.miCooperativa(null)).rejects.toThrow();
     });
   });
 

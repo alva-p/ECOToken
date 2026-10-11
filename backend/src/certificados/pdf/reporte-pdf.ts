@@ -1,3 +1,4 @@
+import { ZONA_AR } from '../../common/helpers/fecha-art.helper';
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
 import { join } from 'node:path';
@@ -77,7 +78,7 @@ const dos = (n: number) => String(n).padStart(2, '0');
 function partes(d: Date) {
   const p = Object.fromEntries(
     new Intl.DateTimeFormat('es-AR', {
-      timeZone: 'America/Argentina/Cordoba',
+      timeZone: ZONA_AR,
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',

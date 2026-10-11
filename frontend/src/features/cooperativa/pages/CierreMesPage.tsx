@@ -1,21 +1,8 @@
 import { useEffect, useState } from 'react';
+import { inicioMes, restanteCierre, useAhora } from '@/lib/cierreMes';
 import { Card } from '@/components/ui/Card';
 import { LoadingState } from '@/components/ui/States';
 import { misEntregas, type EntregaHistorial } from '../api';
-
-const ART_MS = 3 * 3600_000; // Argentina: GMT-3 fijo, sin horario de verano.
-
-/** Inicio del próximo mes (día 1, 00:00 hora argentina) como instante UTC. */
-function proximoCierre(ahora: number): number {
-  const art = new Date(ahora - ART_MS);
-  return Date.UTC(art.getUTCFullYear(), art.getUTCMonth() + 1, 1) + ART_MS;
-}
-
-/** Inicio del mes en curso (día 1, 00:00 hora argentina) como instante UTC. */
-function inicioMes(ahora: number): number {
-  const art = new Date(ahora - ART_MS);
-  return Date.UTC(art.getUTCFullYear(), art.getUTCMonth(), 1) + ART_MS;
-}
 
 function Unidad({ valor, label }: { valor: number; label: string }) {
   return (
@@ -33,13 +20,8 @@ function Unidad({ valor, label }: { valor: number; label: string }) {
 /** Cierre de mes (solo lectura): cuenta regresiva y resumen del mes en curso.
  * El cierre lo ejecuta el job mensual y lo gestiona administración. */
 export function CierreMesPage() {
-  const [ahora, setAhora] = useState(Date.now());
+  const ahora = useAhora();
   const [entregas, setEntregas] = useState<EntregaHistorial[] | null>(null);
-
-  useEffect(() => {
-    const t = setInterval(() => setAhora(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
 
   useEffect(() => {
     misEntregas(31)
@@ -47,11 +29,7 @@ export function CierreMesPage() {
       .catch(() => setEntregas([]));
   }, []);
 
-  const resto = Math.max(0, proximoCierre(ahora) - ahora);
-  const dias = Math.floor(resto / 86_400_000);
-  const horas = Math.floor(resto / 3_600_000) % 24;
-  const minutos = Math.floor(resto / 60_000) % 60;
-  const segundos = Math.floor(resto / 1000) % 60;
+  const { dias, horas, minutos, segundos } = restanteCierre(ahora);
 
   const delMes = entregas?.filter(
     (e) => Date.parse(e.fecha) >= inicioMes(ahora),
