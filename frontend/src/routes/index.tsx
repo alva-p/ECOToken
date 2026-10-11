@@ -1,3 +1,4 @@
+import { OrganizacionBeneficiosPage } from '@/features/empresa/pages/BeneficiosPage';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import App from '@/App';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -49,6 +50,7 @@ export const router = createBrowserRouter([
       { path: 'aportes/:id', element: <ComprobanteAportePage /> },
       { path: 'ranking', element: <RankingContenido enPanel /> },
       { path: 'certificados', element: <CertificadosPage /> },
+      { path: 'beneficios', element: <OrganizacionBeneficiosPage /> },
     ],
   },
   {

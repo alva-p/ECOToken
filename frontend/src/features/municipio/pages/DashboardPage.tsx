@@ -3,6 +3,7 @@ import { Recycle } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { LoadingState } from '@/components/ui/States';
+import { listarMateriales } from '@/features/empresa/api';
 import { obtenerAportes } from '../api';
 import {
   COMPARACIONES,
@@ -65,6 +66,7 @@ export function MunicipioDashboardPage() {
   const [filtros, setFiltros] = useState<Filtros>(SIN_FILTROS);
   const [modo, setModo] = useState<ModoComparacion>('mes');
   const [seleccion, setSeleccion] = useState<string | null>(null);
+  const [catalogo, setCatalogo] = useState<string[]>([]);
 
   const cargar = () => {
     setError(false);
@@ -74,11 +76,19 @@ export function MunicipioDashboardPage() {
       .catch(() => setError(true));
   };
   useEffect(cargar, []);
+  useEffect(() => {
+    listarMateriales()
+      .then((m) => setCatalogo(m.map((x) => x.nombre)))
+      .catch(() => setCatalogo([]));
+  }, []);
 
   const d = useMemo(() => {
     const base = todos ?? [];
     const { desde, hasta } = filtros;
-    const color = coloresMateriales(base);
+    const color = coloresMateriales([
+      ...catalogo,
+      ...base.map((a) => a.material),
+    ]);
     const materialesTodos = [...new Set(base.map((a) => a.material))].sort();
     const dims = filtrarDimensiones(base, filtros);
     const periodo = dims.filter((a) => enRango(a, desde, hasta));
@@ -116,7 +126,7 @@ export function MunicipioDashboardPage() {
       rankingGeneral: porOrganizacion(sinBusqueda),
       nombres: [...new Set(base.map((a) => a.organizacion))].sort(),
     };
-  }, [todos, filtros, modo]);
+  }, [todos, filtros, modo, catalogo]);
 
   const toggleMaterial = (material: string) =>
     setFiltros((f) => ({

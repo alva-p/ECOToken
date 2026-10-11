@@ -4,19 +4,26 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Field } from '@/components/ui/Field';
 import { LoadingState } from '@/components/ui/States';
+import { Table } from '@/components/ui/Table';
 import {
   actualizarBeneficio,
   crearBeneficio,
   eliminarBeneficio,
   listarBeneficios,
+  listarCanjes,
+  resolverCanje,
+  type CanjeConEmpresa,
   type Beneficio,
+  TIPOS_BENEFICIO,
   type TipoBeneficio,
 } from '../api';
 
-const TIPOS: Record<TipoBeneficio, string> = {
-  WEB: 'Publicidad web',
-  PANTALLAS: 'Pantallas digitales',
-  OTRO: 'Otro',
+const TIPOS = TIPOS_BENEFICIO;
+
+const ESTADOS = {
+  PENDIENTE: 'Pendiente',
+  APROBADO: 'Aprobado',
+  RECHAZADO: 'Rechazado',
 };
 
 const VACIO = {
@@ -32,12 +39,16 @@ const VACIO = {
 // canjeen con tokens ECO (publicidad en la web municipal, pantallas, etc.).
 export function BeneficiosPage() {
   const [items, setItems] = useState<Beneficio[] | null>(null);
+  const [canjes, setCanjes] = useState<CanjeConEmpresa[]>([]);
   const [form, setForm] = useState(VACIO);
   const [error, setError] = useState<string | null>(null);
 
   const cargar = () =>
-    listarBeneficios()
-      .then(setItems)
+    Promise.all([listarBeneficios(), listarCanjes()])
+      .then(([b, c]) => {
+        setItems(b);
+        setCanjes(c);
+      })
       .catch(() => setError('No se pudieron cargar los beneficios.'));
 
   useEffect(() => {
@@ -66,13 +77,17 @@ export function BeneficiosPage() {
     }
   }
 
+  const pendientes = canjes.filter((c) => c.estado === 'PENDIENTE').length;
+
   async function accion(fn: () => Promise<unknown>) {
     setError(null);
     try {
       await fn();
       await cargar();
     } catch {
-      setError('No se pudo completar la acción.');
+      setError(
+        'No se pudo completar la acción. Un beneficio con solicitudes no se puede eliminar: pausalo.',
+      );
     }
   }
 
@@ -153,6 +168,81 @@ export function BeneficiosPage() {
 
       {error && <p className="text-sm text-eco-danger">{error}</p>}
 
+      <Card className="p-5">
+        <h2 className="text-sm font-semibold text-eco-ink">
+          Solicitudes de canje
+          {pendientes > 0 && (
+            <span className="ml-2">
+              <Badge color="muni">{pendientes} pendientes</Badge>
+            </span>
+          )}
+        </h2>
+        <p className="mb-3 mt-0.5 text-xs text-eco-ink2">
+          Las organizaciones solicitan beneficios con sus ECO; los puntos quedan
+          reservados hasta que aprobás o rechazás la solicitud.
+        </p>
+        <Table
+          columns={[
+            { label: 'Fecha' },
+            { label: 'Organización' },
+            { label: 'Beneficio' },
+            { label: 'ECO', align: 'right' },
+            { label: 'Estado' },
+            { label: '', align: 'right' },
+          ]}
+          rows={canjes.map((c) => ({
+            cells: [
+              new Date(c.createdAt).toLocaleDateString('es-AR'),
+              c.empresa.razonSocial,
+              c.beneficio.titulo,
+              c.costoTokens.toLocaleString('es-AR'),
+              <Badge
+                key="e"
+                color={
+                  c.estado === 'APROBADO'
+                    ? 'org'
+                    : c.estado === 'RECHAZADO'
+                      ? 'danger'
+                      : 'muni'
+                }
+              >
+                {ESTADOS[c.estado]}
+              </Badge>,
+              c.estado === 'PENDIENTE' ? (
+                <div key="a" className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    color="muni"
+                    className="px-3 py-1.5 text-xs"
+                    onClick={() =>
+                      accion(() => resolverCanje(c.id, 'APROBADO'))
+                    }
+                  >
+                    Aprobar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    color="danger"
+                    className="px-3 py-1.5 text-xs"
+                    onClick={() =>
+                      window.confirm(
+                        `¿Rechazar la solicitud de ${c.empresa.razonSocial}? Los ECO reservados vuelven a su saldo.`,
+                      ) && accion(() => resolverCanje(c.id, 'RECHAZADO'))
+                    }
+                  >
+                    Rechazar
+                  </Button>
+                </div>
+              ) : (
+                ''
+              ),
+            ],
+          }))}
+          emptyLabel="Todavía no hay solicitudes de canje."
+        />
+      </Card>
+
       {!items ? (
         <LoadingState label="Cargando beneficios…" />
       ) : items.length === 0 ? (
@@ -181,7 +271,7 @@ export function BeneficiosPage() {
                 {' · '}
                 {b.cupos ? `${b.cupos} cupos` : 'sin límite de cupos'}
                 {b.vigenteHasta &&
-                  ` · hasta ${new Date(b.vigenteHasta).toLocaleDateString('es-AR')}`}
+                  ` · hasta ${new Date(b.vigenteHasta).toLocaleDateString('es-AR', { timeZone: 'UTC' })}`}
               </div>
               <div className="flex gap-2">
                 <Button

@@ -7,6 +7,12 @@ export const obtenerAportes = () => api<Aporte[]>('/reportes/ingresos');
 
 export type TipoBeneficio = 'WEB' | 'PANTALLAS' | 'OTRO';
 
+export const TIPOS_BENEFICIO: Record<TipoBeneficio, string> = {
+  WEB: 'Publicidad web',
+  PANTALLAS: 'Pantallas digitales',
+  OTRO: 'Otro',
+};
+
 export interface Beneficio {
   id: string;
   titulo: string;
@@ -33,3 +39,30 @@ export const actualizarBeneficio = (id: string, dto: Partial<Beneficio>) =>
 
 export const eliminarBeneficio = (id: string) =>
   api<Beneficio>(`/beneficios/${id}`, { method: 'DELETE' });
+
+// ─── Solicitudes de canje ───
+
+export type EstadoCanje = 'PENDIENTE' | 'APROBADO' | 'RECHAZADO';
+
+export interface Canje {
+  id: string;
+  costoTokens: number;
+  estado: EstadoCanje;
+  beneficioId: string;
+  empresaId: string;
+  createdAt: string;
+  updatedAt: string;
+  beneficio: { titulo: string; tipo: TipoBeneficio };
+}
+
+export interface CanjeConEmpresa extends Canje {
+  empresa: { razonSocial: string };
+}
+
+export const listarCanjes = () => api<CanjeConEmpresa[]>('/beneficios/canjes');
+
+export const resolverCanje = (id: string, estado: 'APROBADO' | 'RECHAZADO') =>
+  api<Canje>(`/beneficios/canjes/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ estado }),
+  });

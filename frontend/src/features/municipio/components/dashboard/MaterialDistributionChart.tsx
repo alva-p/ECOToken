@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   Cell,
   Pie,
@@ -34,26 +35,34 @@ function Detalle({ active, payload }: TooltipProps<number, string>) {
   );
 }
 
-/** Donut de composición; clic en un material lo usa como filtro del dashboard. */
+/**
+ * Donut de composición. Con `onSelect`, clic en un material lo usa como
+ * filtro (dashboard municipal); sin él es solo lectura (panel de la organización).
+ */
 export function MaterialDistributionChart({
   data,
   color,
-  seleccionado,
+  seleccionado = '',
   onSelect,
+  title = '¿Qué se está reciclando?',
+  question = 'Composición del material recuperado. Clic en un material para filtrar.',
+  actions,
+  vacio,
 }: {
   data: MaterialAgg[];
   color: (m: string) => string;
-  seleccionado: string;
-  onSelect: (material: string) => void;
+  seleccionado?: string;
+  onSelect?: (material: string) => void;
+  title?: string;
+  question?: string;
+  actions?: ReactNode;
+  vacio?: string;
 }) {
   const total = data.reduce((s, m) => s + m.kg, 0);
   return (
-    <ChartCard
-      title="¿Qué se está reciclando?"
-      question="Composición del material recuperado. Clic en un material para filtrar."
-    >
+    <ChartCard title={title} question={question} actions={actions}>
       {data.length === 0 ? (
-        <SinDatos />
+        <SinDatos label={vacio} />
       ) : (
         <div className="flex flex-col items-center gap-4 sm:flex-row lg:flex-col 2xl:flex-row">
           <div
@@ -72,8 +81,8 @@ export function MaterialDistributionChart({
                   paddingAngle={data.length > 1 ? 1.5 : 0}
                   stroke="#fff"
                   strokeWidth={2}
-                  onClick={(d: MaterialAgg) => onSelect(d.material)}
-                  className="cursor-pointer"
+                  onClick={(d: MaterialAgg) => onSelect?.(d.material)}
+                  className={onSelect && 'cursor-pointer'}
                 >
                   {data.map((m) => (
                     <Cell
@@ -102,10 +111,14 @@ export function MaterialDistributionChart({
               <li key={m.material}>
                 <button
                   type="button"
-                  aria-pressed={seleccionado === m.material}
-                  onClick={() => onSelect(m.material)}
+                  disabled={!onSelect}
+                  aria-pressed={
+                    onSelect ? seleccionado === m.material : undefined
+                  }
+                  onClick={() => onSelect?.(m.material)}
                   className={cx(
-                    'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-eco-bg',
+                    'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm',
+                    onSelect && 'hover:bg-eco-bg',
                     seleccionado === m.material && 'bg-eco-org-soft',
                   )}
                 >

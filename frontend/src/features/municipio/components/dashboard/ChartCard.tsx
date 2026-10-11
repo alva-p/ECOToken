@@ -135,3 +135,51 @@ export function NotaMesEnCurso({ meses }: { meses: { mes: string }[] }) {
     </p>
   );
 }
+
+/** Selector segmentado chico para alternar vistas de un gráfico. */
+export function Segmented<T extends string>({
+  value,
+  options,
+  onChange,
+  label,
+}: {
+  value: T;
+  options: Record<T, string>;
+  onChange: (v: T) => void;
+  label: string;
+}) {
+  return (
+    <div
+      className="inline-flex rounded-lg border border-eco-border-strong p-0.5"
+      role="group"
+      aria-label={label}
+    >
+      {(Object.keys(options) as T[]).map((v) => (
+        <button
+          key={v}
+          type="button"
+          aria-pressed={value === v}
+          onClick={() => onChange(v)}
+          className={cx(
+            'rounded-md px-2.5 py-1 text-xs font-semibold',
+            value === v
+              ? 'bg-eco-org-soft text-eco-org'
+              : 'text-eco-ink2 hover:text-eco-ink',
+          )}
+        >
+          {options[v]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Bloque gris animado mientras cargan los datos. */
+export function Skeleton({ className }: { className?: string }) {
+  return (
+    <div
+      aria-hidden
+      className={cx('animate-pulse rounded-xl bg-eco-border/60', className)}
+    />
+  );
+}

@@ -61,11 +61,11 @@ enum TipoDocumento {
 
 /// Usuario del sistema. Pertenece a una Empresa o a una Municipalidad según su rol.
 model Usuario {
-  id           String  @id @default(uuid())
-  email        String  @unique
-  passwordHash String
-  tipoRol      TipoRol
-  activo       Boolean @default(true)
+  id                  String  @id @default(uuid())
+  email               String  @unique
+  passwordHash        String
+  tipoRol             TipoRol
+  activo              Boolean @default(true)
   /// true mientras la cuenta use la contraseña temporal que generó el sistema (aprobación/alta): fuerza el cambio al ingresar.
   debeCambiarPassword Boolean @default(false)
 
@@ -127,6 +127,7 @@ model Empresa {
   reportes               Reporte[]
   rankings               Ranking[]
   documentosVerificacion DocumentoVerificacion[]
+  canjes                 Canje[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -255,23 +256,23 @@ model MovimientoToken {
 /// fijos al emitir, no se recalculan si después cambian los ingresos del período
 /// (mismo criterio que el snapshot de Ranking, E7-HU02).
 model CertificadoDigital {
-  id                String   @id @default(uuid())
-  fechaEmision      DateTime @default(now())
-  mes               Int
-  anio              Int
-  posicion          Int
+  id                  String   @id @default(uuid())
+  fechaEmision        DateTime @default(now())
+  mes                 Int
+  anio                Int
+  posicion            Int
   /// Cantidad de empresas del cierre de ese mes (para "posición X de N", PDF).
-  totalEmpresas     Int      @default(1)
-  kgReciclados      Float
-  co2Evitado        Float
+  totalEmpresas       Int      @default(1)
+  kgReciclados        Float
+  co2Evitado          Float
   /// Desglose por tipo de material al momento de emitir, ej. [{"material":"PLASTICO","kg":120}] (E8-HU02, PDF).
-  desglosePorMaterial Json @default("[]")
+  desglosePorMaterial Json     @default("[]")
   /// Datos del reporte mensual de actividad congelados al emitir (mismo instante que el certificado). Null en certificados anteriores a esta columna.
-  reporteSnapshot   Json?
-  hashVerificacion  String
-  credencialFirmada String
-  urlPDF            String?
-  txHashOnChain     String?
+  reporteSnapshot     Json?
+  hashVerificacion    String
+  credencialFirmada   String
+  urlPDF              String?
+  txHashOnChain       String?
 
   empresa   Empresa @relation(fields: [empresaId], references: [id])
   empresaId String
@@ -331,7 +332,37 @@ model Beneficio {
   cupos        Int?
   vigenteHasta DateTime?
   activo       Boolean   @default(true)
+  canjes       Canje[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// Estado de una solicitud de canje: la organización la crea PENDIENTE y la
+/// municipalidad la aprueba o rechaza.
+enum EstadoCanje {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+}
+
+/// Solicitud de una organización para canjear un Beneficio con sus tokens ECO.
+/// Los ECO de canjes PENDIENTE/APROBADO quedan reservados (se descuentan del
+/// saldo disponible); la quema on-chain queda fuera de este alcance.
+model Canje {
+  id          String      @id @default(uuid())
+  /// Costo al momento de solicitar (el beneficio puede cambiar después).
+  costoTokens Int
+  estado      EstadoCanje @default(PENDIENTE)
+
+  beneficio   Beneficio @relation(fields: [beneficioId], references: [id])
+  beneficioId String
+  empresa     Empresa   @relation(fields: [empresaId], references: [id])
+  empresaId   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([empresaId])
+  @@index([beneficioId])
 }

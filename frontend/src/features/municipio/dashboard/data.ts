@@ -87,9 +87,13 @@ const PALETA = [
 ];
 const OTRO = '#9a9a96';
 
-/** Asigna un color estable por material (orden alfabético sobre todo el histórico). */
-export function coloresMateriales(aportes: Aporte[]) {
-  const nombres = [...new Set(aportes.map((a) => a.material))].sort();
+/**
+ * Color estable por material: orden alfabético sobre el catálogo completo
+ * (GET /materiales). Lo usan el panel municipal y el de la organización, así
+ * cada material tiene el mismo color en todo EcoToken.
+ */
+export function coloresMateriales(materiales: Iterable<string>) {
+  const nombres = [...new Set(materiales)].sort();
   const mapa = new Map(nombres.map((m, i) => [m, PALETA[i] ?? OTRO]));
   return (material: string) => mapa.get(material) ?? OTRO;
 }
@@ -399,7 +403,14 @@ export function sinAportesEnPeriodo(
 // ─── Insights verificables ───
 
 export interface Insight {
-  icono: 'sube' | 'baja' | 'material' | 'organizacion' | 'participacion';
+  icono:
+    | 'sube'
+    | 'baja'
+    | 'material'
+    | 'organizacion'
+    | 'participacion'
+    | 'ranking'
+    | 'beneficio';
   texto: string;
 }
 

@@ -1,5 +1,7 @@
 import {
   Building2,
+  Gift,
+  Trophy,
   Recycle,
   TrendingDown,
   TrendingUp,
@@ -14,6 +16,8 @@ const ICONOS = {
   material: Recycle,
   organizacion: Building2,
   participacion: Users,
+  ranking: Trophy,
+  beneficio: Gift,
 };
 
 /** Datos destacados calculados de los datos (sin IA ni conclusiones inventadas). */
