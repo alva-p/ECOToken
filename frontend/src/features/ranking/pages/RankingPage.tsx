@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { fechaAR } from '@/lib/fecha';
 import { ArrowDown, ArrowUp, Search } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
@@ -53,11 +54,7 @@ const inputClass =
   'w-full rounded-lg border border-eco-border-strong bg-eco-surface px-3 py-2 text-sm text-eco-ink focus:outline-none focus:ring-2 focus:ring-eco-org/30 sm:w-auto';
 
 const fechaLarga = (iso: string) =>
-  new Date(iso).toLocaleDateString('es-AR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  fechaAR(iso, { day: 'numeric', month: 'long', year: 'numeric' });
 
 /** Lee ?mes=&anio= de la URL; null si faltan o no son números. */
 function periodoDeUrl(params: URLSearchParams) {

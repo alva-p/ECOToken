@@ -1,3 +1,4 @@
+import { partesArt } from '../common/helpers/fecha-art.helper';
 import {
   ConflictException,
   Injectable,
@@ -129,9 +130,9 @@ export class RankingService {
     mes?: number,
     anio?: number,
   ): Promise<RankingMesResponse> {
-    const ahora = new Date();
-    const mesPeriodo = mes ?? ahora.getUTCMonth() + 1;
-    const anioPeriodo = anio ?? ahora.getUTCFullYear();
+    const ahora = partesArt();
+    const mesPeriodo = mes ?? ahora.mes;
+    const anioPeriodo = anio ?? ahora.anio;
 
     const grilla = await this.armarGrilla(mesPeriodo, anioPeriodo);
     const totalTokens = grilla.reduce((sum, item) => sum + item.tokens, 0);
@@ -142,7 +143,7 @@ export class RankingService {
     return {
       mes: mesPeriodo,
       anio: anioPeriodo,
-      actualizadoEn: ahora.toISOString(),
+      actualizadoEn: new Date().toISOString(),
       totalEmpresas: grilla.length,
       totalTokens,
       totalKg,

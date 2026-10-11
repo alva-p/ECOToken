@@ -1,3 +1,4 @@
+import { rangoMesArt } from '../../common/helpers/fecha-art.helper';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -55,10 +56,7 @@ export class RankingPublicoRepository {
       by: ['empresaId'],
       where: {
         empresaId: { in: empresaIds },
-        fechaIngreso: {
-          gte: new Date(Date.UTC(anio, mes - 1, 1)),
-          lt: new Date(Date.UTC(anio, mes, 1)),
-        },
+        fechaIngreso: rangoMesArt(mes, anio),
       },
       _sum: { peso: true, tokensAcumulados: true },
     });
@@ -84,10 +82,7 @@ export class RankingPublicoRepository {
       by: ['tipoMaterialId'],
       where: {
         empresaId: { in: empresaIds },
-        fechaIngreso: {
-          gte: new Date(Date.UTC(anio, mes - 1, 1)),
-          lt: new Date(Date.UTC(anio, mes, 1)),
-        },
+        fechaIngreso: rangoMesArt(mes, anio),
       },
       _sum: { peso: true },
     });

@@ -1,3 +1,4 @@
+import { inicioDiaArt, limiteDiaArt } from '../common/helpers/fecha-art.helper';
 import {
   BadRequestException,
   ConflictException,
@@ -228,8 +229,8 @@ export class IngresosService {
     const { data, total } = await this.repository.findAportesEmpresa(
       empresaId,
       {
-        desde: filtros.desde ? new Date(filtros.desde) : undefined,
-        hasta: filtros.hasta ? new Date(filtros.hasta) : undefined,
+        desde: filtros.desde ? limiteDiaArt(filtros.desde, 'desde') : undefined,
+        hasta: filtros.hasta ? limiteDiaArt(filtros.hasta, 'hasta') : undefined,
         tipoMaterialId: filtros.tipoMaterialId,
       },
       (page - 1) * limit,
@@ -263,10 +264,7 @@ export class IngresosService {
         'El usuario no está asociado a ninguna cooperativa',
       );
     }
-    const desde = new Date();
-    desde.setHours(0, 0, 0, 0);
-    desde.setDate(desde.getDate() - dias);
-
+    const desde = inicioDiaArt(dias);
     const ingresos = await this.repository.findEntregasCooperativa(
       cooperativaId,
       desde,
@@ -274,11 +272,39 @@ export class IngresosService {
     return ingresos.map((i) => ({
       id: i.id,
       fecha: i.fechaIngreso,
+      empresaId: i.empresaId,
       empresa: i.empresa.razonSocial,
       material: i.tipoMaterial.nombre,
       peso: i.peso,
       tokens: i.tokensAcumulados,
+      estado: i.estado.nombre,
+      txHash: i.movimientoToken?.txHash ?? null,
     }));
+  }
+
+  /**
+   * Identidad y estado de validación de la cooperativa logueada, para el
+   * panel operativo. `validador` es null si la cadena no está configurada o
+   * no respondió (no se informa un estado que no se pudo verificar).
+   */
+  async miCooperativa(cooperativaId: string | null) {
+    if (!cooperativaId) {
+      throw new ForbiddenException(
+        'El usuario no está asociado a ninguna cooperativa',
+      );
+    }
+    const cooperativa = await this.empresas.findOne(cooperativaId);
+    let validador: boolean | null = null;
+    if (this.blockchain.configurada && cooperativa.walletAddress) {
+      validador = await this.blockchain
+        .tieneValidatorRole(cooperativa.walletAddress)
+        .catch(() => null);
+    }
+    return {
+      razonSocial: cooperativa.razonSocial,
+      walletAddress: cooperativa.walletAddress,
+      validador,
+    };
   }
 
   // ─── E5-HU03: comprobante digital de un aporte ───

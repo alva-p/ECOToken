@@ -46,9 +46,11 @@ export class TokensService {
   // ─── E6-HU01: saldo de tokens de la empresa ───
 
   /** Saldo ECO (on-chain, con la base como respaldo) y dirección EVM de la empresa logueada. */
-  async miSaldo(
-    empresaId: string | null,
-  ): Promise<{ saldo: number; walletAddress: string | null }> {
+  async miSaldo(empresaId: string | null): Promise<{
+    saldo: number;
+    walletAddress: string | null;
+    razonSocial: string | null;
+  }> {
     if (!empresaId) {
       throw new ForbiddenException(
         'El usuario no está asociado a ninguna empresa',
@@ -56,7 +58,7 @@ export class TokensService {
     }
     const empresa = await this.prisma.empresa.findUnique({
       where: { id: empresaId },
-      select: { walletAddress: true },
+      select: { walletAddress: true, razonSocial: true },
     });
     // Fuente de verdad: la blockchain, para que coincida con lo que ve la
     // empresa en el explorador. Sin conexión cae al saldo sumado en la base.
@@ -64,6 +66,10 @@ export class TokensService {
       (empresa?.walletAddress
         ? await this.blockchain.saldoOnChain(empresa.walletAddress)
         : null) ?? (await this.repository.sumarSaldoEmpresa(empresaId));
-    return { saldo, walletAddress: empresa?.walletAddress ?? null };
+    return {
+      saldo,
+      walletAddress: empresa?.walletAddress ?? null,
+      razonSocial: empresa?.razonSocial ?? null,
+    };
   }
 }

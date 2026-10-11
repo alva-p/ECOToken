@@ -49,6 +49,14 @@ export class IngresosController {
     return this.service.estadoAcunacion(id, user.empresaId);
   }
 
+  // ─── Identidad y estado de validador de la cooperativa logueada ───
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.COOPERATIVA)
+  @Get('mi-cooperativa')
+  miCooperativa(@CurrentUser() user: JwtPayload) {
+    return this.service.miCooperativa(user.empresaId);
+  }
+
   // ─── Historial de entregas de la cooperativa logueada ───
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(TipoRol.COOPERATIVA)

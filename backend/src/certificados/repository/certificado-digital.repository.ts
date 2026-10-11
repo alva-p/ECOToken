@@ -1,3 +1,7 @@
+import {
+  inicioMesArt,
+  rangoMesArt,
+} from '../../common/helpers/fecha-art.helper';
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -30,10 +34,8 @@ export class CertificadoDigitalRepository {
 
   /** Ingresos de la empresa en el mes/año indicado, con el material (E8-HU01/02). */
   findIngresosDelPeriodo(empresaId: string, mes: number, anio: number) {
-    const desde = new Date(Date.UTC(anio, mes - 1, 1));
-    const hasta = new Date(Date.UTC(anio, mes, 1));
     return this.prisma.ingresoMaterial.findMany({
-      where: { empresaId, fechaIngreso: { gte: desde, lt: hasta } },
+      where: { empresaId, fechaIngreso: rangoMesArt(mes, anio) },
       select: { peso: true, tipoMaterial: { select: { nombre: true } } },
     });
   }
@@ -119,8 +121,7 @@ export class CertificadoDigitalRepository {
       where: {
         empresaId,
         fechaIngreso: {
-          gte: new Date(Date.UTC(anio, mes - 1, 1)),
-          lt: new Date(Date.UTC(anio, mes, 1)),
+          ...rangoMesArt(mes, anio),
           ...(hasta ? { lte: hasta } : {}),
         },
       },
@@ -140,7 +141,7 @@ export class CertificadoDigitalRepository {
     const { _sum } = await this.prisma.ingresoMaterial.aggregate({
       where: {
         empresaId,
-        fechaIngreso: { lt: new Date(Date.UTC(anio, mes - 1, 1)) },
+        fechaIngreso: { lt: inicioMesArt(anio, mes) },
       },
       _sum: { tokensAcumulados: true },
     });

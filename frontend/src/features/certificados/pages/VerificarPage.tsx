@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { fechaAR } from '@/lib/fecha';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { Field } from '@/components/ui/Field';
@@ -59,7 +60,7 @@ function Aportes({ certificado }: { certificado: CertificadoVerificado }) {
         ]}
         rows={aportes.map((a) => ({
           cells: [
-            new Date(a.fecha).toLocaleDateString('es-AR'),
+            fechaAR(a.fecha),
             a.material,
             a.kg.toLocaleString('es-AR'),
             a.tokens.toLocaleString('es-AR'),
