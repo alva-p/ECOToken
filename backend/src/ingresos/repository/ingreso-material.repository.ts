@@ -139,6 +139,8 @@ export class IngresoMaterialRepository {
       include: {
         empresa: { select: { razonSocial: true } },
         tipoMaterial: { select: { nombre: true } },
+        estado: { select: { nombre: true } },
+        movimientoToken: { select: { txHash: true } },
       },
       orderBy: { fechaIngreso: 'desc' },
     });

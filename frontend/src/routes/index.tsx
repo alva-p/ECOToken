@@ -1,3 +1,4 @@
+import { HistorialEntregas } from '@/features/cooperativa/components/HistorialEntregas';
 import { OrganizacionBeneficiosPage } from '@/features/empresa/pages/BeneficiosPage';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import App from '@/App';
@@ -62,6 +63,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <CooperativaDashboardPage /> },
+      { path: 'historial', element: <HistorialEntregas /> },
       { path: 'cierre-de-mes', element: <CierreMesPage /> },
     ],
   },

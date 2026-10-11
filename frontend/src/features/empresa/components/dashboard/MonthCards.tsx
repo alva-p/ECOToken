@@ -12,7 +12,7 @@ import { textoHaceDias } from '../../dashboard/data';
 import { Etapa } from './KpiCards';
 
 /** Flecha y variación; bajar se muestra en gris, no en rojo (no es un tablero financiero). */
-function Cambio({ pct, diff }: { pct: number | null; diff?: number }) {
+export function Cambio({ pct, diff }: { pct: number | null; diff?: number }) {
   const v = pct ?? diff ?? null;
   if (v === null) return <span className="text-xs text-eco-ink3">—</span>;
   const neutro = pct !== null ? Math.abs(pct) < 1 : v === 0;

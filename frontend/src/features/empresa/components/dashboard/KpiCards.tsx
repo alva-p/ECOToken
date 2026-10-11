@@ -39,7 +39,8 @@ export function Etapa({
   );
 }
 
-function Kpi({
+/** Tarjeta de indicador compartida por los paneles de organización y cooperativa. */
+export function Kpi({
   label,
   etapa,
   value,

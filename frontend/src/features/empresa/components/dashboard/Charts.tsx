@@ -256,10 +256,16 @@ export function MaterialMixChart({
   data,
   materiales,
   color,
+  title = 'Cómo cambió lo que reciclás',
+  question = 'Kg por material en cada mes: ¿mantenés o diversificás lo que entregás?',
+  vacio = 'Todavía no registraste aportes en los últimos meses.',
 }: {
   data: Record<string, number | string>[];
   materiales: string[];
   color: (m: string) => string;
+  title?: string;
+  question?: string;
+  vacio?: string;
 }) {
   const filas = data.map((f) => ({
     ...f,
@@ -287,12 +293,9 @@ export function MaterialMixChart({
     );
   };
   return (
-    <ChartCard
-      title="Cómo cambió lo que reciclás"
-      question="Kg por material en cada mes: ¿mantenés o diversificás lo que entregás?"
-    >
+    <ChartCard title={title} question={question}>
       {materiales.length === 0 ? (
-        <SinDatos label="Todavía no registraste aportes en los últimos meses." />
+        <SinDatos label={vacio} />
       ) : (
         <>
           <div

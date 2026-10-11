@@ -30,11 +30,15 @@ export function OrganizationMaterialChart({
   materiales,
   color,
   onSelect,
+  title = 'Materiales por organización',
+  question = 'No solo quién recicla más: qué recicla cada una.',
 }: {
   data: OrganizacionAgg[];
   materiales: string[];
   color: (m: string) => string;
-  onSelect: (id: string) => void;
+  onSelect?: (id: string) => void;
+  title?: string;
+  question?: string;
 }) {
   const top = data.slice(0, 10);
 
@@ -60,10 +64,7 @@ export function OrganizationMaterialChart({
   };
 
   return (
-    <ChartCard
-      title="Materiales por organización"
-      question="No solo quién recicla más: qué recicla cada una."
-    >
+    <ChartCard title={title} question={question}>
       {top.length === 0 ? (
         <SinDatos />
       ) : (
@@ -113,8 +114,8 @@ export function OrganizationMaterialChart({
                   strokeWidth={1}
                   barSize={18}
                   radius={i === materiales.length - 1 ? [0, 4, 4, 0] : 0}
-                  className="cursor-pointer"
-                  onClick={(o: OrganizacionAgg) => onSelect(o.id)}
+                  className={onSelect && 'cursor-pointer'}
+                  onClick={(o: OrganizacionAgg) => onSelect?.(o.id)}
                 />
               ))}
             </BarChart>
