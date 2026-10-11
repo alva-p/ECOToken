@@ -1,3 +1,4 @@
+import { inicioDiaArt } from '../common/helpers/fecha-art.helper';
 import { Test } from '@nestjs/testing';
 import {
   BadRequestException,
@@ -376,8 +377,9 @@ describe('IngresosService (E5-HU01)', () => {
     it('filtra desde el inicio del día `dias` atrás y mapea la fila', async () => {
       const r = await service.misEntregas('coop-1', 7);
       const desde: Date = repository.findEntregasCooperativa.mock.calls[0][1];
-      expect(desde.getHours()).toBe(0);
-      expect(Math.floor((Date.now() - desde.getTime()) / 864e5)).toBe(7);
+      // Medianoche de Buenos Aires (03:00 UTC), sin importar el huso del servidor.
+      expect(desde.getUTCHours()).toBe(3);
+      expect(desde).toEqual(inicioDiaArt(7));
       expect(r[0]).toMatchObject({
         empresaId: 'emp1',
         empresa: 'ACME',
