@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { fechaAR } from '@/lib/fecha';
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -11,7 +12,7 @@ const LIMIT = 20;
 const LIMIT_EXPORT = 500;
 
 function formatFecha(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-AR');
+  return fechaAR(iso);
 }
 
 /** Escapa un valor para una celda CSV (RFC 4180: comillas dobles si hace falta). */

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
+import { aHoraArgentina } from '@/lib/fecha';
 import { Button } from '@/components/ui/Button';
 import { Table } from '@/components/ui/Table';
 import {
@@ -109,7 +110,12 @@ export function EmpresaDashboardPage() {
     setErrorAportes(false);
     setAportes(null);
     misAportes({ limit: LIMITE_APORTES })
-      .then((r) => setAportes(r.data))
+      // Fechas en hora argentina para agrupar por día/mes (ver lib/fecha.ts).
+      .then((r) =>
+        setAportes(
+          r.data.map((a) => ({ ...a, fecha: aHoraArgentina(a.fecha) })),
+        ),
+      )
       .catch(() => setErrorAportes(true));
   }, []);
 

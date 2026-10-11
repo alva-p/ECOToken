@@ -1,9 +1,16 @@
 import { api } from '@/lib/api';
+import { aHoraArgentina } from '@/lib/fecha';
 
 import type { Aporte } from './dashboard/data';
 
-/** Aportes planos para el Panel de Gestión Ambiental (las métricas se derivan en dashboard/data.ts). */
-export const obtenerAportes = () => api<Aporte[]>('/reportes/ingresos');
+/**
+ * Aportes planos para el Panel de Gestión Ambiental (las métricas se derivan
+ * en dashboard/data.ts). Las fechas se pasan a hora argentina al recibirlas.
+ */
+export const obtenerAportes = () =>
+  api<Aporte[]>('/reportes/ingresos').then((a) =>
+    a.map((x) => ({ ...x, fecha: aHoraArgentina(x.fecha) })),
+  );
 
 export type TipoBeneficio = 'WEB' | 'PANTALLAS' | 'OTRO';
 

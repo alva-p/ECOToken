@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { fechaAR } from '@/lib/fecha';
 import { Link } from 'react-router-dom';
 import { CalendarDays, Gift, Globe, MonitorPlay, Ticket } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
@@ -316,8 +317,7 @@ export function MyBenefitsList({
                 {c.beneficio.titulo}
               </div>
               <div className="text-xs text-eco-ink2">
-                {e.detalle} · {fmtEco(c.costoTokens)} ·{' '}
-                {new Date(c.createdAt).toLocaleDateString('es-AR')}
+                {e.detalle} · {fmtEco(c.costoTokens)} · {fechaAR(c.createdAt)}
               </div>
             </div>
             <Badge color={e.color}>{e.label}</Badge>

@@ -20,15 +20,9 @@ import {
   type Insight,
 } from '../../municipio/dashboard/data.ts';
 
-const ART_MS = 3 * 3600_000; // Argentina: GMT-3 fijo, sin horario de verano.
+import { aHoraArgentina } from '../../../lib/fecha.ts';
 
-/** ISO desplazado a hora argentina: sus primeros 10 caracteres son el día local. */
-export const aHoraArgentina = (iso: string) =>
-  new Date(Date.parse(iso) - ART_MS).toISOString();
-
-/** Día de hoy en Argentina (YYYY-MM-DD). */
-export const hoyArt = (ahora = Date.now()) =>
-  new Date(ahora - ART_MS).toISOString().slice(0, 10);
+export { hoyArt } from '../../../lib/fecha.ts';
 
 export interface EntregaLike {
   id: string;

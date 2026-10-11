@@ -1,3 +1,4 @@
+import { limiteDiaArt } from '../common/helpers/fecha-art.helper';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ReporteRepository } from './repository/reporte.repository';
 import { CreateReporteDto } from './dto/create-reporte.dto';
@@ -53,8 +54,12 @@ export class ReportesService {
    * cada empresa aparte, y evita una segunda consulta.
    */
   async obtenerVolumenPorPeriodo(filtros: { desde?: string; hasta?: string }) {
-    const desde = filtros.desde ? new Date(filtros.desde) : undefined;
-    const hasta = filtros.hasta ? new Date(filtros.hasta) : undefined;
+    const desde = filtros.desde
+      ? limiteDiaArt(filtros.desde, 'desde')
+      : undefined;
+    const hasta = filtros.hasta
+      ? limiteDiaArt(filtros.hasta, 'hasta')
+      : undefined;
     const ingresos = await this.repository.findIngresosEnPeriodo(desde, hasta);
 
     const porEmpresa = new Map<

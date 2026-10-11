@@ -96,9 +96,10 @@ describe('ReportesService', () => {
         hasta: '2026-08-31',
       });
 
+      // Días completos en hora argentina: el "hasta" incluye todo el 31/8.
       expect(repository.findIngresosEnPeriodo).toHaveBeenCalledWith(
-        new Date('2026-08-01'),
-        new Date('2026-08-31'),
+        new Date('2026-08-01T03:00:00.000Z'),
+        new Date('2026-09-01T02:59:59.999Z'),
       );
     });
 

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { aHoraArgentina, fechaAR, hoyArt } from '@/lib/fecha';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table } from '@/components/ui/Table';
@@ -10,7 +11,6 @@ import {
   nombreMaterial,
 } from '@/features/municipio/dashboard/data';
 import { misEntregas, type EntregaHistorial } from '../api';
-import { hoyArt } from '../dashboard/data';
 
 const PERIODOS = [
   { dias: 0, label: 'Hoy' },
@@ -26,8 +26,7 @@ const DIAS_MAX = 366;
 const control =
   'rounded-lg border border-eco-border-strong bg-eco-surface px-3 py-2 text-sm text-eco-ink focus:outline-none focus:ring-2 focus:ring-eco-coop/30';
 
-const diaArt = (iso: string) =>
-  new Date(Date.parse(iso) - 3 * 3600_000).toISOString().slice(0, 10);
+const diaArt = (iso: string) => aHoraArgentina(iso).slice(0, 10);
 
 /** Historial de entregas de la cooperativa: período, organización, material, fechas y búsqueda. */
 export function HistorialEntregas() {
@@ -198,9 +197,7 @@ export function HistorialEntregas() {
             ]}
             rows={filtradas.map((e) => ({
               cells: [
-                new Date(e.fecha).toLocaleDateString('es-AR', {
-                  timeZone: 'America/Argentina/Buenos_Aires',
-                }),
+                fechaAR(e.fecha),
                 e.empresa,
                 nombreMaterial(e.material),
                 fmtKg(e.peso),

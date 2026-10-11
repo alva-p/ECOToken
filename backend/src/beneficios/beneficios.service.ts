@@ -1,3 +1,4 @@
+import { partesArt } from '../common/helpers/fecha-art.helper';
 import {
   BadRequestException,
   ConflictException,
@@ -11,11 +12,14 @@ import { BeneficioRepository } from './repository/beneficio.repository';
 import { CreateBeneficioDto } from './dto/create-beneficio.dto';
 import { UpdateBeneficioDto } from './dto/update-beneficio.dto';
 
-/** Inicio del día de hoy en UTC: un beneficio vale hasta el final de su `vigenteHasta`. */
-function inicioDeHoy(ahora = new Date()) {
-  return new Date(
-    Date.UTC(ahora.getUTCFullYear(), ahora.getUTCMonth(), ahora.getUTCDate()),
-  );
+/**
+ * Hoy (hora argentina) como fecha a medianoche UTC, el mismo formato en que
+ * se guarda `vigenteHasta` (día elegido en el formulario): un beneficio vale
+ * hasta el final de ese día en Buenos Aires.
+ */
+function inicioDeHoy() {
+  const { anio, mes, dia } = partesArt();
+  return new Date(Date.UTC(anio, mes - 1, dia));
 }
 
 /** Lógica de negocio de Beneficio (premios canjeables con tokens ECO) y sus canjes. */

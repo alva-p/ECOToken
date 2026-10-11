@@ -1,3 +1,4 @@
+import { rangoMesArt } from '../../common/helpers/fecha-art.helper';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateRankingDto } from '../dto/create-ranking.dto';
@@ -33,8 +34,7 @@ export class RankingRepository {
    * `mes` es 1-indexado (1 = enero, 12 = diciembre). (E7-HU01)
    */
   findIngresosDelMes(mes: number, anio: number) {
-    const desde = new Date(Date.UTC(anio, mes - 1, 1, 0, 0, 0, 0));
-    const hasta = new Date(Date.UTC(anio, mes, 1, 0, 0, 0, 0));
+    const { gte: desde, lt: hasta } = rangoMesArt(mes, anio);
 
     return this.prisma.ingresoMaterial.findMany({
       where: {

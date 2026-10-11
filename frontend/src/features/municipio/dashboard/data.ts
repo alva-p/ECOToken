@@ -1,3 +1,5 @@
+import { hoyArt } from '../../../lib/fecha.ts';
+
 // Métricas del Panel de Gestión Ambiental. Todo se deriva en el cliente a
 // partir de los aportes planos de GET /reportes/ingresos: funciones puras,
 // sin estado, para poder testearlas con data.check.ts.
@@ -51,6 +53,7 @@ export const fmtKg = (n: number) =>
 export const fmtNum = (n: number) => n.toLocaleString('es-AR');
 export const fmtPct = (n: number) =>
   `${n.toLocaleString('es-AR', { maximumFractionDigits: 1 })}%`;
+/** Para fechas ya pasadas a hora argentina (aHoraArgentina): no las vuelve a correr. */
 export const fmtFecha = (iso: string) =>
   new Date(iso).toLocaleDateString('es-AR', { timeZone: 'UTC' });
 
@@ -103,8 +106,9 @@ export function coloresMateriales(materiales: Iterable<string>) {
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const utc = (y: number, m: number, d: number) => new Date(Date.UTC(y, m, d));
 
+/** Hoy en Buenos Aires: los aportes llegan ya pasados a hora argentina (api.ts). */
 export function hoy() {
-  return iso(new Date());
+  return hoyArt();
 }
 
 export type Preset = 'mes' | 'mesAnterior' | '3m' | '6m' | 'anio' | 'todo';

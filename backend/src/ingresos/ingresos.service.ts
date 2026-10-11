@@ -1,3 +1,4 @@
+import { inicioDiaArt, limiteDiaArt } from '../common/helpers/fecha-art.helper';
 import {
   BadRequestException,
   ConflictException,
@@ -228,8 +229,8 @@ export class IngresosService {
     const { data, total } = await this.repository.findAportesEmpresa(
       empresaId,
       {
-        desde: filtros.desde ? new Date(filtros.desde) : undefined,
-        hasta: filtros.hasta ? new Date(filtros.hasta) : undefined,
+        desde: filtros.desde ? limiteDiaArt(filtros.desde, 'desde') : undefined,
+        hasta: filtros.hasta ? limiteDiaArt(filtros.hasta, 'hasta') : undefined,
         tipoMaterialId: filtros.tipoMaterialId,
       },
       (page - 1) * limit,
@@ -263,10 +264,7 @@ export class IngresosService {
         'El usuario no está asociado a ninguna cooperativa',
       );
     }
-    const desde = new Date();
-    desde.setHours(0, 0, 0, 0);
-    desde.setDate(desde.getDate() - dias);
-
+    const desde = inicioDiaArt(dias);
     const ingresos = await this.repository.findEntregasCooperativa(
       cooperativaId,
       desde,

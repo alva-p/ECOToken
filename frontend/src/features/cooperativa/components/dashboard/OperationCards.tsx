@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { fechaAR } from '@/lib/fecha';
 import {
   CalendarCheck,
   CheckCircle2,
@@ -178,9 +179,7 @@ export function RecentDeliveries({
         ]}
         rows={entregas.map((e) => ({
           cells: [
-            new Date(e.fecha).toLocaleDateString('es-AR', {
-              timeZone: 'America/Argentina/Buenos_Aires',
-            }),
+            fechaAR(e.fecha),
             e.empresa,
             <span key="m" className="inline-flex items-center gap-2">
               <Swatch color={color(e.material)} />

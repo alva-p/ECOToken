@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { fechaAR } from '@/lib/fecha';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -192,7 +193,7 @@ export function BeneficiosPage() {
           ]}
           rows={canjes.map((c) => ({
             cells: [
-              new Date(c.createdAt).toLocaleDateString('es-AR'),
+              fechaAR(c.createdAt),
               c.empresa.razonSocial,
               c.beneficio.titulo,
               c.costoTokens.toLocaleString('es-AR'),
