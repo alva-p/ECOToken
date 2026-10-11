@@ -282,7 +282,9 @@ export function PanelLayout({
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-4 sm:p-6 print:overflow-visible print:p-0">
+        {/* relative: los sr-only (absolute) quedan dentro del scroll del main; si no,
+            estiran el body y aparece una segunda barra de scroll. */}
+        <main className="relative flex-1 overflow-auto p-4 sm:p-6 print:overflow-visible print:p-0">
           {children}
         </main>
       </div>
