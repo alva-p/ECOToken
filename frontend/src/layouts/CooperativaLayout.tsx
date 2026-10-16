@@ -1,6 +1,8 @@
-import { CalendarCheck, ClipboardList, LayoutDashboard } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ClipboardList, LayoutDashboard, UserRound } from 'lucide-react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthContext';
+import { obtenerMiPerfil, urlLogoEmpresa } from '@/features/empresa/api';
 import { PanelLayout, type PanelNavItem } from './PanelLayout';
 
 const NAV: PanelNavItem[] = [
@@ -10,20 +12,36 @@ const NAV: PanelNavItem[] = [
     to: '/cooperativa/historial',
     icon: ClipboardList,
   },
-  {
-    label: 'Cierre de mes',
-    to: '/cooperativa/cierre-de-mes',
-    icon: CalendarCheck,
-  },
+];
+
+const NAV_FOOTER: PanelNavItem[] = [
+  { label: 'Mi Perfil', to: '/cooperativa/perfil', icon: UserRound },
 ];
 
 export function CooperativaLayout() {
   const { user } = useAuth();
   const { pathname } = useLocation();
+  const [logo, setLogo] = useState<string | undefined>(undefined);
+
+  // Logo de la cooperativa para el encabezado del menú (se recarga al cambiarlo
+  // desde "Mi Perfil", vía el evento 'ecotoken:logo').
+  useEffect(() => {
+    function cargarLogo() {
+      obtenerMiPerfil()
+        .then((p) =>
+          setLogo(p.logoUrl ? urlLogoEmpresa(p.id, Date.now()) : undefined),
+        )
+        .catch(() => undefined);
+    }
+    cargarLogo();
+    window.addEventListener('ecotoken:logo', cargarLogo);
+    return () => window.removeEventListener('ecotoken:logo', cargarLogo);
+  }, []);
+
   const title = pathname.endsWith('/historial')
     ? 'Historial de entregas'
-    : pathname.endsWith('/cierre-de-mes')
-      ? 'Cierre de mes'
+    : pathname.endsWith('/perfil')
+      ? 'Mi Perfil'
       : 'Panel Operativo';
   return (
     <PanelLayout
@@ -33,6 +51,8 @@ export function CooperativaLayout() {
       who={user?.email ?? ''}
       whoRole="Cooperativa receptora"
       nav={NAV}
+      navFooter={NAV_FOOTER}
+      logo={logo}
     >
       <Outlet />
     </PanelLayout>

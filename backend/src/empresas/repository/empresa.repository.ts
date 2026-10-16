@@ -192,11 +192,34 @@ export class EmpresaRepository {
     });
   }
 
+  /** Guarda/actualiza la ruta y el mimetype del logo de la empresa. */
+  updateLogo(id: string, logoUrl: string, logoMime: string) {
+    return this.prisma.empresa.update({
+      where: { id },
+      data: { logoUrl, logoMime },
+    });
+  }
+
   /** Documentos de verificación presentados por una empresa (más recientes primero). */
   findDocumentosVerificacion(empresaId: string) {
     return this.prisma.documentoVerificacion.findMany({
       where: { empresaId },
       orderBy: { fechaCarga: 'desc' },
+    });
+  }
+
+  /** Transición del estado de verificación (KYB): revisión del administrador. */
+  updateEstadoVerificacion(id: string, estadoVerificacion: EstadoVerificacion) {
+    return this.prisma.empresa.update({
+      where: { id },
+      data: { estadoVerificacion },
+    });
+  }
+
+  /** Un documento de verificación por id (para servir/descargar el archivo). */
+  findDocumentoVerificacionById(docId: string) {
+    return this.prisma.documentoVerificacion.findUnique({
+      where: { id: docId },
     });
   }
 

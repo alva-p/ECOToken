@@ -15,11 +15,14 @@ import { EmpresaDashboardPage } from '@/features/empresa/pages/DashboardPage';
 import { HistorialAportesPage } from '@/features/empresa/pages/HistorialAportesPage';
 import { ComprobanteAportePage } from '@/features/empresa/pages/ComprobanteAportePage';
 import { CertificadosPage } from '@/features/empresa/pages/CertificadosPage';
+import { PerfilPage } from '@/features/empresa/pages/PerfilPage';
 import { CooperativaLayout } from '@/layouts/CooperativaLayout';
 import { CooperativaDashboardPage } from '@/features/cooperativa/pages/DashboardPage';
-import { CierreMesPage } from '@/features/cooperativa/pages/CierreMesPage';
+import { CooperativaPerfilPage } from '@/features/cooperativa/pages/PerfilPage';
 import { AdminLayout } from '@/layouts/AdminLayout';
+import { AdminOverviewPage } from '@/features/admin/pages/OverviewPage';
 import { AdminDashboardPage } from '@/features/admin/pages/DashboardPage';
+import { UsuariosPage } from '@/features/admin/pages/UsuariosPage';
 import { CooperativasPage } from '@/features/admin/pages/CooperativasPage';
 import { RolesPage } from '@/features/admin/pages/RolesPage';
 import { ContratoPage } from '@/features/admin/pages/ContratoPage';
@@ -52,6 +55,7 @@ export const router = createBrowserRouter([
       { path: 'ranking', element: <RankingContenido enPanel /> },
       { path: 'certificados', element: <CertificadosPage /> },
       { path: 'beneficios', element: <OrganizacionBeneficiosPage /> },
+      { path: 'perfil', element: <PerfilPage /> },
     ],
   },
   {
@@ -64,7 +68,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <CooperativaDashboardPage /> },
       { path: 'historial', element: <HistorialEntregas /> },
-      { path: 'cierre-de-mes', element: <CierreMesPage /> },
+      { path: 'perfil', element: <CooperativaPerfilPage /> },
     ],
   },
   {
@@ -75,7 +79,9 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <AdminDashboardPage /> },
+      { index: true, element: <AdminOverviewPage /> },
+      { path: 'empresas', element: <AdminDashboardPage /> },
+      { path: 'usuarios', element: <UsuariosPage /> },
       { path: 'cooperativas', element: <CooperativasPage /> },
       { path: 'roles', element: <RolesPage /> },
       { path: 'contrato', element: <ContratoPage /> },
