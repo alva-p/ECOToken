@@ -83,7 +83,7 @@ function App() {
   );
   const isDark = theme === 'dark';
 
-  // Ranking real del último mes cerrado (E7-HU03); sin datos, la landing
+  // Ranking del mes en curso (provisorio, E7-HU03); sin datos, la landing
   // muestra guiones y estados vacíos en lugar de cifras de ejemplo.
   const { cargando, periodos, ranking } = useRankingActual();
   const variacion = ranking ? variacionVsMesAnterior(ranking, periodos) : null;
@@ -92,9 +92,8 @@ function App() {
     kg: p.totalKg,
   }));
   const kgDelMes = ranking ? ranking.totalKg.toLocaleString('es-AR') : '—';
-  const linkRanking = ranking
-    ? `/ranking?mes=${ranking.mes}&anio=${ranking.anio}`
-    : '/ranking';
+  // Sin período: la página de ranking abre sola el mes en curso.
+  const linkRanking = '/ranking';
 
   useEffect(() => {
     localStorage.setItem(THEME_KEY, theme);
@@ -165,7 +164,7 @@ function App() {
         <div className="hero-metrics container">
           <div>
             <span>{ranking ? ranking.empresas : '—'}</span>
-            <small>empresas en el último ranking</small>
+            <small>empresas en el ranking del mes</small>
           </div>
           <div>
             <span>
@@ -173,8 +172,7 @@ function App() {
               <span className="metric-unit"> kg</span>
             </span>
             <small>
-              reciclados en{' '}
-              {ranking ? etiquetaPeriodo(ranking) : 'el último mes'}
+              reciclados en {ranking ? etiquetaPeriodo(ranking) : 'el mes'}
             </small>
           </div>
           <div>
@@ -265,7 +263,7 @@ function App() {
               <div className="card-top">
                 <span>Material recuperado</span>
                 <span className="live-pill">
-                  <i /> mes cerrado
+                  <i /> mes en curso
                 </span>
               </div>
               <div className="big-number">
@@ -278,7 +276,7 @@ function App() {
                   <p className="chart-empty">
                     {cargando
                       ? 'Cargando ranking…'
-                      : 'El histórico aparece a partir del segundo mes cerrado.'}
+                      : 'El histórico aparece a partir del segundo mes.'}
                   </p>
                 )}
               </div>
@@ -287,7 +285,7 @@ function App() {
                   <Leaf size={15} />{' '}
                   {ranking
                     ? `${cantidadEmpresas(ranking.empresas)} en el ranking`
-                    : 'Sin ranking cerrado todavía'}
+                    : 'Sin ranking todavía'}
                 </span>
                 <span>
                   Puntos ECO{' '}
@@ -334,7 +332,7 @@ function App() {
                   <p className="leaderboard-empty">
                     {cargando
                       ? 'Cargando ranking…'
-                      : 'Todavía no hay un ranking cerrado. El primero se publica al terminar el mes.'}
+                      : 'Todavía no hay aportes este mes.'}
                   </p>
                 )}
               </div>

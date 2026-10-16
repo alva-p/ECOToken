@@ -1,25 +1,25 @@
 import { useEffect, useState } from 'react';
 import {
   listarPeriodos,
-  obtenerRankingPublico,
+  obtenerRankingEnCurso,
   type PeriodoCerrado,
   type RankingPublico,
 } from '../api';
 
 interface RankingActual {
   cargando: boolean;
-  /** Períodos cerrados, del más reciente al más antiguo. */
+  /** Mes en curso (provisorio) y los cerrados, del más reciente al más antiguo. */
   periodos: PeriodoCerrado[];
-  /** Ranking del último período cerrado; null si todavía no hay ninguno. */
+  /** Ranking provisorio del mes en curso; null si el backend no respondió. */
   ranking: RankingPublico | null;
 }
 
 const HISTORICO = 6;
 
 /**
- * Último ranking cerrado y su histórico reciente, para la landing pública
- * (E7-HU03). Si el backend no responde o aún no hay cierres, devuelve el
- * estado vacío: la landing no debe romperse por esto.
+ * Ranking del mes en curso y su histórico reciente, para la landing pública
+ * (E7-HU03). Si el backend no responde, devuelve el estado vacío: la landing
+ * no debe romperse por esto.
  */
 export function useRankingActual(): RankingActual {
   const [estado, setEstado] = useState<RankingActual>({
@@ -30,11 +30,14 @@ export function useRankingActual(): RankingActual {
 
   useEffect(() => {
     let vigente = true;
-    listarPeriodos(HISTORICO)
-      .then(async (periodos) => {
-        const ranking = periodos[0]
-          ? await obtenerRankingPublico(periodos[0])
-          : null;
+    Promise.all([listarPeriodos(HISTORICO), obtenerRankingEnCurso()])
+      .then(([cerrados, ranking]) => {
+        const periodos = [
+          ranking,
+          ...cerrados.filter(
+            (p) => p.mes !== ranking.mes || p.anio !== ranking.anio,
+          ),
+        ].slice(0, HISTORICO);
         if (vigente) setEstado({ cargando: false, periodos, ranking });
       })
       .catch(() => {
