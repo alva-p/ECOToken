@@ -14,6 +14,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
+import { AltaUsuarioDto } from './dto/alta-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 
 /** Rutas HTTP de Usuario: solo delegan en el service. */
@@ -26,6 +27,18 @@ export class UsuariosController {
   @Post()
   create(@Body() dto: CreateUsuarioDto) {
     return this.service.create(dto);
+  }
+
+  // Alta administrativa: el sistema genera la contraseña temporal (no la recibe).
+  @Post('alta')
+  alta(@Body() dto: AltaUsuarioDto) {
+    return this.service.altaAdministrativa(dto);
+  }
+
+  // Restablece la contraseña (usuario que no puede ingresar): nueva temporal.
+  @Post(':id/reset-password')
+  resetPassword(@Param('id') id: string) {
+    return this.service.restablecerPassword(id);
   }
 
   @Get()

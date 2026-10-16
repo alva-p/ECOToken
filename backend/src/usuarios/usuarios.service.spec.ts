@@ -8,6 +8,7 @@ describe('UsuariosService', () => {
   let repository: {
     findByEmail: jest.Mock;
     findById: jest.Mock;
+    findByIdConHash: jest.Mock;
     update: jest.Mock;
   };
 
@@ -15,6 +16,7 @@ describe('UsuariosService', () => {
     repository = {
       findByEmail: jest.fn(),
       findById: jest.fn(),
+      findByIdConHash: jest.fn(),
       update: jest.fn(),
     };
 
@@ -53,7 +55,7 @@ describe('UsuariosService', () => {
 
   describe('cambiarPassword', () => {
     it('guarda el hash nuevo y baja la marca de contraseña temporal', async () => {
-      repository.findById.mockResolvedValue({
+      repository.findByIdConHash.mockResolvedValue({
         id: 'u1',
         passwordHash: await bcrypt.hash('Temporal-1', 4),
         debeCambiarPassword: true,
@@ -75,7 +77,7 @@ describe('UsuariosService', () => {
     });
 
     it('no cambia nada si la contraseña actual no coincide', async () => {
-      repository.findById.mockResolvedValue({
+      repository.findByIdConHash.mockResolvedValue({
         id: 'u1',
         passwordHash: await bcrypt.hash('Temporal-1', 4),
       });
