@@ -43,6 +43,8 @@ const empresaBase: Empresa = {
   sitioWeb: null,
   descripcion: null,
   estadoVerificacion: EstadoVerificacion.SIN_VERIFICAR,
+  logoUrl: null,
+  logoMime: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

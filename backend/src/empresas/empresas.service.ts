@@ -6,7 +6,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { CategoriaEmpresa, EstadoEmpresa, TipoRol } from '@prisma/client';
+import {
+  CategoriaEmpresa,
+  EstadoEmpresa,
+  EstadoVerificacion,
+  TipoRol,
+} from '@prisma/client';
 import { generarPasswordTemporal } from '../common/helpers/crypto.helper';
 import { BilleterasService } from '../billeteras/billeteras.service';
 import { BlockchainService } from '../blockchain/blockchain.service';
@@ -16,6 +21,7 @@ import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 import { RegistrarEmpresaDto } from './dto/registrar-empresa.dto';
 import { AltaCooperativaDto } from './dto/alta-cooperativa.dto';
+import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto';
 import { AgregarDocumentoVerificacionDto } from './dto/agregar-documento-verificacion.dto';
 import { ArchivoSubido } from './subida-verificacion';
 
@@ -262,6 +268,51 @@ export class EmpresasService {
     return empresa;
   }
 
+  // ─── "Mi Perfil": datos de la empresa logueada ───
+
+  /** Devuelve el perfil completo de la empresa asociada al usuario logueado. */
+  async miPerfil(empresaId: string | null) {
+    if (!empresaId) {
+      throw new BadRequestException(
+        'El usuario no está asociado a una empresa',
+      );
+    }
+    return this.findOne(empresaId);
+  }
+
+  /** Edita el perfil de la empresa logueada (no toca CUIT ni estado). */
+  async actualizarMiPerfil(empresaId: string | null, dto: ActualizarPerfilDto) {
+    if (!empresaId) {
+      throw new BadRequestException(
+        'El usuario no está asociado a una empresa',
+      );
+    }
+    return this.update(empresaId, dto);
+  }
+
+  /** Guarda/actualiza el logo de la empresa logueada. */
+  async actualizarLogo(empresaId: string | null, archivo: ArchivoSubido) {
+    if (!empresaId) {
+      throw new BadRequestException(
+        'El usuario no está asociado a una empresa',
+      );
+    }
+    return this.repository.updateLogo(
+      empresaId,
+      archivo.path,
+      archivo.mimetype,
+    );
+  }
+
+  /** Ruta + mimetype del logo de una empresa, para servirlo. */
+  async obtenerLogo(id: string): Promise<{ path: string; mime: string }> {
+    const empresa = await this.findOne(id);
+    if (!empresa.logoUrl) {
+      throw new NotFoundException('La empresa no tiene logo');
+    }
+    return { path: empresa.logoUrl, mime: empresa.logoMime ?? 'image/png' };
+  }
+
   // ─── E3-HU05: verificación (KYB) — carga de documentos ───
 
   /**
@@ -289,6 +340,35 @@ export class EmpresasService {
   async listarDocumentosVerificacion(id: string) {
     await this.findOne(id);
     return this.repository.findDocumentosVerificacion(id);
+  }
+
+  /** Aprueba la verificación (KYB) de la empresa → VERIFICADA (revisión del admin). */
+  async aprobarVerificacion(id: string) {
+    await this.findOne(id);
+    return this.repository.updateEstadoVerificacion(
+      id,
+      EstadoVerificacion.VERIFICADA,
+    );
+  }
+
+  /** Rechaza la verificación → RECHAZADA. */
+  async rechazarVerificacion(id: string) {
+    await this.findOne(id);
+    return this.repository.updateEstadoVerificacion(
+      id,
+      EstadoVerificacion.RECHAZADA,
+    );
+  }
+
+  /** Ruta + mimetype + nombre de un documento de verificación, para servirlo. */
+  async obtenerArchivoDocumento(docId: string) {
+    const doc = await this.repository.findDocumentoVerificacionById(docId);
+    if (!doc) throw new NotFoundException('Documento no encontrado');
+    return {
+      path: doc.archivoUrl,
+      mime: doc.mimeType ?? 'application/octet-stream',
+      nombre: doc.nombreArchivo ?? 'documento',
+    };
   }
 
   // ─── E4-HU03: buscador de empresas (cooperativa, con autocompletado) ───

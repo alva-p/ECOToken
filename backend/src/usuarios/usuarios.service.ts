@@ -1,7 +1,13 @@
 import * as bcrypt from 'bcrypt';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { generarPasswordTemporal } from '../common/helpers/crypto.helper';
 import { UsuarioRepository } from './repository/usuario.repository';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
+import { AltaUsuarioDto } from './dto/alta-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 
 /** Lógica de negocio de Usuario. */
@@ -13,6 +19,49 @@ export class UsuariosService {
 
   create(dto: CreateUsuarioDto) {
     return this.repository.create(dto);
+  }
+
+  /**
+   * Alta administrativa (gestión de usuarios): genera una contraseña temporal,
+   * la hashea y crea la cuenta con `debeCambiarPassword`. Devuelve el usuario y
+   * la contraseña en claro UNA sola vez para entregarla al titular.
+   */
+  async altaAdministrativa(dto: AltaUsuarioDto) {
+    const existente = await this.repository.findByEmail(dto.email);
+    if (existente)
+      throw new ConflictException(
+        `Ya existe un usuario con el email ${dto.email}`,
+      );
+
+    const passwordTemporal = generarPasswordTemporal();
+    const usuario = await this.repository.create({
+      email: dto.email,
+      passwordHash: await bcrypt.hash(passwordTemporal, BCRYPT_ROUNDS),
+      tipoRol: dto.tipoRol,
+      debeCambiarPassword: true,
+      empresaId: dto.empresaId,
+      municipalidadId: dto.municipalidadId,
+    });
+
+    return { usuario, passwordTemporal };
+  }
+
+  /**
+   * Restablece la contraseña de un usuario que no puede ingresar: genera una
+   * nueva temporal, la hashea y vuelve a exigir el cambio en el próximo acceso.
+   * Devuelve la contraseña en claro UNA sola vez.
+   */
+  async restablecerPassword(id: string) {
+    const existe = await this.repository.findById(id);
+    if (!existe) throw new NotFoundException(`Usuario ${id} no encontrado`);
+
+    const passwordTemporal = generarPasswordTemporal();
+    const usuario = await this.repository.update(id, {
+      passwordHash: await bcrypt.hash(passwordTemporal, BCRYPT_ROUNDS),
+      debeCambiarPassword: true,
+    });
+
+    return { usuario, passwordTemporal };
   }
 
   findAll() {
@@ -68,7 +117,8 @@ export class UsuariosService {
     actual: string,
     nueva: string,
   ): Promise<boolean> {
-    const usuario = await this.findOne(id);
+    const usuario = await this.repository.findByIdConHash(id);
+    if (!usuario) throw new NotFoundException(`Usuario ${id} no encontrado`);
     if (!(await bcrypt.compare(actual, usuario.passwordHash))) return false;
     await this.repository.update(id, {
       passwordHash: await bcrypt.hash(nueva, BCRYPT_ROUNDS),
