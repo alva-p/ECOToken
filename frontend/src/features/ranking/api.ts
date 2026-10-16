@@ -67,6 +67,51 @@ export function obtenerRankingPublico(periodo?: {
   return api<RankingPublico>(`/ranking/publico${qs}`);
 }
 
+interface RankingEnCursoApi {
+  mes: number;
+  anio: number;
+  totalEmpresas: number;
+  totalKg: number;
+  totalTokens: number;
+  ranking: {
+    posicion: number;
+    razonSocial: string;
+    tokens: number;
+    totalKg: number;
+  }[];
+}
+
+/**
+ * Ranking provisorio del mes en curso (público, sin login), con la misma forma
+ * que uno cerrado pero sin cierre ni snapshot: se certifica cuando cierra el mes.
+ */
+export async function obtenerRankingEnCurso(): Promise<RankingPublico> {
+  if (SIN_BACKEND) return { ...rankingMock(), fechaCierre: null };
+  const r = await api<RankingEnCursoApi>('/ranking/actual');
+  return {
+    mes: r.mes,
+    anio: r.anio,
+    fechaCierre: null,
+    empresas: r.totalEmpresas,
+    totalKg: r.totalKg,
+    totalTokens: r.totalTokens,
+    hashSnapshot: null,
+    bloqueReferencia: null,
+    co2Evitado: 0,
+    materiales: [],
+    lider: null,
+    data: r.ranking.map((f) => ({
+      posicion: f.posicion,
+      razonSocial: f.razonSocial,
+      kgReciclados: f.totalKg,
+      tokens: f.tokens,
+      certificados: 0,
+      tendencia: null,
+      nuevo: false,
+    })),
+  };
+}
+
 export interface PuntoEvolucion {
   mes: number;
   anio: number;
