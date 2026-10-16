@@ -119,6 +119,11 @@ model Empresa {
   descripcion        String?
   estadoVerificacion EstadoVerificacion @default(SIN_VERIFICAR)
 
+  // Logo de la empresa (se muestra en el panel). Ruta del archivo en el
+  // servidor + su mimetype para servirlo.
+  logoUrl  String?
+  logoMime String?
+
   usuarios               Usuario[]
   ingresos               IngresoMaterial[]       @relation("IngresosDeEmpresa")
   aportesValidados       IngresoMaterial[]       @relation("IngresosValidadosPorCooperativa")
