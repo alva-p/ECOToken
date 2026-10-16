@@ -397,7 +397,7 @@ export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
                         <LogoEmpresa
                           nombre={f.razonSocial}
                           logo={f.logo}
-                          className="h-7 w-7 text-[10px]"
+                          className="h-9 w-9 text-xs"
                         />
                         {f.razonSocial}
                         {enPanel && mia?.posicion === f.posicion && (
