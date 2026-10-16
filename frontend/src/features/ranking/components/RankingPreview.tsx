@@ -133,7 +133,7 @@ function PodiumCard({ item }: { item: RankingPodiumItem }) {
       <LogoEmpresa
         nombre={item.name}
         logo={item.logo}
-        className="mx-auto mt-2 h-14 w-14 text-base"
+        className="mx-auto mt-2 h-20 w-20 text-xl"
       />
       {/* Nombre a 2 líneas fijas: un nombre largo no estira su tarjeta del podio. */}
       <div className="mt-2 flex min-h-[3.5rem] items-center justify-center">
