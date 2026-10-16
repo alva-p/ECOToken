@@ -17,6 +17,12 @@ export const TAMANIO_MAXIMO_DOCUMENTO = 5 * 1024 * 1024;
 export const MIME_DOCUMENTO_VERIFICACION =
   /^(application\/pdf|image\/(jpeg|png|webp))$/;
 
+/** Logo de la empresa: directorio, tamaño máximo (2 MB) y tipos (solo imagen). */
+export const DIRECTORIO_LOGOS =
+  process.env.UPLOADS_DIR_LOGOS ?? 'uploads/logos';
+export const TAMANIO_MAXIMO_LOGO = 2 * 1024 * 1024;
+export const MIME_LOGO = /^image\/(jpeg|png|webp)$/;
+
 /**
  * Forma mínima del archivo que deja Multer. Se declara acá para no depender de
  * `@types/multer` (no instalado). Con la opción `dest`, Multer completa

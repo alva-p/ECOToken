@@ -26,6 +26,13 @@ export type CategoriaEmpresa = 'EMPRESA' | 'COOPERATIVA';
 /** Estado de aprobación de una Empresa (E3-HU04). Solo APROBADA puede operar. */
 export type EstadoEmpresa = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
 
+/** Estado de verificación (KYB) de una Empresa (E3-HU05), independiente del de aprobación. */
+export type EstadoVerificacion =
+  | 'SIN_VERIFICAR'
+  | 'EN_REVISION'
+  | 'VERIFICADA'
+  | 'RECHAZADA';
+
 // ─── Entidades ───
 
 /**
@@ -64,6 +71,8 @@ export interface Empresa {
   nombre: string | null;
   datosContacto: string | null;
   activa: boolean;
+  estadoVerificacion: EstadoVerificacion;
+  logoUrl: string | null;
 }
 
 /**

@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Field } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
@@ -6,8 +6,8 @@ import { Table } from '@/components/ui/Table';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import type { Empresa } from '@/types';
 import { EditarEmpresaModal } from '../components/EditarEmpresaModal';
+import { AltaCooperativaModal } from '../components/AltaCooperativaModal';
 import {
-  altaCooperativa,
   darDeBajaEmpresa,
   editarEmpresa,
   filtrarEmpresas,
@@ -15,22 +15,13 @@ import {
   type AltaCooperativaResponse,
 } from '../api';
 
-const EMPTY_FORM = {
-  razonSocial: '',
-  cuit: '',
-  emailContacto: '',
-  domicilio: '',
-  representanteLegal: '',
-};
-
 export function CooperativasPage() {
-  const [form, setForm] = useState(EMPTY_FORM);
   const [cooperativas, setCooperativas] = useState<Empresa[]>([]);
   const [editando, setEditando] = useState<Empresa | null>(null);
   const [dandoBaja, setDandoBaja] = useState<Empresa | null>(null);
+  const [mostrarAlta, setMostrarAlta] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [errores, setErrores] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [resultado, setResultado] = useState<AltaCooperativaResponse | null>(
     null,
@@ -47,50 +38,6 @@ export function CooperativasPage() {
   useEffect(() => {
     cargar();
   }, []);
-
-  function setField(field: keyof typeof EMPTY_FORM) {
-    return (event: React.ChangeEvent<HTMLInputElement>) =>
-      setForm((actual) => ({ ...actual, [field]: event.target.value }));
-  }
-
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    setError(null);
-    setResultado(null);
-    const nuevosErrores: Record<string, string> = {};
-    if (!form.razonSocial.trim()) {
-      nuevosErrores.razonSocial = 'La razón social es obligatoria.';
-    }
-    const cuit = form.cuit.replace(/\D/g, '');
-    if (cuit.length !== 11) {
-      nuevosErrores.cuit = 'El CUIT debe tener 11 dígitos.';
-    }
-    if (!/^\S+@\S+\.\S+$/.test(form.emailContacto)) {
-      nuevosErrores.emailContacto = 'Ingresá un email válido.';
-    }
-    setErrores(nuevosErrores);
-    if (Object.keys(nuevosErrores).length) return;
-
-    setSubmitting(true);
-    try {
-      const res = await altaCooperativa({
-        razonSocial: form.razonSocial.trim(),
-        cuit,
-        emailContacto: form.emailContacto.trim(),
-        domicilio: form.domicilio.trim() || undefined,
-        representanteLegal: form.representanteLegal.trim() || undefined,
-      });
-      setResultado(res);
-      setForm(EMPTY_FORM);
-      await cargar();
-    } catch {
-      setError(
-        'No se pudo dar de alta la cooperativa. Verificá los datos e intentá de nuevo.',
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  }
 
   async function confirmarBaja() {
     if (!dandoBaja) return;
@@ -113,53 +60,26 @@ export function CooperativasPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <Card className="max-w-lg p-6">
-        <h2 className="mb-4 text-sm font-semibold text-eco-ink">
-          Dar de alta una cooperativa
-        </h2>
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col gap-4"
-          noValidate
+      <div className="flex items-end justify-between gap-4">
+        <div className="w-full max-w-sm">
+          <Field
+            label="Buscar cooperativa"
+            type="search"
+            placeholder="Razón social, CUIT o email"
+            value={busqueda}
+            onChange={(event) => setBusqueda(event.target.value)}
+          />
+        </div>
+        <Button
+          color="muni"
+          onClick={() => {
+            setResultado(null);
+            setMostrarAlta(true);
+          }}
         >
-          <Field
-            label="Razón social"
-            required
-            value={form.razonSocial}
-            onChange={setField('razonSocial')}
-            error={errores.razonSocial}
-          />
-          <Field
-            label="CUIT"
-            required
-            value={form.cuit}
-            onChange={setField('cuit')}
-            placeholder="20-12345678-6"
-            error={errores.cuit}
-          />
-          <Field
-            label="Email de contacto y acceso"
-            type="email"
-            required
-            value={form.emailContacto}
-            onChange={setField('emailContacto')}
-            error={errores.emailContacto}
-          />
-          <Field
-            label="Domicilio"
-            value={form.domicilio}
-            onChange={setField('domicilio')}
-          />
-          <Field
-            label="Representante legal"
-            value={form.representanteLegal}
-            onChange={setField('representanteLegal')}
-          />
-          <Button type="submit" color="muni" disabled={submitting}>
-            {submitting ? 'Dando de alta…' : 'Dar de alta'}
-          </Button>
-        </form>
-      </Card>
+          Dar de alta cooperativa
+        </Button>
+      </div>
 
       {error && <p className="text-xs text-eco-danger">{error}</p>}
 
@@ -182,18 +102,6 @@ export function CooperativasPage() {
       )}
 
       <div>
-        <h2 className="mb-3 text-sm font-semibold text-eco-ink">
-          Cooperativas registradas
-        </h2>
-        <div className="mb-4 max-w-sm">
-          <Field
-            label="Buscar cooperativa"
-            type="search"
-            placeholder="Razón social, CUIT o email"
-            value={busqueda}
-            onChange={(event) => setBusqueda(event.target.value)}
-          />
-        </div>
         <Table
           columns={[
             { label: 'Cooperativa' },
@@ -240,6 +148,16 @@ export function CooperativasPage() {
           }
         />
       </div>
+
+      <AltaCooperativaModal
+        open={mostrarAlta}
+        onClose={() => setMostrarAlta(false)}
+        onCreated={(res) => {
+          setResultado(res);
+          setMostrarAlta(false);
+          cargar();
+        }}
+      />
 
       <EditarEmpresaModal
         empresa={editando}

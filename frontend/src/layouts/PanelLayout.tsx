@@ -1,20 +1,26 @@
 import { useState, type ReactNode } from 'react';
 import {
+  ArrowLeft,
+  ChevronRight,
   Circle,
-  Leaf,
   LogOut,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
+  Settings,
   X,
   type LucideIcon,
 } from 'lucide-react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cx } from '@/lib/cx';
 import { CierreMesBadge } from '@/components/CierreMesBadge';
 import { useAuth } from '@/providers/AuthContext';
 
 export type ActorColor = 'org' | 'coop' | 'muni';
+
+// Isotipo de marca en el encabezado del menú, igual para todos los paneles.
+// El logo propio de cada cuenta va en el avatar inferior.
+const MARCA_LOGO = '/logos/logo-mini-eco.png';
 
 const STRIPE: Record<ActorColor, string> = {
   org: 'bg-eco-org',
@@ -41,6 +47,16 @@ export interface PanelNavItem {
   icon?: LucideIcon;
 }
 
+/**
+ * Grupo "drill-in" fijado al fondo del menú (ej. "Configuración"): al tocarlo,
+ * su submenú tapa a los ítems principales, con un botón para volver.
+ */
+export interface PanelNavGroup {
+  label: string;
+  icon?: LucideIcon;
+  items: PanelNavItem[];
+}
+
 // Variante legible del color del actor sobre la barra oscura.
 const LABEL_OSCURO: Record<ActorColor, string> = {
   org: 'text-emerald-400',
@@ -65,6 +81,14 @@ interface PanelLayoutProps {
   who: string;
   whoRole: string;
   nav: PanelNavItem[];
+  /** Ítems fijados al fondo del menú (ej. "Mi Perfil"), separados del resto. */
+  navFooter?: PanelNavItem[];
+  /** Grupo desplegable fijado al fondo (ej. "Configuración"): su submenú tapa al menú principal. */
+  configGroup?: PanelNavGroup;
+  /** Logo del actor (ej. logo de la empresa) para el encabezado del menú. */
+  logo?: string;
+  /** Muestra el badge de "Próximo cierre" en el encabezado (default true). */
+  showCierreBadge?: boolean;
   children: ReactNode;
 }
 
@@ -77,13 +101,24 @@ export function PanelLayout({
   who,
   whoRole,
   nav,
+  navFooter,
+  configGroup,
+  logo,
+  showCierreBadge = true,
   children,
 }: PanelLayoutProps) {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [abierto, setAbierto] = useState(false);
   // Preferencia por navegador: barra angosta solo con íconos (desktop/tablet).
   const [colapsada, setColapsada] = useState(leerColapsada);
+  // El submenú de configuración arranca abierto si ya estamos en una de sus rutas.
+  const [configAbierta, setConfigAbierta] = useState(
+    () =>
+      configGroup?.items.some((i) => i.to && pathname.startsWith(i.to)) ??
+      false,
+  );
 
   function alternarColapsada() {
     setColapsada((c) => {
@@ -99,6 +134,49 @@ export function PanelLayout({
   function handleLogout() {
     logout();
     navigate('/login', { replace: true });
+  }
+
+  function renderItem(item: PanelNavItem) {
+    const Icon = item.icon ?? Circle;
+    const contenido = (
+      <>
+        <Icon size={18} aria-hidden className="shrink-0" />
+        <span className={cx('truncate', colapsada && 'md:sr-only')}>
+          {item.label}
+        </span>
+      </>
+    );
+    const base = cx(
+      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium',
+      colapsada && 'md:justify-center md:px-0',
+    );
+    return item.to ? (
+      <NavLink
+        key={item.label}
+        to={item.to}
+        end
+        title={colapsada ? item.label : undefined}
+        onClick={() => setAbierto(false)}
+        className={({ isActive }) =>
+          cx(
+            base,
+            isActive
+              ? NAV_ACTIVE[actorColor]
+              : 'text-white/60 hover:bg-white/5 hover:text-white',
+          )
+        }
+      >
+        {contenido}
+      </NavLink>
+    ) : (
+      <span
+        key={item.label}
+        title="Disponible en una próxima entrega"
+        className={cx(base, 'cursor-not-allowed text-white/25')}
+      >
+        {contenido}
+      </span>
+    );
   }
 
   return (
@@ -123,9 +201,11 @@ export function PanelLayout({
             colapsada && 'md:h-auto md:flex-col md:gap-2 md:px-0 md:py-3',
           )}
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-eco-org">
-            <Leaf size={18} aria-hidden />
-          </span>
+          <img
+            src={MARCA_LOGO}
+            alt="EcoToken"
+            className="h-9 w-9 shrink-0 object-contain"
+          />
           <div className={cx('min-w-0 flex-1', colapsada && 'md:hidden')}>
             <div className="text-base font-bold leading-tight tracking-tight">
               EcoToken
@@ -166,56 +246,76 @@ export function PanelLayout({
           className="flex flex-1 flex-col gap-1 overflow-y-auto p-3"
           aria-label="Secciones del panel"
         >
-          <div
-            className={cx(
-              'px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest text-white/30',
-              colapsada && 'md:hidden',
-            )}
-          >
-            Menú
-          </div>
-          {nav.map((item) => {
-            const Icon = item.icon ?? Circle;
-            const contenido = (
-              <>
-                <Icon size={18} aria-hidden className="shrink-0" />
+          {configGroup && configAbierta ? (
+            // Submenú de configuración: tapa al menú principal, con "volver".
+            <>
+              <button
+                type="button"
+                onClick={() => setConfigAbierta(false)}
+                title={colapsada ? 'Volver' : undefined}
+                className={cx(
+                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-white/70 hover:bg-white/5 hover:text-white',
+                  colapsada && 'md:justify-center md:px-0',
+                )}
+              >
+                <ArrowLeft size={18} aria-hidden className="shrink-0" />
                 <span className={cx('truncate', colapsada && 'md:sr-only')}>
-                  {item.label}
+                  {configGroup.label}
                 </span>
-              </>
-            );
-            const base = cx(
-              'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium',
-              colapsada && 'md:justify-center md:px-0',
-            );
-            return item.to ? (
-              <NavLink
-                key={item.label}
-                to={item.to}
-                end
-                title={colapsada ? item.label : undefined}
-                onClick={() => setAbierto(false)}
-                className={({ isActive }) =>
-                  cx(
-                    base,
-                    isActive
-                      ? NAV_ACTIVE[actorColor]
-                      : 'text-white/60 hover:bg-white/5 hover:text-white',
-                  )
-                }
+              </button>
+              <div className="my-1 border-t border-white/10" />
+              {configGroup.items.map(renderItem)}
+            </>
+          ) : (
+            <>
+              <div
+                className={cx(
+                  'px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-widest text-white/30',
+                  colapsada && 'md:hidden',
+                )}
               >
-                {contenido}
-              </NavLink>
-            ) : (
-              <span
-                key={item.label}
-                title="Disponible en una próxima entrega"
-                className={cx(base, 'cursor-not-allowed text-white/25')}
-              >
-                {contenido}
-              </span>
-            );
-          })}
+                Menú
+              </div>
+              {nav.map(renderItem)}
+
+              {(navFooter?.length || configGroup) && (
+                <div className="mt-auto flex flex-col gap-1 border-t border-white/10 pt-3">
+                  {navFooter?.map(renderItem)}
+                  {configGroup && (
+                    <button
+                      type="button"
+                      onClick={() => setConfigAbierta(true)}
+                      title={colapsada ? configGroup.label : undefined}
+                      className={cx(
+                        'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white',
+                        colapsada && 'md:justify-center md:px-0',
+                      )}
+                    >
+                      {(() => {
+                        const Icon = configGroup.icon ?? Settings;
+                        return (
+                          <Icon size={18} aria-hidden className="shrink-0" />
+                        );
+                      })()}
+                      <span
+                        className={cx('truncate', colapsada && 'md:sr-only')}
+                      >
+                        {configGroup.label}
+                      </span>
+                      <ChevronRight
+                        size={16}
+                        aria-hidden
+                        className={cx(
+                          'ml-auto shrink-0',
+                          colapsada && 'md:hidden',
+                        )}
+                      />
+                    </button>
+                  )}
+                </div>
+              )}
+            </>
+          )}
         </nav>
 
         <div className="border-t border-white/10 p-3">
@@ -225,15 +325,24 @@ export function PanelLayout({
               colapsada && 'md:flex-col md:bg-transparent md:p-0',
             )}
           >
-            <span
-              title={colapsada ? `${who} · ${whoRole}` : undefined}
-              className={cx(
-                'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold uppercase',
-                STRIPE[actorColor],
-              )}
-            >
-              {who.charAt(0) || '?'}
-            </span>
+            {logo ? (
+              <img
+                src={logo}
+                alt=""
+                title={colapsada ? `${who} · ${whoRole}` : undefined}
+                className="h-9 w-9 shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <span
+                title={colapsada ? `${who} · ${whoRole}` : undefined}
+                className={cx(
+                  'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold uppercase',
+                  STRIPE[actorColor],
+                )}
+              >
+                {who.charAt(0) || '?'}
+              </span>
+            )}
             <div className={cx('min-w-0 flex-1', colapsada && 'md:hidden')}>
               <div className="truncate text-sm font-semibold text-white/85">
                 {who}
@@ -277,9 +386,11 @@ export function PanelLayout({
                 {title}
               </h1>
             </div>
-            <div className="ml-auto print:hidden">
-              <CierreMesBadge />
-            </div>
+            {showCierreBadge && (
+              <div className="ml-auto print:hidden">
+                <CierreMesBadge />
+              </div>
+            )}
           </div>
         </header>
         {/* relative: los sr-only (absolute) quedan dentro del scroll del main; si no,
