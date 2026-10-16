@@ -71,6 +71,8 @@ function periodoDeUrl(params: URLSearchParams) {
 export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [periodos, setPeriodos] = useState<PeriodoCerrado[] | null>(null);
+  // Ranking provisorio del mes en curso (null si no se pudo cargar).
+  const [actual, setActual] = useState<RankingPublico | null>(null);
   const [ranking, setRanking] = useState<RankingPublico | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
@@ -104,10 +106,19 @@ export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
   const sinRanking = !!periodos && !!objetivo && !cerrado && !enCurso;
 
   useEffect(() => {
-    listarPeriodos(24)
-      .then(setPeriodos)
+    Promise.all([listarPeriodos(24), obtenerRankingEnCurso().catch(() => null)])
+      .then(([cerrados, enCursoActual]) => {
+        setActual(enCursoActual);
+        setPeriodos(cerrados);
+      })
       .catch(() => setError('No se pudo cargar el ranking.'));
   }, []);
+
+  // Histórico: el mes en curso (provisorio) arriba de los cerrados.
+  const historico =
+    periodos && actual && !periodos.some((p) => clave(p) === clave(actual))
+      ? [actual, ...periodos]
+      : (periodos ?? []);
 
   const objetivoMes = objetivo?.mes;
   const objetivoAnio = objetivo?.anio;
@@ -118,10 +129,12 @@ export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
     setRanking(null);
     setError(null);
     if (!cerrado && !enCurso) return;
-    (cerrado
-      ? obtenerRankingPublico({ mes: objetivoMes, anio: objetivoAnio })
-      : obtenerRankingEnCurso()
-    )
+    if (enCurso) {
+      if (actual) setRanking(actual);
+      else setError('No se pudo cargar el ranking de este período.');
+      return;
+    }
+    obtenerRankingPublico({ mes: objetivoMes, anio: objetivoAnio })
       .then((r) => vigente && setRanking(r))
       .catch(
         () =>
@@ -130,7 +143,7 @@ export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
     return () => {
       vigente = false;
     };
-  }, [periodos, objetivoMes, objetivoAnio, cerrado, enCurso]);
+  }, [periodos, actual, objetivoMes, objetivoAnio, cerrado, enCurso]);
 
   // Solo en el panel de empresa: dónde está la empresa logueada en este período.
   useEffect(() => {
@@ -185,7 +198,7 @@ export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
 
   const variacion =
     ranking && periodos ? variacionVsMesAnterior(ranking, periodos) : null;
-  const maxKg = Math.max(...(periodos ?? []).map((p) => p.totalKg), 1);
+  const maxKg = Math.max(...historico.map((p) => p.totalKg), 1);
 
   return (
     <div
@@ -488,11 +501,11 @@ export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
         </>
       )}
 
-      {periodos && periodos.length > 1 && (
+      {historico.length > 1 && (
         <section>
           <h2 className="mb-3 text-sm font-semibold">Histórico</h2>
           <Card className="flex flex-col gap-1 p-2">
-            {periodos.map((p) => {
+            {historico.map((p) => {
               const activo =
                 p.mes === objetivo?.mes && p.anio === objetivo?.anio;
               return (
@@ -506,8 +519,13 @@ export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
                     activo && 'bg-eco-org-soft hover:bg-eco-org-soft',
                   )}
                 >
-                  <span className="text-sm font-semibold sm:w-36 sm:shrink-0">
+                  <span className="text-sm font-semibold sm:w-44 sm:shrink-0">
                     {etiquetaPeriodo(p)}
+                    {!p.fechaCierre && (
+                      <span className="ml-1.5 text-xs font-normal text-eco-ink2">
+                        en curso
+                      </span>
+                    )}
                   </span>
                   <span
                     aria-hidden
