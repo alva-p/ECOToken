@@ -67,11 +67,11 @@ export class RankingPublicoRepository {
     }));
   }
 
-  /** Razón social de las empresas indicadas (único dato de empresa que se publica). */
+  /** Razón social y logo de las empresas indicadas (únicos datos de empresa que se publican). */
   razonesSociales(empresaIds: string[]) {
     return this.prisma.empresa.findMany({
       where: { id: { in: empresaIds } },
-      select: { id: true, razonSocial: true },
+      select: { id: true, razonSocial: true, logoUrl: true },
     });
   }
 

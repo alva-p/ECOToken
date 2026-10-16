@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto';
 import { BlockchainService } from '../blockchain/blockchain.service';
 import { CertificadosService } from '../certificados/certificados.service';
 import { RankingRepository } from './repository/ranking.repository';
+import { rutaLogo } from './logo.util';
 import { CreateRankingDto } from './dto/create-ranking.dto';
 import { UpdateRankingDto } from './dto/update-ranking.dto';
 import {
@@ -79,6 +80,7 @@ export class RankingService {
       {
         empresaId: string;
         razonSocial: string;
+        logo: string | null;
         tokens: number;
         totalKg: number;
         cantidadAportes: number;
@@ -90,6 +92,7 @@ export class RankingService {
       const actual = acumuladoPorEmpresa.get(empresaId) ?? {
         empresaId,
         razonSocial: ingreso.empresa.razonSocial,
+        logo: rutaLogo(ingreso.empresa),
         tokens: 0,
         totalKg: 0,
         cantidadAportes: 0,
@@ -116,6 +119,7 @@ export class RankingService {
         posicion: index + 1,
         empresaId: fila.empresaId,
         razonSocial: fila.razonSocial,
+        logo: fila.logo,
         tokens: fila.tokens,
         totalKg: Math.round(fila.totalKg * 100) / 100,
         cantidadAportes: fila.cantidadAportes,

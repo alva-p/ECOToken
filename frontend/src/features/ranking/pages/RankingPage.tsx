@@ -24,6 +24,7 @@ import {
   variacionVsMesAnterior,
 } from '../periodo';
 import { RankingPreview } from '../components/RankingPreview';
+import { LogoEmpresa } from '../components/LogoEmpresa';
 import { RankingEstadisticas } from '../components/RankingEstadisticas';
 import { PerfilDestacado } from '../components/PerfilDestacado';
 import { Transparencia } from '../components/Transparencia';
@@ -329,6 +330,7 @@ export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
             podium={ranking.data.slice(0, 3).map((f) => ({
               rank: f.posicion as 1 | 2 | 3,
               name: f.razonSocial,
+              logo: f.logo,
               kg: f.kgReciclados,
               eco: f.tokens,
             }))}
@@ -388,7 +390,15 @@ export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
                       >
                         {f.posicion}
                       </span>,
-                      <span key="e" className="font-medium">
+                      <span
+                        key="e"
+                        className="inline-flex items-center gap-2 font-medium"
+                      >
+                        <LogoEmpresa
+                          nombre={f.razonSocial}
+                          logo={f.logo}
+                          className="h-7 w-7 text-[10px]"
+                        />
                         {f.razonSocial}
                         {enPanel && mia?.posicion === f.posicion && (
                           <span className="ml-2 align-middle">
