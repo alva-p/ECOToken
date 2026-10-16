@@ -52,6 +52,7 @@ export class RankingRepository {
             id: true,
             razonSocial: true,
             cuit: true,
+            logoUrl: true,
           },
         },
       },

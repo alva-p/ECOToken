@@ -17,7 +17,7 @@ const ITEMS = [
     icon: Clock,
     titulo: 'Rankings cerrados',
     texto:
-      'Solo se publican meses ya cerrados: los datos no cambian después de la publicación.',
+      'Los meses cerrados no cambian después del cierre; el mes en curso se muestra como provisorio hasta entonces.',
   },
 ];
 

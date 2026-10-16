@@ -109,14 +109,19 @@ describe('RankingPublicoService (E7-HU03)', () => {
       ]);
       repository.razonesSociales.mockResolvedValueOnce([
         { id: 'e1', razonSocial: 'Eco SRL' },
-        { id: 'e2', razonSocial: 'Supermercado Top' },
+        { id: 'e2', razonSocial: 'Supermercado Top', logoUrl: 'uploads/x' },
         { id: 'e3', razonSocial: 'GreenPack' },
       ]);
 
       const ranking = await service.obtener();
 
       expect(repository.snapshotCerrado).toHaveBeenCalledWith(8, 2026);
-      const extra = { certificados: 0, tendencia: null, nuevo: false };
+      const extra = {
+        certificados: 0,
+        tendencia: null,
+        nuevo: false,
+        logo: null,
+      };
       expect(ranking.data).toEqual([
         {
           posicion: 1,
@@ -124,6 +129,7 @@ describe('RankingPublicoService (E7-HU03)', () => {
           kgReciclados: 300,
           tokens: 900,
           ...extra,
+          logo: '/empresas/e2/logo',
         },
         {
           posicion: 2,

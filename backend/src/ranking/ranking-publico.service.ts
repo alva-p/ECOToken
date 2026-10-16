@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { RankingPublicoRepository } from './repository/ranking-publico.repository';
+import { rutaLogo } from './logo.util';
 
 export interface PeriodoCerrado {
   mes: number;
@@ -18,6 +19,8 @@ export interface PeriodoCerrado {
 export interface FilaRankingPublico {
   posicion: number;
   razonSocial: string;
+  /** Ruta pública del logo, o null si la empresa no subió uno. */
+  logo: string | null;
   kgReciclados: number;
   tokens: number;
   /** Certificados emitidos a la empresa hasta este período. */
@@ -327,6 +330,7 @@ export class RankingPublicoService {
       .map((e) => ({
         empresaId: e.id,
         razonSocial: e.razonSocial,
+        logo: rutaLogo(e),
         kgReciclados: redondear(totalesPorId.get(e.id)?.kg ?? 0),
         tokens: totalesPorId.get(e.id)?.tokens ?? 0,
       }))
