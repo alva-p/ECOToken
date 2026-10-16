@@ -84,12 +84,9 @@ export function RankingContenido({ enPanel = false }: { enPanel?: boolean }) {
   const clave = (p: { mes: number; anio: number }) => p.anio * 12 + p.mes;
 
   const pedido = periodoDeUrl(searchParams);
-  const ultimo = periodos?.[0];
+  // Sin período en la URL se abre el mes en curso (provisorio si no cerró).
   const objetivo =
-    pedido ??
-    (ultimo
-      ? { mes: ultimo.mes, anio: ultimo.anio }
-      : periodos && { mes: claveHoy - anioHoy * 12, anio: anioHoy });
+    pedido ?? (periodos && { mes: claveHoy - anioHoy * 12, anio: anioHoy });
 
   // Selector: todos los meses del año en curso (cerrados, el en curso y los
   // que faltan) más los cerrados de años anteriores, del más nuevo al más viejo.
