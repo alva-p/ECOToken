@@ -3,6 +3,8 @@ export interface FilaRankingMes {
   posicion: number;
   empresaId: string;
   razonSocial: string;
+  /** Ruta pública del logo, o null si la empresa no subió uno. */
+  logo?: string | null;
   tokens: number;
   totalKg: number;
   cantidadAportes: number;

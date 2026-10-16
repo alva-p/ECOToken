@@ -61,6 +61,7 @@ function armar([mes, anio, k]: [number, number, number]): RankingPublico {
     return {
       posicion: 0,
       razonSocial,
+      logo: null,
       kgReciclados: redondear(kg * f),
       tokens: Math.round(tokens * f),
       certificados: Math.max(1, Math.round((tokens / 120) * k)),

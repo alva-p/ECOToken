@@ -17,6 +17,8 @@ export interface PeriodoCerrado {
 export interface FilaRanking {
   posicion: number;
   razonSocial: string;
+  /** Ruta pública del logo en el backend, o null si la empresa no subió uno. */
+  logo: string | null;
   kgReciclados: number;
   tokens: number;
   certificados: number;
@@ -76,6 +78,7 @@ interface RankingEnCursoApi {
   ranking: {
     posicion: number;
     razonSocial: string;
+    logo: string | null;
     tokens: number;
     totalKg: number;
   }[];
@@ -103,6 +106,7 @@ export async function obtenerRankingEnCurso(): Promise<RankingPublico> {
     data: r.ranking.map((f) => ({
       posicion: f.posicion,
       razonSocial: f.razonSocial,
+      logo: f.logo,
       kgReciclados: f.totalKg,
       tokens: f.tokens,
       certificados: 0,

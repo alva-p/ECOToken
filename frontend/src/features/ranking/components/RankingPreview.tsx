@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { cx } from '@/lib/cx';
+import { LogoEmpresa } from './LogoEmpresa';
 
 export interface RankingSummaryItem {
   label: string;
@@ -11,6 +12,8 @@ export interface RankingSummaryItem {
 export interface RankingPodiumItem {
   rank: 1 | 2 | 3;
   name: string;
+  /** Ruta pública del logo; sin logo se muestran las iniciales. */
+  logo?: string | null;
   /** Rubro de la empresa; se muestra solo si viene. */
   categoria?: string;
   kg: number;
@@ -111,7 +114,7 @@ function PodiumCard({ item }: { item: RankingPodiumItem }) {
       className={cx(
         'relative rounded-2xl border bg-white p-6 pt-8 text-center',
         PODIUM_ORDER[item.rank],
-        isFirst ? 'border-eco-org sm:scale-105' : 'border-eco-border',
+        isFirst ? 'border-eco-org sm:pb-10 sm:pt-12' : 'border-eco-border',
       )}
     >
       <div
@@ -127,8 +130,19 @@ function PodiumCard({ item }: { item: RankingPodiumItem }) {
           {item.categoria}
         </div>
       )}
-      <div className="mt-1 break-words text-lg font-bold tracking-tight text-eco-ink">
-        {item.name}
+      <LogoEmpresa
+        nombre={item.name}
+        logo={item.logo}
+        className="mx-auto mt-2 h-14 w-14 text-base"
+      />
+      {/* Nombre a 2 líneas fijas: un nombre largo no estira su tarjeta del podio. */}
+      <div className="mt-2 flex min-h-[3.5rem] items-center justify-center">
+        <span
+          title={item.name}
+          className="line-clamp-2 break-words text-lg font-bold leading-7 tracking-tight text-eco-ink"
+        >
+          {item.name}
+        </span>
       </div>
       <div className="mt-4 flex justify-around border-t border-eco-border pt-4">
         <div>
