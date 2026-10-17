@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronRight } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table } from '@/components/ui/Table';
@@ -7,15 +6,9 @@ import { Badge } from '@/components/ui/Badge';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { LoadingState } from '@/components/ui/States';
 import { cx } from '@/lib/cx';
-import type {
-  EstadoVerificacion,
-  Empresa,
-  Municipalidad,
-  TipoRol,
-} from '@/types';
+import type { Empresa, Municipalidad, TipoRol } from '@/types';
 import { UsuarioModal } from '../components/UsuarioModal';
 import { MunicipalidadModal } from '../components/MunicipalidadModal';
-import { RevisarVerificacionModal } from '../components/RevisarVerificacionModal';
 import {
   editarUsuario,
   eliminarMunicipalidad,
@@ -40,23 +33,6 @@ const ROL_COLOR: Record<TipoRol, 'org' | 'coop' | 'muni' | 'ink'> = {
   ADMIN: 'ink',
 };
 
-const VERIF_LABEL: Record<EstadoVerificacion, string> = {
-  SIN_VERIFICAR: 'Sin verificar',
-  EN_REVISION: 'En revisión',
-  VERIFICADA: 'Verificada',
-  RECHAZADA: 'Rechazada',
-};
-
-const VERIF_COLOR: Record<
-  EstadoVerificacion,
-  'ink' | 'muni' | 'org' | 'danger'
-> = {
-  SIN_VERIFICAR: 'ink',
-  EN_REVISION: 'muni',
-  VERIFICADA: 'org',
-  RECHAZADA: 'danger',
-};
-
 type Tab = 'usuarios' | 'municipalidades';
 
 // Gestión de usuarios del panel admin: alta administrativa (contraseña temporal),
@@ -78,7 +54,6 @@ export function UsuariosPage() {
     null,
   );
   const [cambioEstado, setCambioEstado] = useState<UsuarioAdmin | null>(null);
-  const [revisando, setRevisando] = useState<Empresa | null>(null);
   const [procesando, setProcesando] = useState(false);
 
   // Modales de municipalidad.
@@ -232,73 +207,41 @@ export function UsuariosPage() {
               { label: 'Usuario' },
               { label: 'Rol' },
               { label: 'Organización' },
-              { label: 'Verificación' },
               { label: 'Estado' },
               { label: 'Acciones', align: 'right' },
             ]}
-            rows={(usuarios ?? []).map((u) => {
-              const empresa =
-                (u.tipoRol === 'EMPRESA' || u.tipoRol === 'COOPERATIVA') &&
-                u.empresaId
-                  ? empresaPorId.get(u.empresaId)
-                  : undefined;
-              return {
-                cells: [
-                  <span key="email" className="text-eco-ink">
-                    {u.email}
-                  </span>,
-                  <Badge key="rol" color={ROL_COLOR[u.tipoRol]}>
-                    {ROL_LABEL[u.tipoRol]}
-                  </Badge>,
-                  organizacion(u),
-                  empresa ? (
-                    <button
-                      key="verif"
-                      type="button"
-                      title="Revisar verificación"
-                      onClick={() => setRevisando(empresa)}
-                      className="group inline-flex items-center gap-1 rounded-md py-0.5 pr-1 transition-colors hover:bg-eco-bg"
-                    >
-                      <Badge color={VERIF_COLOR[empresa.estadoVerificacion]}>
-                        {VERIF_LABEL[empresa.estadoVerificacion]}
-                      </Badge>
-                      <ChevronRight
-                        size={14}
-                        aria-hidden
-                        className="text-eco-ink3 transition-colors group-hover:text-eco-ink2"
-                      />
-                    </button>
-                  ) : (
-                    <span key="verif" className="text-eco-ink3">
-                      —
-                    </span>
-                  ),
-                  <Badge key="estado" color={u.activo ? 'org' : 'danger'}>
-                    {u.activo ? 'Activo' : 'Inactivo'}
-                  </Badge>,
-                  <div key="acciones" className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      color="ink"
-                      className="px-2.5 py-1 text-xs"
-                      onClick={() =>
-                        setModalUsuario({ open: true, usuario: u })
-                      }
-                    >
-                      Editar
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      color={u.activo ? 'danger' : 'org'}
-                      className="px-2.5 py-1 text-xs"
-                      onClick={() => setCambioEstado(u)}
-                    >
-                      {u.activo ? 'Desactivar' : 'Activar'}
-                    </Button>
-                  </div>,
-                ],
-              };
-            })}
+            rows={(usuarios ?? []).map((u) => ({
+              cells: [
+                <span key="email" className="text-eco-ink">
+                  {u.email}
+                </span>,
+                <Badge key="rol" color={ROL_COLOR[u.tipoRol]}>
+                  {ROL_LABEL[u.tipoRol]}
+                </Badge>,
+                organizacion(u),
+                <Badge key="estado" color={u.activo ? 'org' : 'danger'}>
+                  {u.activo ? 'Activo' : 'Inactivo'}
+                </Badge>,
+                <div key="acciones" className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    color="ink"
+                    className="px-2.5 py-1 text-xs"
+                    onClick={() => setModalUsuario({ open: true, usuario: u })}
+                  >
+                    Editar
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    color={u.activo ? 'danger' : 'org'}
+                    className="px-2.5 py-1 text-xs"
+                    onClick={() => setCambioEstado(u)}
+                  >
+                    {u.activo ? 'Desactivar' : 'Activar'}
+                  </Button>
+                </div>,
+              ],
+            }))}
             emptyLabel="No hay usuarios cargados."
           />
         </>
@@ -373,15 +316,6 @@ export function UsuariosPage() {
         onReset={(res) => {
           setModalUsuario({ open: false, usuario: null });
           setCredenciales(res);
-          cargar();
-        }}
-      />
-
-      <RevisarVerificacionModal
-        empresa={revisando}
-        onClose={() => setRevisando(null)}
-        onResolved={() => {
-          setRevisando(null);
           cargar();
         }}
       />

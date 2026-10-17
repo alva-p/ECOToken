@@ -73,6 +73,13 @@ export interface Empresa {
   activa: boolean;
   estadoVerificacion: EstadoVerificacion;
   logoUrl: string | null;
+  // Datos formales extendidos (E3-HU05). Opcionales: solo llegan completos en
+  // la ficha (GET /empresas/:id); el listado puede no traerlos.
+  pais?: string | null;
+  codigoPostal?: string | null;
+  telefono?: string | null;
+  sitioWeb?: string | null;
+  descripcion?: string | null;
 }
 
 /**

@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Field } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
 import { Table } from '@/components/ui/Table';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { urlLogoEmpresa } from '@/features/empresa/api';
 import type { Empresa } from '@/types';
 import { EditarEmpresaModal } from '../components/EditarEmpresaModal';
+import { EmpresaDetalleModal } from '../components/EmpresaDetalleModal';
 import { AltaCooperativaModal } from '../components/AltaCooperativaModal';
 import {
   darDeBajaEmpresa,
@@ -16,6 +19,7 @@ import {
 } from '../api';
 
 export function CooperativasPage() {
+  const [detalleId, setDetalleId] = useState<string | null>(null);
   const [cooperativas, setCooperativas] = useState<Empresa[]>([]);
   const [editando, setEditando] = useState<Empresa | null>(null);
   const [dandoBaja, setDandoBaja] = useState<Empresa | null>(null);
@@ -111,12 +115,38 @@ export function CooperativasPage() {
           ]}
           rows={cooperativasVisibles.map((cooperativa) => ({
             cells: [
-              <div key="cooperativa">
-                <div>{cooperativa.razonSocial}</div>
-                <div className="text-xs text-eco-ink2">
-                  {cooperativa.emailContacto}
-                </div>
-              </div>,
+              <button
+                key="cooperativa"
+                type="button"
+                title="Abrir ficha"
+                onClick={() => setDetalleId(cooperativa.id)}
+                className="group flex w-full items-center gap-3 text-left"
+              >
+                {cooperativa.logoUrl ? (
+                  <img
+                    src={urlLogoEmpresa(cooperativa.id)}
+                    alt=""
+                    className="h-9 w-9 shrink-0 rounded-lg object-cover"
+                  />
+                ) : (
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-eco-bg text-sm font-bold uppercase text-eco-ink2">
+                    {cooperativa.razonSocial.charAt(0)}
+                  </span>
+                )}
+                <span className="min-w-0">
+                  <span className="block truncate font-medium text-eco-ink group-hover:text-eco-coop group-hover:underline">
+                    {cooperativa.razonSocial}
+                  </span>
+                  <span className="block truncate text-xs text-eco-ink2">
+                    {cooperativa.emailContacto}
+                  </span>
+                </span>
+                <ChevronRight
+                  size={16}
+                  aria-hidden
+                  className="ml-auto shrink-0 text-eco-ink3 group-hover:text-eco-coop"
+                />
+              </button>,
               cooperativa.cuit,
               cooperativa.activa ? 'Activa' : 'Baja',
               <div key="acciones" className="flex justify-end gap-2">
@@ -148,6 +178,12 @@ export function CooperativasPage() {
           }
         />
       </div>
+
+      <EmpresaDetalleModal
+        empresaId={detalleId}
+        onClose={() => setDetalleId(null)}
+        onChanged={cargar}
+      />
 
       <AltaCooperativaModal
         open={mostrarAlta}
