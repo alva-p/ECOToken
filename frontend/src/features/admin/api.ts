@@ -40,6 +40,11 @@ export function listarEmpresas(
   return api<Empresa[]>(`/empresas?categoria=${categoria}`);
 }
 
+/** Ficha de una empresa/cooperativa puntual (incluye datos formales extendidos). */
+export function obtenerEmpresa(id: string): Promise<Empresa> {
+  return api<Empresa>(`/empresas/${id}`);
+}
+
 export function editarEmpresa(
   id: string,
   dto: EditarEmpresaInput,
