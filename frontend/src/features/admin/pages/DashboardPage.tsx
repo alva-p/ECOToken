@@ -1,11 +1,43 @@
 import { useEffect, useState } from 'react';
+import { Ban, ChevronRight, Pencil } from 'lucide-react';
 import { Table } from '@/components/ui/Table';
 import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { Field } from '@/components/ui/Field';
 import { LoadingState } from '@/components/ui/States';
-import type { Empresa } from '@/types';
+import { urlLogoEmpresa } from '@/features/empresa/api';
+import { cx } from '@/lib/cx';
+import type { Empresa, EstadoEmpresa, EstadoVerificacion } from '@/types';
+
+const ESTADO_LABEL: Record<EstadoEmpresa, string> = {
+  PENDIENTE: 'Pendiente',
+  APROBADA: 'Aprobada',
+  RECHAZADA: 'Rechazada',
+};
+const ESTADO_COLOR: Record<EstadoEmpresa, 'ink' | 'muni' | 'org' | 'danger'> = {
+  PENDIENTE: 'muni',
+  APROBADA: 'org',
+  RECHAZADA: 'danger',
+};
+
+const VERIF_LABEL: Record<EstadoVerificacion, string> = {
+  SIN_VERIFICAR: 'Sin verificar',
+  EN_REVISION: 'En revisión',
+  VERIFICADA: 'Verificada',
+  RECHAZADA: 'Rechazada',
+};
+const VERIF_COLOR: Record<
+  EstadoVerificacion,
+  'ink' | 'muni' | 'org' | 'danger'
+> = {
+  SIN_VERIFICAR: 'ink',
+  EN_REVISION: 'muni',
+  VERIFICADA: 'org',
+  RECHAZADA: 'danger',
+};
 import { EditarEmpresaModal } from '../components/EditarEmpresaModal';
+import { EmpresaDetalleModal } from '../components/EmpresaDetalleModal';
 import {
   aprobarEmpresa,
   darDeBajaEmpresa,
@@ -28,6 +60,7 @@ interface Credenciales {
 }
 
 export function AdminDashboardPage() {
+  const [detalleId, setDetalleId] = useState<string | null>(null);
   const [empresas, setEmpresas] = useState<Empresa[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendiente, setPendiente] = useState<AccionPendiente | null>(null);
@@ -85,18 +118,53 @@ export function AdminDashboardPage() {
   const empresasVisibles = pendientesPrimero(
     filtrarEmpresas(empresas ?? [], busqueda),
   );
-  const cantidadPendientes = (empresas ?? []).filter(
+  const lista = empresas ?? [];
+  const cantidadPendientes = lista.filter(
     (e) => e.estado === 'PENDIENTE',
+  ).length;
+  const cantidadActivas = lista.filter(
+    (e) => e.activa && e.estado === 'APROBADA',
+  ).length;
+  const cantidadVerificadas = lista.filter(
+    (e) => e.estadoVerificacion === 'VERIFICADA',
   ).length;
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <h2 className="text-sm font-semibold text-eco-ink">Empresas</h2>
-        <p className="mt-1 text-xs text-eco-ink2">
-          Las altas se originan en el registro público y se habilitan al
-          aprobarlas.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 className="text-sm font-semibold text-eco-ink">Empresas</h2>
+          <p className="mt-1 text-xs text-eco-ink2">
+            Las altas se originan en el registro público y se habilitan al
+            aprobarlas.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <div className="min-w-[72px] rounded-xl border border-eco-border bg-eco-surface px-3 py-1.5 text-center">
+            <div className="text-lg font-bold leading-none text-eco-ink">
+              {lista.length}
+            </div>
+            <div className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-eco-ink2">
+              Total
+            </div>
+          </div>
+          <div className="min-w-[72px] rounded-xl border border-eco-org/30 bg-eco-org-soft px-3 py-1.5 text-center">
+            <div className="text-lg font-bold leading-none text-eco-org">
+              {cantidadActivas}
+            </div>
+            <div className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-eco-org">
+              Activas
+            </div>
+          </div>
+          <div className="min-w-[72px] rounded-xl border border-eco-muni/30 bg-eco-muni-soft px-3 py-1.5 text-center">
+            <div className="text-lg font-bold leading-none text-eco-muni">
+              {cantidadVerificadas}
+            </div>
+            <div className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-eco-muni">
+              Verificadas
+            </div>
+          </div>
+        </div>
       </div>
       {error && <p className="text-xs text-eco-danger">{error}</p>}
 
@@ -150,28 +218,73 @@ export function AdminDashboardPage() {
           { label: 'Empresa' },
           { label: 'CUIT' },
           { label: 'Estado' },
+          { label: 'Verificación' },
           { label: 'Actividad' },
           { label: 'Acciones', align: 'right' },
         ]}
         rows={empresasVisibles.map((empresa) => ({
           cells: [
-            <div key="empresa">
-              <div>{empresa.razonSocial}</div>
-              <div className="text-xs text-eco-ink2">
-                {empresa.emailContacto}
-              </div>
-            </div>,
+            <button
+              key="empresa"
+              type="button"
+              title="Abrir ficha"
+              onClick={() => setDetalleId(empresa.id)}
+              className="group flex w-full items-center gap-3 text-left"
+            >
+              {empresa.logoUrl ? (
+                <img
+                  src={urlLogoEmpresa(empresa.id)}
+                  alt=""
+                  className="h-9 w-9 shrink-0 rounded-lg object-cover"
+                />
+              ) : (
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-eco-bg text-sm font-bold uppercase text-eco-ink2">
+                  {empresa.razonSocial.charAt(0)}
+                </span>
+              )}
+              <span className="min-w-0">
+                <span className="block truncate font-medium text-eco-ink group-hover:text-eco-org group-hover:underline">
+                  {empresa.razonSocial}
+                </span>
+                <span className="block truncate text-xs text-eco-ink2">
+                  {empresa.emailContacto}
+                </span>
+              </span>
+              <ChevronRight
+                size={16}
+                aria-hidden
+                className="ml-auto shrink-0 text-eco-ink3 group-hover:text-eco-org"
+              />
+            </button>,
             empresa.cuit,
-            empresa.estado,
-            empresa.activa ? 'Activa' : 'Baja',
+            <Badge key="estado" color={ESTADO_COLOR[empresa.estado]}>
+              {ESTADO_LABEL[empresa.estado]}
+            </Badge>,
+            <Badge key="verif" color={VERIF_COLOR[empresa.estadoVerificacion]}>
+              {VERIF_LABEL[empresa.estadoVerificacion]}
+            </Badge>,
+            <span
+              key="actividad"
+              className="inline-flex items-center gap-1.5 text-sm text-eco-ink"
+            >
+              <span
+                className={cx(
+                  'h-2 w-2 rounded-full',
+                  empresa.activa ? 'bg-eco-org' : 'bg-eco-ink3',
+                )}
+              />
+              {empresa.activa ? 'Activa' : 'Baja'}
+            </span>,
             <div key="acciones" className="flex flex-wrap justify-end gap-2">
               <Button
                 variant="outline"
                 color="ink"
-                className="px-2.5 py-1 text-xs"
+                className="px-2 py-1.5"
+                title="Editar"
+                aria-label="Editar"
                 onClick={() => setEditando(empresa)}
               >
-                Editar
+                <Pencil size={15} />
               </Button>
               {empresa.activa && empresa.estado === 'PENDIENTE' && (
                 <>
@@ -198,10 +311,12 @@ export function AdminDashboardPage() {
                 <Button
                   variant="ghost"
                   color="danger"
-                  className="px-2.5 py-1 text-xs"
+                  className="px-2 py-1.5"
+                  title="Dar de baja"
+                  aria-label="Dar de baja"
                   onClick={() => setPendiente({ empresa, accion: 'baja' })}
                 >
-                  Dar de baja
+                  <Ban size={15} />
                 </Button>
               )}
             </div>,
@@ -212,6 +327,12 @@ export function AdminDashboardPage() {
             ? 'No hay empresas que coincidan con la búsqueda.'
             : 'No hay empresas registradas.'
         }
+      />
+
+      <EmpresaDetalleModal
+        empresaId={detalleId}
+        onClose={() => setDetalleId(null)}
+        onChanged={cargar}
       />
 
       <EditarEmpresaModal
