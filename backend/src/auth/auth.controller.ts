@@ -19,8 +19,9 @@ import { LoginDto } from './dto/login.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  // 5 intentos/min por IP: frena fuerza bruta contra el login
-  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  // 30 intentos/min por IP: frena fuerza bruta contra el login sin bloquear
+  // a muchos usuarios legítimos detrás de la misma IP (wifi de la facultad).
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   login(@Body() dto: LoginDto) {
