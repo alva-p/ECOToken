@@ -10,6 +10,7 @@ import {
   etiquetaPeriodo,
   variacionVsMesAnterior,
 } from '@/features/ranking/periodo';
+import EcoNetworkAnimation from '@/components/EcoNetworkAnimation';
 import {
   ArrowUpRight,
   ChevronRight,
@@ -358,20 +359,8 @@ function App() {
               una cultura de reciclaje con evidencia.
             </p>
           </div>
-          <div className="trust-orbit">
-            <div className="orbit-ring ring-one" />
-            <div className="orbit-ring ring-two" />
-            <div className="orbit-core">
-              <Leaf size={22} />
-              <span>
-                registro
-                <br />
-                verificable
-              </span>
-            </div>
-            <span className="orbit-label label-top">Municipalidad</span>
-            <span className="orbit-label label-right">Cooperativas</span>
-            <span className="orbit-label label-bottom">Empresas</span>
+          <div className="trust-animation-wrap">
+            <EcoNetworkAnimation isDark={isDark} />
           </div>
         </div>
 
