@@ -866,6 +866,59 @@
   color: #e2f3e7;
 }
 
+.juego-section {
+  padding: 70px 0;
+  background: var(--background);
+}
+
+.juego-box {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  align-items: center;
+  gap: 56px;
+}
+
+.juego-copy .section-intro {
+  margin: 22px 0 26px;
+}
+
+.juego-touch {
+  display: none;
+  margin-top: 12px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+@media (pointer: coarse) {
+  .juego-touch {
+    display: block;
+  }
+}
+
+.juego-shot {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+
+.juego-shot:hover {
+  transform: translateY(-3px);
+}
+
+.juego-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 760px) {
+  .juego-box {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
 .cta-section {
   position: relative;
   isolation: isolate;
