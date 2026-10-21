@@ -1,8 +1,10 @@
 {
   "rewrites": [
     { "source": "/api/:path*", "destination": "https://ecotoken-api.alva-p.xyz/:path*" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/juego/equipo", "destination": "/juego/index.html" },
+    { "source": "/((?!api/|juego/).*)", "destination": "/index.html" }
   ],
+  "redirects": [{ "source": "/juego", "destination": "/juego/", "permanent": false }],
   "headers": [
     {
       "source": "/(.*)",

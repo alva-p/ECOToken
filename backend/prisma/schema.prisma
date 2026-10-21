@@ -371,3 +371,14 @@ model Canje {
   @@index([empresaId])
   @@index([beneficioId])
 }
+
+/// Partida del minijuego "Misión de Reciclaje" (/juego). Ranking público,
+/// sin relación con empresas ni tokens: solo nombre y puntaje.
+model PartidaJuego {
+  id        String   @id @default(uuid())
+  nombre    String   @db.VarChar(30)
+  puntaje   Int
+  createdAt DateTime @default(now())
+
+  @@index([puntaje(sort: Desc), createdAt])
+}
