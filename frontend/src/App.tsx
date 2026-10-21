@@ -15,6 +15,7 @@ import {
   ArrowUpRight,
   ChevronRight,
   CircleDot,
+  Gamepad2,
   Leaf,
   Link2,
   ShieldCheck,
@@ -386,6 +387,43 @@ function App() {
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ═══ MINIJUEGO ═══ */}
+      {/* El juego es un build estático aparte (public/juego, repo ecotoken-game):
+          se carga solo al entrar a /juego/, no pesa en la landing. */}
+      <section className="juego-section" id="juego">
+        <div className="container juego-box">
+          <div className="juego-copy">
+            <p className="kicker">
+              <Gamepad2 size={13} /> Minijuego
+            </p>
+            <h2>
+              Probá el circuito
+              <br />
+              <span>del reciclaje.</span>
+            </h2>
+            <p className="section-intro">
+              Recolectá, transportá y clasificá en 2 minutos. Tu puntaje entra
+              al ranking de todos los jugadores.
+            </p>
+            <a className="button button-primary" href="/juego/">
+              Jugar <ArrowUpRight size={17} />
+            </a>
+            <small className="juego-touch">
+              Se juega con teclado: abrilo desde la compu.
+            </small>
+          </div>
+          <a className="juego-shot" href="/juego/" tabIndex={-1}>
+            <img
+              src="/juego-menu.webp"
+              alt="Menú del minijuego Misión de Reciclaje"
+              loading="lazy"
+              width={1200}
+              height={675}
+            />
+          </a>
         </div>
       </section>
 
