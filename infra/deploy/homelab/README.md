@@ -5,7 +5,7 @@ pruebe el sistema. El frontend sigue en Vercel y le habla al backend a través d
 (`/api/*`), así los usuarios solo ven la URL de Vercel.
 
 ```
-Usuarios ─► eco-token-ruddy.vercel.app ─(/api/*)─► ecotoken-api.alva-p.xyz
+Usuarios ─► eco-token-ruddy.vercel.app ─(/api/*)─► ecotoken-api.alvaropineda.xyz
                                                     └─ Cloudflare Tunnel ─► homelab:3300 (Docker)
 ```
 
@@ -50,12 +50,12 @@ abre puertos en el router.
 5. **Túnel de Cloudflare**: agregar en `/etc/cloudflared/config.yml`, antes de la regla final
    `http_status:404`:
    ```yaml
-   - hostname: ecotoken-api.alva-p.xyz
+   - hostname: ecotoken-api.alvaropineda.xyz
      service: http://localhost:3300
    ```
    ```bash
    sudo cp /etc/cloudflared/config.yml /etc/cloudflared/config.yml.bak-$(date +%F)
-   cloudflared tunnel route dns homelab ecotoken-api.alva-p.xyz
+   cloudflared tunnel route dns homelab ecotoken-api.alvaropineda.xyz
    sudo systemctl restart cloudflared
    ```
    (Si se prefiere desde el panel de Cloudflare: DNS → CNAME `ecotoken-api` →
