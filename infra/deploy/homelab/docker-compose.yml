@@ -49,7 +49,7 @@ services:
     volumes:
       - uploads_data:/app/uploads
     ports:
-      # Solo loopback: lo publica cloudflared (ecotoken-api.alva-p.xyz -> localhost:3300).
+      # Solo loopback: lo publica cloudflared (ecotoken-api.alvaropineda.xyz -> localhost:3300).
       - "127.0.0.1:${BACKEND_HOST_PORT:-3300}:3000"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
