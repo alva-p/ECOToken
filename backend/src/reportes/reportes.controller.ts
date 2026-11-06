@@ -38,26 +38,36 @@ export class ReportesController {
     return this.service.obtenerAportes();
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.ADMIN)
   @Post()
   create(@Body() dto: CreateReporteDto) {
     return this.service.create(dto);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.ADMIN)
   @Get()
   findAll() {
     return this.service.findAll();
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.ADMIN)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.ADMIN)
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateReporteDto) {
     return this.service.update(id, dto);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.ADMIN)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.service.remove(id);
