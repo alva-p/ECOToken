@@ -65,3 +65,23 @@ export function descargarCertificadoPdf(id: string): Promise<Blob> {
 export function descargarReportePdf(id: string): Promise<Blob> {
   return apiBlob(`/certificados/${id}/reporte`);
 }
+
+/** Certificado de cualquier empresa, para el panel municipal (E9-HU03). */
+export interface Reconocimiento {
+  id: string;
+  mes: number;
+  anio: number;
+  posicion: number;
+  totalEmpresas: number;
+  kgReciclados: number;
+  co2Evitado: number;
+  hashVerificacion: string;
+  txHashOnChain: string | null;
+  empresaId: string;
+  empresa: { razonSocial: string };
+}
+
+/** Todos los certificados emitidos, por mes y posición (E9-HU03). */
+export function listarReconocimientos(): Promise<Reconocimiento[]> {
+  return api<Reconocimiento[]>('/certificados/reconocimientos');
+}

@@ -29,6 +29,7 @@ import { ContratoPage } from '@/features/admin/pages/ContratoPage';
 import { MunicipioLayout } from '@/layouts/MunicipioLayout';
 import { MunicipioDashboardPage } from '@/features/municipio/pages/DashboardPage';
 import { BeneficiosPage } from '@/features/municipio/pages/BeneficiosPage';
+import { ReconocimientosPage } from '@/features/municipio/pages/ReconocimientosPage';
 
 /** Definición de rutas. Ver doc/ESTRUCTURA-PROYECTO.md §5. */
 export const router = createBrowserRouter([
@@ -97,6 +98,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <MunicipioDashboardPage /> },
       { path: 'beneficios', element: <BeneficiosPage /> },
+      { path: 'reconocimientos', element: <ReconocimientosPage /> },
     ],
   },
 
