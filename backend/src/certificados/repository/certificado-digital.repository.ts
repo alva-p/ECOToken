@@ -44,6 +44,26 @@ export class CertificadoDigitalRepository {
     return this.prisma.certificadoDigital.findMany();
   }
 
+  /** Todos los certificados con nombre de empresa, por mes y posición (E9-HU03). */
+  findAllConEmpresa() {
+    return this.prisma.certificadoDigital.findMany({
+      orderBy: [{ anio: 'desc' }, { mes: 'desc' }, { posicion: 'asc' }],
+      select: {
+        id: true,
+        mes: true,
+        anio: true,
+        posicion: true,
+        totalEmpresas: true,
+        kgReciclados: true,
+        co2Evitado: true,
+        hashVerificacion: true,
+        txHashOnChain: true,
+        empresaId: true,
+        empresa: { select: { razonSocial: true } },
+      },
+    });
+  }
+
   /** Certificados de una empresa, más nuevos primero (E8-HU02). */
   findByEmpresaId(empresaId: string) {
     return this.prisma.certificadoDigital.findMany({

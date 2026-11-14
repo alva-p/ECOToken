@@ -286,6 +286,25 @@ describe('CertificadosService', () => {
       ).rejects.toBeInstanceOf(ForbiddenException);
     });
 
+    it('obtenerPdf con verTodos (municipio, E9-HU03) entrega el de cualquier empresa', async () => {
+      repository.findByIdConEmpresa.mockResolvedValue({
+        id: 'cert1',
+        empresaId: 'emp1',
+        mes: 3,
+        anio: 2026,
+        posicion: 1,
+        totalEmpresas: 2,
+        kgReciclados: 10,
+        co2Evitado: 5,
+        desglosePorMaterial: [],
+        hashVerificacion: 'abc',
+        empresa: { razonSocial: 'Eco SRL' },
+      });
+
+      const pdf = await service.obtenerPdf('cert1', null, true);
+      expect(pdf.subarray(0, 4).toString()).toBe('%PDF');
+    });
+
     it('obtenerReportePdf rechaza si el certificado no pertenece a la empresa', async () => {
       repository.findByIdConEmpresa.mockResolvedValue({
         id: 'cert1',
