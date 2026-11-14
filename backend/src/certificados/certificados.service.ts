@@ -234,9 +234,18 @@ export class CertificadosService {
     return this.repository.findByEmpresaId(empresaId);
   }
 
-  /** PDF del certificado, solo para la empresa dueña. */
-  async obtenerPdf(id: string, empresaId: string | null): Promise<Buffer> {
-    const certificado = await this.certificadoPropio(id, empresaId);
+  /** Todos los certificados con la empresa, para el municipio (E9-HU03). */
+  reconocimientos() {
+    return this.repository.findAllConEmpresa();
+  }
+
+  /** PDF del certificado: la empresa dueña, o cualquiera si `verTodos` (municipio/admin). */
+  async obtenerPdf(
+    id: string,
+    empresaId: string | null,
+    verTodos = false,
+  ): Promise<Buffer> {
+    const certificado = await this.certificadoPropio(id, empresaId, verTodos);
 
     const frontendUrl = this.config.get<string>('corsOrigin') ?? '';
     return generarCertificadoPdf({
@@ -261,8 +270,9 @@ export class CertificadosService {
   async obtenerReportePdf(
     id: string,
     empresaId: string | null,
+    verTodos = false,
   ): Promise<Buffer> {
-    const cert = await this.certificadoPropio(id, empresaId);
+    const cert = await this.certificadoPropio(id, empresaId, verTodos);
     // Certificados anteriores a la columna no tienen snapshot: se arma al vuelo.
     const snap =
       (cert.reporteSnapshot as unknown as ReporteSnapshot | null) ??
@@ -348,7 +358,18 @@ export class CertificadosService {
   }
 
   /** Certificado con datos de empresa; exige que pertenezca a la empresa logueada. */
-  private async certificadoPropio(id: string, empresaId: string | null) {
+  private async certificadoPropio(
+    id: string,
+    empresaId: string | null,
+    verTodos = false,
+  ) {
+    if (verTodos) {
+      const certificado = await this.repository.findByIdConEmpresa(id);
+      if (!certificado) {
+        throw new NotFoundException(`CertificadoDigital ${id} no encontrado`);
+      }
+      return certificado;
+    }
     if (!empresaId) {
       throw new ForbiddenException(
         'El usuario no está asociado a ninguna empresa',

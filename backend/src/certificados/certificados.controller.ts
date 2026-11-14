@@ -52,25 +52,42 @@ export class CertificadosController {
     return this.service.misCertificados(user.empresaId);
   }
 
+  // ─── E9-HU03: reconocimientos de todas las empresas para el municipio ───
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(TipoRol.EMPRESA)
+  @Roles(TipoRol.MUNICIPALIDAD, TipoRol.ADMIN)
+  @Get('reconocimientos')
+  reconocimientos() {
+    return this.service.reconocimientos();
+  }
+
+  // Empresa: solo los suyos. Municipio/admin: cualquiera (E9-HU03).
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(TipoRol.EMPRESA, TipoRol.MUNICIPALIDAD, TipoRol.ADMIN)
   @Get(':id/pdf')
   async pdf(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    const buffer = await this.service.obtenerPdf(id, user.empresaId);
+    const buffer = await this.service.obtenerPdf(
+      id,
+      user.empresaId,
+      user.rol !== TipoRol.EMPRESA,
+    );
     return new StreamableFile(buffer, {
       type: 'application/pdf',
-      disposition: `attachment; filename="certificado-${id}.pdf"`,
+      disposition: `inline; filename="certificado-${id}.pdf"`,
     });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(TipoRol.EMPRESA)
+  @Roles(TipoRol.EMPRESA, TipoRol.MUNICIPALIDAD, TipoRol.ADMIN)
   @Get(':id/reporte')
   async reporte(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
-    const buffer = await this.service.obtenerReportePdf(id, user.empresaId);
+    const buffer = await this.service.obtenerReportePdf(
+      id,
+      user.empresaId,
+      user.rol !== TipoRol.EMPRESA,
+    );
     return new StreamableFile(buffer, {
       type: 'application/pdf',
-      disposition: `attachment; filename="reporte-${id}.pdf"`,
+      disposition: `inline; filename="reporte-${id}.pdf"`,
     });
   }
 
