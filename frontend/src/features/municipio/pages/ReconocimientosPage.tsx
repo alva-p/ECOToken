@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Table } from '@/components/ui/Table';
 import { LoadingState } from '@/components/ui/States';
+import { hoyArt } from '@/lib/fecha';
 import {
   listarReconocimientos,
   descargarCertificadoPdf,
@@ -125,10 +126,32 @@ export function ReconocimientosPage() {
       .sort((a, b) => b.kgTotal - a.kgTotal);
   }, [data]);
 
-  const periodos = useMemo(
-    () => [...new Map(data.map((c) => [clavePeriodo(c), c])).values()],
-    [data],
-  );
+  // Todos los meses desde el primer certificado hasta el actual (hora ART),
+  // también los que no tienen reconocimientos: así se puede consultar un
+  // período vacío y ver por qué lo está (E9-HU03).
+  const periodos = useMemo(() => {
+    const hoy = hoyArt();
+    const actual = Number(hoy.slice(0, 4)) * 12 + Number(hoy.slice(5, 7)) - 1;
+    const primero = data.at(-1); // data viene del más nuevo al más viejo
+    const desde = primero ? primero.anio * 12 + primero.mes - 1 : actual;
+    const cantidad = new Map<string, number>();
+    for (const c of data) {
+      cantidad.set(clavePeriodo(c), (cantidad.get(clavePeriodo(c)) ?? 0) + 1);
+    }
+    const lista = [];
+    for (let n = actual; n >= desde; n--) {
+      const anio = Math.floor(n / 12);
+      const mes = (n % 12) + 1;
+      const clave = `${anio}-${mes}`;
+      lista.push({
+        clave,
+        nombre: nombrePeriodo(mes, anio),
+        enCurso: n === actual,
+        cantidad: cantidad.get(clave) ?? 0,
+      });
+    }
+    return lista;
+  }, [data]);
 
   async function ver(tipo: 'certificado' | 'reporte', c: Reconocimiento) {
     setAbriendo(`${tipo}:${c.id}`);
@@ -246,6 +269,14 @@ export function ReconocimientosPage() {
       c.empresa.razonSocial.toLowerCase().includes(q),
   );
   const filtradas = empresas.filter((e) => e.nombre.toLowerCase().includes(q));
+  const elegido = periodos.find((p) => p.clave === periodo);
+  const vacioDelMes = !elegido
+    ? ''
+    : elegido.cantidad > 0
+      ? 'Ninguna empresa coincide con la búsqueda.'
+      : elegido.enCurso
+        ? `El ranking de ${elegido.nombre} todavía no cerró: los certificados se emiten automáticamente al cierre del mes.`
+        : `No hay organizaciones reconocidas en ${elegido.nombre}: no se emitieron certificados para ese período.`;
 
   return (
     <div className="flex flex-col gap-4">
@@ -270,9 +301,14 @@ export function ReconocimientosPage() {
           className={inputCls}
         >
           <option value="">Todos los meses</option>
-          {periodos.map((c) => (
-            <option key={clavePeriodo(c)} value={clavePeriodo(c)}>
-              {nombrePeriodo(c.mes, c.anio)}
+          {periodos.map((p) => (
+            <option key={p.clave} value={p.clave}>
+              {p.nombre}
+              {p.enCurso
+                ? ' — en curso'
+                : p.cantidad === 0
+                  ? ' — sin reconocimientos'
+                  : ''}
             </option>
           ))}
         </select>
@@ -297,7 +333,7 @@ export function ReconocimientosPage() {
                 <LinkVerificar hash={c.hashVerificacion} />,
               ],
             }))}
-            emptyLabel="Ninguna empresa coincide con la búsqueda."
+            emptyLabel={vacioDelMes}
           />
         ) : (
           <Table
